@@ -5,7 +5,7 @@ import { PostComposerForm } from "@/components/feed/PostComposerForm";
 import type { Profile } from "@/lib/supabase/types";
 import { FeedTabs, type FeedTab } from "@/components/feed/FeedTabs";
 import { FeedList } from "@/components/feed/FeedList";
-import type { PostWithAuthor } from "@/lib/supabase/types";
+import type { CommentWithAuthor, PostWithAuthor } from "@/lib/supabase/types";
 
 type Props = {
   recentPosts: PostWithAuthor[];
@@ -13,6 +13,7 @@ type Props = {
   user: { id: string; email?: string } | null;
   profile: Profile | null;
   likedPostIds: number[];
+  commentsByPostId: Record<number, CommentWithAuthor[]>;
 };
 
 export function FeedSection({
@@ -21,6 +22,7 @@ export function FeedSection({
   user,
   profile,
   likedPostIds,
+  commentsByPostId,
 }: Props) {
   const isLoggedIn = !!user;
   const [tab, setTab] = useState<FeedTab>("for-you");
@@ -40,6 +42,7 @@ export function FeedSection({
         posts={posts}
         likedPostIds={likedPostIds}
         isLoggedIn={isLoggedIn}
+        commentsByPostId={commentsByPostId}
       />
     </div>
   );

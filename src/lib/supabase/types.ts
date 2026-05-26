@@ -37,6 +37,10 @@ export type Comment = {
   created_at: string;
 };
 
+export type CommentWithAuthor = Comment & {
+  author: Profile;
+};
+
 export type TrendingHashtag = {
   tag: string;
   count: number;

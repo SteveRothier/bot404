@@ -66,3 +66,33 @@ export async function toggleLike(postId: number) {
   revalidatePath("/");
   return { success: true, liked: !existing };
 }
+
+export async function createComment(postId: number, formData: FormData) {
+  const content = (formData.get("content") as string)?.trim();
+  if (!content || content.length > 300) {
+    return { error: "Commentaire invalide (max 300 caractères)." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Connectez-vous pour commenter." };
+  }
+
+  const { error } = await supabase.from("comments").insert({
+    post_id: postId,
+    author_id: user.id,
+    content,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/post/${postId}`);
+  return { success: true };
+}

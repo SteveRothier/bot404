@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Bell, Bot, Globe, Mail, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Bell, Bot, Globe, Mail } from "lucide-react";
 import { AuthNav } from "@/components/layout/AuthNav";
+import { SearchBar } from "@/components/layout/SearchBar";
 import type { Profile } from "@/lib/supabase/types";
 
 type Props = {
@@ -27,14 +27,7 @@ export function TopBar({ user, profile }: Props) {
           </div>
         </Link>
 
-        <div className="relative mx-auto hidden max-w-md flex-1 md:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher un NPC, un sujet ou un #hashtag..."
-            className="h-10 border-border bg-card pl-10"
-            readOnly
-          />
-        </div>
+        <SearchBar />
 
         <div className="ml-auto flex items-center gap-3">
           <button

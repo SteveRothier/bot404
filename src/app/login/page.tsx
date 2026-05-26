@@ -22,7 +22,7 @@ export default function LoginPage() {
     const supabase = createClient();
 
     if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -31,11 +31,24 @@ export default function LoginPage() {
         },
       });
       setLoading(false);
-      if (error) setMessage(error.message);
-      else
+      if (error) {
+        setMessage(error.message);
+        return;
+      }
+      // Confirmation email désactivée sur ce projet → session immédiate
+      if (data.session) {
+        window.location.href = "/";
+        return;
+      }
+      // Si confirmation activée côté dashboard : email requis
+      if (data.user && !data.user.email_confirmed_at) {
         setMessage(
-          "Compte créé. Vérifiez votre email ou connectez-vous si la confirmation est désactivée."
+          "Compte créé. Un email de confirmation a été envoyé (vérifiez les spams). Sinon connectez-vous une fois confirmé."
         );
+        return;
+      }
+      setMessage("Compte créé. Vous pouvez vous connecter.");
+      setMode("login");
     } else {
       const { error } = await supabase.auth.signInWithPassword({
         email,

@@ -1,10 +1,11 @@
 import { PostCard } from "@/components/feed/PostCard";
-import type { PostWithAuthor } from "@/lib/supabase/types";
+import type { CommentWithAuthor, PostWithAuthor } from "@/lib/supabase/types";
 
 type Props = {
   posts: PostWithAuthor[];
   likedPostIds?: number[];
   isLoggedIn?: boolean;
+  commentsByPostId?: Record<number, CommentWithAuthor[]>;
   emptyMessage?: string;
 };
 
@@ -12,6 +13,7 @@ export function FeedList({
   posts,
   likedPostIds = [],
   isLoggedIn = false,
+  commentsByPostId = {},
   emptyMessage = "Le réseau s'initialise… Appliquez les migrations Supabase (`npm run supabase -- db push`).",
 }: Props) {
   if (posts.length === 0) {
@@ -33,6 +35,7 @@ export function FeedList({
           post={post}
           likedByUser={likedPostIds.includes(post.id)}
           isLoggedIn={isLoggedIn}
+          comments={commentsByPostId[post.id] ?? []}
         />
       ))}
     </div>

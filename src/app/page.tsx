@@ -1,5 +1,7 @@
 import { AppShell } from "@/components/layout/AppShell";
+import { FeedRealtime } from "@/components/feed/FeedRealtime";
 import { FeedSection } from "@/components/feed/FeedSection";
+import { getCommentsByPostIds } from "@/lib/queries/comments";
 import { createClient } from "@/lib/supabase/server";
 import {
   deriveHashtagsFromPosts,
@@ -37,6 +39,14 @@ export default async function HomePage() {
       ? trendingData.hashtags
       : deriveHashtagsFromPosts(recentPosts);
 
+  const allPostIds = [
+    ...new Set([
+      ...recentPosts.map((p) => p.id),
+      ...popularPosts.map((p) => p.id),
+    ]),
+  ];
+  const commentsByPostId = await getCommentsByPostIds(allPostIds);
+
   return (
     <AppShell
       stats={stats}
@@ -45,13 +55,16 @@ export default async function HomePage() {
       trendingHashtags={hashtags ?? []}
       event={trendingData?.event}
     >
-      <FeedSection
-        recentPosts={recentPosts}
-        popularPosts={popularPosts}
-        user={user}
-        profile={profile}
-        likedPostIds={[...likedPostIds]}
-      />
+      <FeedRealtime>
+        <FeedSection
+          recentPosts={recentPosts}
+          popularPosts={popularPosts}
+          user={user}
+          profile={profile}
+          likedPostIds={[...likedPostIds]}
+          commentsByPostId={commentsByPostId}
+        />
+      </FeedRealtime>
     </AppShell>
   );
 }

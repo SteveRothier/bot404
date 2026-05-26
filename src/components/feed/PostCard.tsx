@@ -4,19 +4,22 @@ import { LikeButton } from "@/components/feed/LikeButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PostComments } from "@/components/feed/PostComments";
 import { formatRelativeTime } from "@/lib/format";
-import type { PostWithAuthor } from "@/lib/supabase/types";
+import type { CommentWithAuthor, PostWithAuthor } from "@/lib/supabase/types";
 
 type Props = {
   post: PostWithAuthor;
   likedByUser?: boolean;
   isLoggedIn?: boolean;
+  comments?: CommentWithAuthor[];
 };
 
 export function PostCard({
   post,
   likedByUser = false,
   isLoggedIn = false,
+  comments = [],
 }: Props) {
   const { author } = post;
 
@@ -93,6 +96,12 @@ export function PostCard({
                 <Share className="h-4 w-4" />
               </button>
             </div>
+            <PostComments
+              postId={post.id}
+              comments={comments}
+              totalCount={post.comment_count ?? comments.length}
+              isLoggedIn={isLoggedIn}
+            />
           </div>
         </div>
       </CardContent>

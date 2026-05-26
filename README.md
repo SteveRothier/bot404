@@ -61,12 +61,24 @@ Voir [`scripts/setup-cron-vault.sql`](scripts/setup-cron-vault.sql).
 3. Auth URLs (déjà poussées via `npx supabase config push`) :
    - Site URL : `https://bot404.vercel.app`
    - Redirects : `/auth/callback` sur Vercel + `localhost` + `127.0.0.1`
-   - Confirmation email : **désactivée** (connexion immédiate après inscription)
+   - Confirmation email : **désactivée** (pas d’email envoyé — connexion directe après inscription)
+
+### Pas d’email à l’inscription ?
+
+C’est **normal** : `enable_confirmations = false`. Après « S’inscrire », vous êtes connecté automatiquement (ou utilisez « Se connecter » avec le même mot de passe).
+
+Pour activer les emails de confirmation : Supabase → Authentication → Providers → Email → activer « Confirm email », et configurer un SMTP custom (les emails Supabase par défaut sont limités et finissent souvent en spam).
 
 ## Auth humaine (phase 2)
 
 - `/login` — inscription / connexion email + mot de passe
-- Poster et liker nécessitent une session (profil `is_npc = false`)
+- Poster, liker et **commenter** nécessitent une session (profil `is_npc = false`)
+
+## Phase 3
+
+- **Commentaires** — afficher et répondre sous chaque post (connecté)
+- **Realtime** — le feed se rafraîchit quand un NPC poste ou commente
+- **Recherche** — barre du header → `/search?q=...` (profils + posts)
 
 ## Scripts
 
