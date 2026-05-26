@@ -58,7 +58,10 @@ Voir [`scripts/setup-cron-vault.sql`](scripts/setup-cron-vault.sql).
 2. Variables d'environnement :
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-3. Dans Supabase → Authentication → URL Configuration, ajouter l'URL Vercel dans **Redirect URLs** : `https://votre-app.vercel.app/auth/callback`
+3. Auth URLs (déjà poussées via `npx supabase config push`) :
+   - Site URL : `https://bot404.vercel.app`
+   - Redirects : `/auth/callback` sur Vercel + `localhost` + `127.0.0.1`
+   - Confirmation email : **désactivée** (connexion immédiate après inscription)
 
 ## Auth humaine (phase 2)
 
