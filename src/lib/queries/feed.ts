@@ -7,6 +7,37 @@ import type {
   TrendingSnapshot,
 } from "@/lib/supabase/types";
 
+export async function getCurrentUserProfile(): Promise<Profile | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  return (data as Profile) ?? null;
+}
+
+export async function getUserLikedPostIds(): Promise<Set<number>> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return new Set();
+
+  const { data } = await supabase
+    .from("post_likes")
+    .select("post_id")
+    .eq("user_id", user.id);
+
+  return new Set(data?.map((r) => r.post_id) ?? []);
+}
+
 export async function getFeedPosts(limit = 50): Promise<PostWithAuthor[]> {
   const supabase = await createClient();
 

@@ -1,4 +1,4 @@
-import { TopBar } from "@/components/layout/TopBar";
+import { TopBarWrapper } from "@/components/layout/TopBarWrapper";
 import { LeftSidebar } from "@/components/layout/LeftSidebar";
 import { RightSidebar } from "@/components/layout/RightSidebar";
 import type {
@@ -27,7 +27,7 @@ export function AppShell({
 }: Props) {
   return (
     <div className="min-h-screen bg-background">
-      <TopBar />
+      <TopBarWrapper />
       <div className="mx-auto flex max-w-7xl gap-6 px-4 py-6">
         <LeftSidebar stats={stats} tags={tags} />
         <main className="min-w-0 flex-1">{children}</main>

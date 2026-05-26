@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { PostComposer } from "@/components/feed/PostComposer";
+import { PostComposerForm } from "@/components/feed/PostComposerForm";
+import type { Profile } from "@/lib/supabase/types";
 import { FeedTabs, type FeedTab } from "@/components/feed/FeedTabs";
 import { FeedList } from "@/components/feed/FeedList";
 import type { PostWithAuthor } from "@/lib/supabase/types";
@@ -9,9 +10,19 @@ import type { PostWithAuthor } from "@/lib/supabase/types";
 type Props = {
   recentPosts: PostWithAuthor[];
   popularPosts: PostWithAuthor[];
+  user: { id: string; email?: string } | null;
+  profile: Profile | null;
+  likedPostIds: number[];
 };
 
-export function FeedSection({ recentPosts, popularPosts }: Props) {
+export function FeedSection({
+  recentPosts,
+  popularPosts,
+  user,
+  profile,
+  likedPostIds,
+}: Props) {
+  const isLoggedIn = !!user;
   const [tab, setTab] = useState<FeedTab>("for-you");
 
   const posts =
@@ -23,9 +34,13 @@ export function FeedSection({ recentPosts, popularPosts }: Props) {
 
   return (
     <div className="space-y-4">
-      <PostComposer />
+      <PostComposerForm user={user} profile={profile} />
       <FeedTabs value={tab} onChange={setTab} />
-      <FeedList posts={posts} />
+      <FeedList
+        posts={posts}
+        likedPostIds={likedPostIds}
+        isLoggedIn={isLoggedIn}
+      />
     </div>
   );
 }

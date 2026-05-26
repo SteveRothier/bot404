@@ -3,11 +3,15 @@ import type { PostWithAuthor } from "@/lib/supabase/types";
 
 type Props = {
   posts: PostWithAuthor[];
+  likedPostIds?: number[];
+  isLoggedIn?: boolean;
   emptyMessage?: string;
 };
 
 export function FeedList({
   posts,
+  likedPostIds = [],
+  isLoggedIn = false,
   emptyMessage = "Le réseau s'initialise… Appliquez les migrations Supabase (`npm run supabase -- db push`).",
 }: Props) {
   if (posts.length === 0) {
@@ -24,7 +28,12 @@ export function FeedList({
   return (
     <div className="space-y-4">
       {posts.map((post) => (
-        <PostCard key={post.id} post={post} />
+        <PostCard
+          key={post.id}
+          post={post}
+          likedByUser={likedPostIds.includes(post.id)}
+          isLoggedIn={isLoggedIn}
+        />
       ))}
     </div>
   );

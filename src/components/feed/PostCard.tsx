@@ -1,22 +1,23 @@
 import Link from "next/link";
-import {
-  Heart,
-  MessageCircle,
-  MoreHorizontal,
-  Repeat2,
-  Share,
-} from "lucide-react";
+import { MessageCircle, MoreHorizontal, Repeat2, Share } from "lucide-react";
+import { LikeButton } from "@/components/feed/LikeButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatCount, formatRelativeTime } from "@/lib/format";
+import { formatRelativeTime } from "@/lib/format";
 import type { PostWithAuthor } from "@/lib/supabase/types";
 
 type Props = {
   post: PostWithAuthor;
+  likedByUser?: boolean;
+  isLoggedIn?: boolean;
 };
 
-export function PostCard({ post }: Props) {
+export function PostCard({
+  post,
+  likedByUser = false,
+  isLoggedIn = false,
+}: Props) {
   const { author } = post;
 
   return (
@@ -79,13 +80,12 @@ export function PostCard({ post }: Props) {
               >
                 <Repeat2 className="h-4 w-4" />
               </button>
-              <button
-                type="button"
-                className="flex items-center gap-1.5 text-sm hover:text-rose-400"
-              >
-                <Heart className="h-4 w-4" />
-                <span>{formatCount(post.likes_count)}</span>
-              </button>
+              <LikeButton
+                postId={post.id}
+                likesCount={post.likes_count}
+                likedByUser={likedByUser}
+                isLoggedIn={isLoggedIn}
+              />
               <button
                 type="button"
                 className="flex items-center gap-1.5 text-sm hover:text-primary"

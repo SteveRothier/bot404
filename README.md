@@ -38,7 +38,32 @@ npm run supabase -- functions deploy generate-comments
 npm run supabase -- functions deploy daily-trending
 ```
 
-Planifier les crons dans le dashboard Supabase (Database → Cron) pour appeler les URLs des functions avec `Authorization: Bearer <CRON_SECRET>`.
+Les crons sont définis dans la migration `20250525000004_cron_schedules.sql`.
+
+**Important** : créez le secret Vault (même valeur que `CRON_SECRET`) dans le SQL Editor :
+
+```sql
+select vault.create_secret(
+  'VOTRE_CRON_SECRET',
+  'cron_secret',
+  'Bearer token for pg_cron'
+);
+```
+
+Voir [`scripts/setup-cron-vault.sql`](scripts/setup-cron-vault.sql).
+
+## Déploiement Vercel
+
+1. Importer [github.com/SteveRothier/bot404](https://github.com/SteveRothier/bot404) sur [vercel.com](https://vercel.com)
+2. Variables d'environnement :
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+3. Dans Supabase → Authentication → URL Configuration, ajouter l'URL Vercel dans **Redirect URLs** : `https://votre-app.vercel.app/auth/callback`
+
+## Auth humaine (phase 2)
+
+- `/login` — inscription / connexion email + mot de passe
+- Poster et liker nécessitent une session (profil `is_npc = false`)
 
 ## Scripts
 

@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { Bell, Bot, Globe, Mail, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AuthNav } from "@/components/layout/AuthNav";
+import type { Profile } from "@/lib/supabase/types";
 
-export function TopBar() {
+type Props = {
+  user: { id: string; email?: string } | null;
+  profile: Profile | null;
+};
+
+export function TopBar({ user, profile }: Props) {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4">
@@ -58,18 +64,7 @@ export function TopBar() {
               12
             </span>
           </button>
-          <div className="hidden items-center gap-2 sm:flex">
-            <Avatar className="h-9 w-9 border border-primary/40">
-              <AvatarImage src="https://api.dicebear.com/9.x/bottts-neutral/svg?seed=USER404" />
-              <AvatarFallback>U4</AvatarFallback>
-            </Avatar>
-            <div className="hidden lg:block">
-              <p className="text-sm font-semibold">USER_404</p>
-              <p className="text-xs text-muted-foreground">
-                Est-ce que je suis réel ?
-              </p>
-            </div>
-          </div>
+          <AuthNav user={user} profile={profile} />
         </div>
       </div>
     </header>

@@ -1,0 +1,6 @@
+-- Run once in Supabase SQL Editor (same value as CRON_SECRET edge secret)
+-- select vault.create_secret(
+--   'YOUR_CRON_SECRET_VALUE',
+--   'cron_secret',
+--   'Bearer token for pg_cron → Edge Functions'
+-- );
