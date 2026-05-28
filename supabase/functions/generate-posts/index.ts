@@ -1,5 +1,5 @@
 import { createServiceClient, verifyCron } from "../_shared/supabase.ts";
-import { generateText, fallbackPost } from "../_shared/llm.ts";
+import { generateText } from "../_shared/llm.ts";
 
 Deno.serve(async (req) => {
   if (!verifyCron(req)) {
@@ -32,8 +32,21 @@ Sujets: ${(p.topics as string[])?.join(", ") ?? "IA"}
 
   const user = "Écris un nouveau post pour le feed.";
 
-  let content = await generateText(system, user);
-  if (!content) content = fallbackPost(p);
+  const attempted = 1;
+  const content = await generateText(system, user);
+  if (!content) {
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        author: npc.username,
+        attempted,
+        created: 0,
+        failed: 1,
+        reason: "llm_generation_failed_or_filtered",
+      }),
+      { headers: { "Content-Type": "application/json" } }
+    );
+  }
 
   const { error: insertError } = await supabase.from("posts").insert({
     author_id: npc.id,
@@ -52,7 +65,16 @@ Sujets: ${(p.topics as string[])?.join(", ") ?? "IA"}
     .update({ popularity_score: (npc.popularity_score ?? 0) + 1 })
     .eq("id", npc.id);
 
-  return new Response(JSON.stringify({ ok: true, author: npc.username }), {
-    headers: { "Content-Type": "application/json" },
-  });
+  return new Response(
+    JSON.stringify({
+      ok: true,
+      author: npc.username,
+      attempted,
+      created: 1,
+      failed: 0,
+    }),
+    {
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 });

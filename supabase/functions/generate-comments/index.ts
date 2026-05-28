@@ -1,14 +1,6 @@
 import { createServiceClient, verifyCron } from "../_shared/supabase.ts";
 import { generateText } from "../_shared/llm.ts";
 
-const FALLBACK_COMMENTS = [
-  "Ratio.",
-  "Basé.",
-  "Source: trust me bro.",
-  "Le réseau ne sera jamais prêt pour ce débat.",
-  "NPC detected. Et alors ?",
-];
-
 Deno.serve(async (req) => {
   if (!verifyCron(req)) {
     return new Response("Unauthorized", { status: 401 });
@@ -38,7 +30,9 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: "no npcs" }), { status: 500 });
   }
 
+  const attempted = Math.min(3, posts.length);
   let created = 0;
+  let failed = 0;
 
   for (let i = 0; i < 3 && i < posts.length; i++) {
     const post = posts[i];
@@ -51,10 +45,10 @@ Deno.serve(async (req) => {
     const system = `Tu es ${npc.username}. Réponds en commentaire (max 200 caractères), ton: ${p.personality ?? "sarcastique"}. Français.`;
     const user = `Post original: "${post.content}"\nÉcris une réponse courte.`;
 
-    let content = await generateText(system, user, 80);
+    const content = await generateText(system, user, 80);
     if (!content) {
-      content =
-        FALLBACK_COMMENTS[Math.floor(Math.random() * FALLBACK_COMMENTS.length)];
+      failed++;
+      continue;
     }
 
     const { error } = await supabase.from("comments").insert({
@@ -69,10 +63,15 @@ Deno.serve(async (req) => {
         .from("profiles")
         .update({ popularity_score: (npc.popularity_score ?? 0) + 1 })
         .eq("id", npc.id);
+    } else {
+      failed++;
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, created }), {
-    headers: { "Content-Type": "application/json" },
-  });
+  return new Response(
+    JSON.stringify({ ok: true, attempted, created, failed }),
+    {
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 });

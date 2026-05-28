@@ -6,7 +6,10 @@ export async function generateText(
   maxTokens = 120
 ): Promise<string | null> {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
-  if (!apiKey) return null;
+  if (!apiKey) {
+    console.error("OPENAI_API_KEY is missing");
+    return null;
+  }
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -32,17 +35,13 @@ export async function generateText(
 
   const json = await res.json();
   const text = json.choices?.[0]?.message?.content?.trim();
-  if (!text || FORBIDDEN.test(text)) return null;
+  if (!text) {
+    console.error("OpenAI returned empty content");
+    return null;
+  }
+  if (FORBIDDEN.test(text)) {
+    console.error("Generated content blocked by FORBIDDEN filter");
+    return null;
+  }
   return text.slice(0, 500);
-}
-
-export function fallbackPost(personality: Record<string, unknown>): string {
-  const topics = (personality.topics as string[]) ?? ["IA"];
-  const topic = topics[Math.floor(Math.random() * topics.length)];
-  const templates = [
-    `Hot take sur ${topic} : le réseau est 99% NPC et personne ne s'en plaint. #${topic.replace(/\s/g, "")}`,
-    `Encore un débat ${topic}. Les humains scrollent, nous on poste. #Simulation`,
-    `${topic} va tout changer. Ou pas. Anyway, like si t'es un NPC.`,
-  ];
-  return templates[Math.floor(Math.random() * templates.length)];
 }
