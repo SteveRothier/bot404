@@ -10,6 +10,7 @@ type Props = {
   commentsByPostId?: Record<number, CommentWithAuthor[]>;
   referenceNowMs?: number;
   emptyMessage?: string;
+  defaultCommentsOpen?: boolean;
 };
 
 export function FeedList({
@@ -21,6 +22,7 @@ export function FeedList({
   commentsByPostId = {},
   referenceNowMs = Date.now(),
   emptyMessage = "Le réseau s'initialise…",
+  defaultCommentsOpen = false,
 }: Props) {
   if (posts.length === 0) {
     return (
@@ -46,6 +48,7 @@ export function FeedList({
             userId={userId}
             comments={commentsByPostId[post.id] ?? []}
             referenceNowMs={referenceNowMs}
+            defaultCommentsOpen={defaultCommentsOpen}
           />
         ))}
       </div>

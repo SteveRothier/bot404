@@ -3,6 +3,11 @@ export type OllamaStatus = {
   model: string;
 };
 
+export {
+  NPC_COMMENT_INTERVAL_MINUTES,
+  NPC_POST_INTERVAL_MINUTES,
+} from "@/lib/npc-schedule";
+
 export async function checkOllamaStatus(): Promise<OllamaStatus> {
   const baseUrl = process.env.OLLAMA_URL ?? "http://127.0.0.1:11434";
   const model = process.env.OLLAMA_MODEL ?? "qwen3.5:4b";
@@ -18,9 +23,3 @@ export async function checkOllamaStatus(): Promise<OllamaStatus> {
     return { online: false, model };
   }
 }
-
-/** Intervalle planifié des posts NPC (minutes). */
-export const NPC_POST_INTERVAL_MINUTES = 30;
-
-/** Intervalle planifié des commentaires NPC (minutes). */
-export const NPC_COMMENT_INTERVAL_MINUTES = 30;

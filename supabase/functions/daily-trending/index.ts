@@ -14,10 +14,10 @@ Deno.serve(async (req) => {
     .gte("created_at", since);
 
   const tagCounts = new Map<string, number>();
-  const regex = /#[\w\u00C0-\u024F]+/gi;
+  const hashtagRegex = /#[\w\u00C0-\u024F]+/gi;
 
   posts?.forEach((p) => {
-    const matches = p.content.match(regex);
+    const matches = p.content.match(hashtagRegex);
     matches?.forEach((tag) => {
       const t = tag.toLowerCase();
       tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1);
@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
   });
 
   const hashtags = [...tagCounts.entries()]
-    .map(([tag, count]) => ({ tag, count: count * 1000 }))
+    .map(([tag, count]) => ({ tag, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
 

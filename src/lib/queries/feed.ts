@@ -1,9 +1,10 @@
+import { attachCommentCountsToPosts } from "@/lib/queries/post-utils";
+import { getCommentsByPostIds } from "@/lib/queries/comments";
 import { createClient } from "@/lib/supabase/server";
 import type {
   NetworkStats,
   PostWithAuthor,
   Profile,
-  TrendingData,
   TrendingSnapshot,
 } from "@/lib/supabase/types";
 
@@ -38,33 +39,36 @@ export async function getUserLikedPostIds(): Promise<Set<number>> {
   return new Set(data?.map((r) => r.post_id) ?? []);
 }
 
-export async function getFeedPosts(limit = 50): Promise<PostWithAuthor[]> {
+export async function getFeedPosts(
+  limit = 50,
+  offset = 0
+): Promise<PostWithAuthor[]> {
   const supabase = await createClient();
 
   const { data: posts, error } = await supabase
     .from("posts")
     .select("*, author:profiles!author_id(*)")
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .range(offset, offset + limit - 1);
 
   if (error || !posts) return [];
 
-  const postIds = posts.map((p) => p.id);
-  const { data: commentCounts } = await supabase
-    .from("comments")
-    .select("post_id")
-    .in("post_id", postIds);
+  return attachCommentCountsToPosts(supabase, posts);
+}
 
-  const countMap = new Map<number, number>();
-  commentCounts?.forEach((c) => {
-    countMap.set(c.post_id, (countMap.get(c.post_id) ?? 0) + 1);
-  });
+export async function getPostById(id: number): Promise<PostWithAuthor | null> {
+  const supabase = await createClient();
 
-  return posts.map((post) => ({
-    ...post,
-    author: post.author as Profile,
-    comment_count: countMap.get(post.id) ?? 0,
-  })) as PostWithAuthor[];
+  const { data: post, error } = await supabase
+    .from("posts")
+    .select("*, author:profiles!author_id(*)")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error || !post) return null;
+
+  const [enriched] = await attachCommentCountsToPosts(supabase, [post]);
+  return enriched ?? null;
 }
 
 export async function getPopularPosts(limit = 50): Promise<PostWithAuthor[]> {
@@ -78,11 +82,30 @@ export async function getPopularPosts(limit = 50): Promise<PostWithAuthor[]> {
 
   if (error || !posts) return [];
 
-  return posts.map((post) => ({
-    ...post,
-    author: post.author as Profile,
-    comment_count: 0,
-  })) as PostWithAuthor[];
+  return attachCommentCountsToPosts(supabase, posts);
+}
+
+export async function getHomeFeedBundle() {
+  const [recentPosts, popularPosts, likedPostIds] = await Promise.all([
+    getFeedPosts(50),
+    getPopularPosts(),
+    getUserLikedPostIds(),
+  ]);
+
+  const postIds = [
+    ...new Set([
+      ...recentPosts.map((p) => p.id),
+      ...popularPosts.map((p) => p.id),
+    ]),
+  ];
+  const commentsByPostId = await getCommentsByPostIds(postIds);
+
+  return {
+    recentPosts,
+    popularPosts,
+    likedPostIds: [...likedPostIds],
+    commentsByPostId,
+  };
 }
 
 export async function getTrendingSnapshot(): Promise<TrendingSnapshot | null> {
@@ -97,20 +120,6 @@ export async function getTrendingSnapshot(): Promise<TrendingSnapshot | null> {
 
   if (error || !data) return null;
   return data as TrendingSnapshot;
-}
-
-export async function getOnlineNpcs(limit = 5): Promise<Profile[]> {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("is_npc", true)
-    .order("popularity_score", { ascending: false })
-    .limit(limit);
-
-  if (error || !data) return [];
-  return data as Profile[];
 }
 
 export async function getNetworkStats(): Promise<NetworkStats> {
@@ -147,24 +156,4 @@ export async function getNetworkStats(): Promise<NetworkStats> {
     postsLast24h: postsCount ?? 0,
     humanPercent,
   };
-}
-
-export function deriveHashtagsFromPosts(
-  posts: PostWithAuthor[]
-): TrendingData["hashtags"] {
-  const counts = new Map<string, number>();
-  const regex = /#[\w\u00C0-\u024F]+/gi;
-
-  for (const post of posts) {
-    const matches = post.content.match(regex);
-    matches?.forEach((tag) => {
-      const normalized = tag.toLowerCase();
-      counts.set(normalized, (counts.get(normalized) ?? 0) + 1);
-    });
-  }
-
-  return [...counts.entries()]
-    .map(([tag, count]) => ({ tag, count: count * 1000 }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
 }

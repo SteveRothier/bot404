@@ -99,7 +99,8 @@ export function PostComposerForm({ user, profile }: Props) {
                     key={label}
                     type="button"
                     disabled
-                    className="transition-colors hover:text-[#9ca3af] disabled:cursor-default disabled:opacity-70"
+                    title="Bientôt"
+                    className="transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                     aria-label={label}
                   >
                     <Icon className="size-[18px]" strokeWidth={1.75} />
@@ -111,7 +112,8 @@ export function PostComposerForm({ user, profile }: Props) {
                 <button
                   type="button"
                   disabled
-                  className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-[#9ca3af] disabled:opacity-70"
+                  title="Bientôt"
+                  className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-[#9ca3af] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Globe className="size-3.5" />
                   Public

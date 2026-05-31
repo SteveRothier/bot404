@@ -1,9 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { NpcNextIn } from "@/components/widgets/NpcNextIn";
 import { OllamaStatusBadge } from "@/components/widgets/OllamaStatusBadge";
+import { checkOllamaStatus } from "@/lib/ollama";
 import {
   NPC_COMMENT_INTERVAL_MINUTES,
   NPC_POST_INTERVAL_MINUTES,
-} from "@/lib/ollama";
+} from "@/lib/npc-schedule";
+import {
+  getLastNpcCommentTime,
+  getLastNpcPostTime,
+} from "@/lib/queries/npc-schedule";
 import type { NetworkStats } from "@/lib/supabase/types";
 
 type Props = {
@@ -16,7 +22,7 @@ function StatRow({
   valueClassName,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   valueClassName?: string;
 }) {
   return (
@@ -31,7 +37,13 @@ function StatRow({
   );
 }
 
-export function NetworkSummary({ stats }: Props) {
+export async function NetworkSummary({ stats }: Props) {
+  const [lastPostAt, lastCommentAt, ollama] = await Promise.all([
+    getLastNpcPostTime(),
+    getLastNpcCommentTime(),
+    checkOllamaStatus(),
+  ]);
+
   return (
     <Card className="border-[#2b1117] bg-[#0b0a13]">
       <CardHeader className="pb-2">
@@ -56,14 +68,27 @@ export function NetworkSummary({ stats }: Props) {
         />
         <StatRow
           label="Posts NPC"
-          value={`toutes les ${NPC_POST_INTERVAL_MINUTES} min`}
+          value={
+            <NpcNextIn
+              intervalMinutes={NPC_POST_INTERVAL_MINUTES}
+              lastAt={lastPostAt?.toISOString() ?? null}
+            />
+          }
         />
         <StatRow
           label="Commentaires NPC"
-          value={`toutes les ${NPC_COMMENT_INTERVAL_MINUTES} min`}
+          value={
+            <NpcNextIn
+              intervalMinutes={NPC_COMMENT_INTERVAL_MINUTES}
+              lastAt={lastCommentAt?.toISOString() ?? null}
+            />
+          }
         />
         <div className="border-t border-[#24101a] pt-3">
-          <OllamaStatusBadge />
+          <OllamaStatusBadge
+            initialModel={ollama.model}
+            initialOnline={ollama.online}
+          />
         </div>
       </CardContent>
     </Card>

@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCount } from "@/lib/format";
+import { HashtagList } from "@/components/widgets/HashtagList";
 import type { TrendingHashtag } from "@/lib/supabase/types";
 
 type Props = {
@@ -13,32 +14,25 @@ export function TrendingList({
   title = "Tendances du réseau",
 }: Props) {
   return (
-    <Card className="border-[#2b1117] bg-[#0b0a13]">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9ca3af]">
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {hashtags.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Aucune tendance pour l&apos;instant.</p>
-        ) : (
-          hashtags.map((item, i) => (
+    <Card className="border-[#2b1117] bg-[#0b0a13] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.03)]">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9ca3af]">
+            <TrendingUp className="size-3.5 text-[#fb7185]" strokeWidth={2} />
+            {title}
+          </CardTitle>
+          {hashtags.length > 0 && (
             <Link
-              key={item.tag}
               href="/trending"
-              className="block rounded-md border border-transparent p-2 transition-colors hover:border-[#34121b] hover:bg-[#171424]"
+              className="text-[10px] font-medium uppercase tracking-wide text-[#6b7280] hover:text-[#fb7185]"
             >
-              <p className="text-xs text-muted-foreground">
-                {i + 1} · Tendance
-              </p>
-              <p className="font-semibold text-[#fb7185]">{item.tag}</p>
-              <p className="text-xs text-muted-foreground">
-                {formatCount(item.count)} posts
-              </p>
+              Explorer
             </Link>
-          ))
-        )}
+          )}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <HashtagList hashtags={hashtags} limit={5} />
       </CardContent>
     </Card>
   );

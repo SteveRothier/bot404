@@ -115,6 +115,7 @@
   --sidebar-accent-foreground: #fda4af;
   --sidebar-border: #2b1117;
   --sidebar-ring: #be123c;
+  --header-height: 3.5rem;
 }
 
 @layer base {
@@ -126,5 +127,37 @@
   }
   html {
     @apply font-sans;
+    scrollbar-gutter: stable;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@layer utilities {
+  .sidebar-sticky {
+    position: sticky;
+    top: var(--header-height);
+    align-self: start;
+    padding-top: 1rem;
+  }
+
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      #1a1224 0%,
+      #251a30 35%,
+      #3d2235 50%,
+      #251a30 65%,
+      #1a1224 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.6s ease-in-out infinite;
   }
 }

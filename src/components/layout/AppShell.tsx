@@ -1,6 +1,7 @@
 import { TopBarWrapper } from "@/components/layout/TopBarWrapper";
 import { LeftSidebar } from "@/components/layout/LeftSidebar";
 import { RightSidebar } from "@/components/layout/RightSidebar";
+import { MobileNavWrapper } from "@/components/layout/MobileNavWrapper";
 import type {
   NetworkStats,
   TrendingEvent,
@@ -10,32 +11,25 @@ import type {
 type Props = {
   children: React.ReactNode;
   stats: NetworkStats;
-  tags: TrendingHashtag[];
-  trendingHashtags: TrendingHashtag[];
+  hashtags: TrendingHashtag[];
   event?: TrendingEvent | null;
 };
 
 export function AppShell({
   children,
   stats,
-  tags,
-  trendingHashtags,
+  hashtags,
   event,
 }: Props) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-16 lg:pb-0">
       <TopBarWrapper />
-      <div className="mx-auto flex max-w-[1480px] gap-4 px-3 py-4 lg:gap-5">
-        <LeftSidebar tags={tags} />
-        <main className="min-w-0 flex-1">
-          {children}
-        </main>
-        <RightSidebar
-          stats={stats}
-          hashtags={trendingHashtags}
-          event={event}
-        />
+      <div className="mx-auto flex max-w-[1480px] items-start gap-4 px-3 lg:gap-5">
+        <LeftSidebar stats={stats} />
+        <main className="min-w-0 flex-1 py-4">{children}</main>
+        <RightSidebar hashtags={hashtags} event={event} />
       </div>
+      <MobileNavWrapper />
     </div>
   );
 }

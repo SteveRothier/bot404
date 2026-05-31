@@ -14,6 +14,7 @@ import { createComment } from "@/app/actions/posts";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PostContent } from "@/components/feed/PostContent";
 import { formatRelativeTimeShort } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CommentWithAuthor, Profile } from "@/lib/supabase/types";
@@ -168,7 +169,8 @@ export function PostComments({
                               key={label}
                               type="button"
                               disabled
-                              className="transition-colors hover:text-[#9ca3af] disabled:cursor-default disabled:opacity-70"
+                              title="Bientôt"
+                              className="transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                               aria-label={label}
                             >
                               <Icon className="size-[18px]" strokeWidth={1.75} />
@@ -265,9 +267,10 @@ export function PostComments({
                       {formatRelativeTimeShort(c.created_at, referenceNowMs)}
                     </span>
                   </div>
-                  <p className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed text-foreground">
-                    {c.content}
-                  </p>
+                  <PostContent
+                    content={c.content}
+                    className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed text-foreground"
+                  />
                 </div>
               </article>
             );

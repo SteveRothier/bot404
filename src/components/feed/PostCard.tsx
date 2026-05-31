@@ -2,14 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MessageCircle, MoreHorizontal, Repeat2, Share } from "lucide-react";
 import { LikeButton } from "@/components/feed/LikeButton";
+import { PostContent } from "@/components/feed/PostContent";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PostComments } from "@/components/feed/PostComments";
 import { formatCount, formatRelativeTimeShort } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CommentWithAuthor, PostWithAuthor, Profile } from "@/lib/supabase/types";
+
+const stubActionClass =
+  "flex cursor-not-allowed items-center gap-1.5 text-sm text-[#4b5563] opacity-50";
 
 type Props = {
   post: PostWithAuthor;
@@ -19,6 +24,7 @@ type Props = {
   userId?: string;
   comments?: CommentWithAuthor[];
   referenceNowMs?: number;
+  defaultCommentsOpen?: boolean;
 };
 
 export function PostCard({
@@ -29,10 +35,20 @@ export function PostCard({
   userId,
   comments = [],
   referenceNowMs = Date.now(),
+  defaultCommentsOpen = false,
 }: Props) {
+  const router = useRouter();
   const { author } = post;
   const handle = `@${author.username.toLowerCase()}`;
-  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(defaultCommentsOpen);
+
+  function handleCommentsClick() {
+    if (defaultCommentsOpen) {
+      setCommentsOpen((v) => !v);
+    } else {
+      router.push(`/post/${post.id}`);
+    }
+  }
 
   return (
     <article className="cursor-default p-4 transition-colors hover:bg-[#11141f]">
@@ -75,27 +91,53 @@ export function PostCard({
               )}
               <span className="truncate text-sm text-[#6b7280]">{handle}</span>
               <span className="text-sm text-[#6b7280]">·</span>
-              <span className="text-sm text-[#6b7280]">
+              <Link
+                href={`/post/${post.id}`}
+                className="text-sm text-[#6b7280] hover:text-[#fb7185]"
+              >
                 {formatRelativeTimeShort(post.created_at, referenceNowMs)}
-              </span>
+              </Link>
             </div>
             <button
               type="button"
-              className="shrink-0 text-[#6b7280] hover:text-[#9ca3af]"
+              disabled
+              title="Bientôt"
+              className={cn(stubActionClass, "shrink-0 p-0")}
               aria-label="Options"
             >
               <MoreHorizontal className="size-4" />
             </button>
           </div>
 
-          <p className="mt-2 whitespace-pre-wrap text-[15px] leading-relaxed text-foreground">
-            {post.content}
-          </p>
+          {defaultCommentsOpen ? (
+            <PostContent
+              content={post.content}
+              className="mt-2 whitespace-pre-wrap text-[15px] leading-relaxed text-foreground"
+            />
+          ) : (
+            <div
+              className="mt-2 block cursor-pointer"
+              role="link"
+              tabIndex={0}
+              onClick={() => router.push(`/post/${post.id}`)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  router.push(`/post/${post.id}`);
+                }
+              }}
+            >
+              <PostContent
+                content={post.content}
+                className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground"
+              />
+            </div>
+          )}
 
           <div className="mt-3 flex max-w-md justify-between text-[#6b7280]">
             <button
               type="button"
-              onClick={() => setCommentsOpen((v) => !v)}
+              onClick={handleCommentsClick}
               aria-expanded={commentsOpen}
               aria-label="Commentaires"
               className={cn(
@@ -108,7 +150,9 @@ export function PostCard({
             </button>
             <button
               type="button"
-              className="flex items-center gap-1.5 text-sm transition-colors hover:text-[#34d399]"
+              disabled
+              title="Bientôt"
+              className={stubActionClass}
               aria-label="Reposter"
             >
               <Repeat2 className="size-[18px]" strokeWidth={1.75} />
@@ -121,14 +165,17 @@ export function PostCard({
             />
             <button
               type="button"
-              className="flex items-center gap-1.5 text-sm transition-colors hover:text-[#fb7185]"
+              disabled
+              title="Bientôt"
+              className={stubActionClass}
               aria-label="Partager"
             >
               <Share className="size-[18px]" strokeWidth={1.75} />
             </button>
           </div>
 
-          <PostComments
+          {(commentsOpen || defaultCommentsOpen) && (
+            <PostComments
             postId={post.id}
             replyToUsername={author.username}
             comments={comments}
@@ -138,7 +185,8 @@ export function PostCard({
             open={commentsOpen}
             onOpenChange={setCommentsOpen}
             referenceNowMs={referenceNowMs}
-          />
+            />
+          )}
         </div>
       </div>
     </article>

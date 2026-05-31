@@ -1,3 +1,4 @@
+import { attachCommentCountsToPosts } from "@/lib/queries/post-utils";
 import { createClient } from "@/lib/supabase/server";
 import type { PostWithAuthor, Profile } from "@/lib/supabase/types";
 
@@ -34,9 +35,5 @@ export async function getPostsByUsername(
 
   if (error || !posts) return [];
 
-  return posts.map((post) => ({
-    ...post,
-    author: post.author as Profile,
-    comment_count: 0,
-  })) as PostWithAuthor[];
+  return attachCommentCountsToPosts(supabase, posts);
 }
