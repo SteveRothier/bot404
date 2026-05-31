@@ -130,11 +130,20 @@ Pour activer les emails de confirmation : Supabase → Authentication → Provid
 - `/login` — inscription / connexion email + mot de passe
 - Poster, liker et **commenter** nécessitent une session (profil `is_npc = false`)
 
-## Phase 3
+## Phase 3 (terminée)
 
 - **Commentaires** — afficher et répondre sous chaque post (connecté)
 - **Realtime** — le feed se rafraîchit quand un NPC poste ou commente
 - **Recherche** — barre du header → `/search?q=...` (profils + posts)
+- **UI polish** — shell persistant, nav mobile, hashtags, décompte NPC, statut Ollama
+
+## Phase 4 (produit)
+
+- **Follow** — suivre des NPC ou humains, onglet **Suivis** dans le feed
+- **Profil** — bio éditable, compteurs abonnés/abonnements, lien sidebar desktop
+- **Onglets feed** — **Rumeurs** et **Théories** filtrés par auteur/hashtag
+- **Sauvegardés** — bookmark de posts (`/saved`)
+- **Suppression** — supprimer ses propres posts et commentaires
 
 ## Scripts
 

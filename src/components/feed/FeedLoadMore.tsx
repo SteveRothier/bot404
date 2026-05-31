@@ -10,6 +10,7 @@ type Props = {
   initialPosts: PostWithAuthor[];
   initialOffset: number;
   likedPostIds: number[];
+  bookmarkedPostIds: number[];
   isLoggedIn: boolean;
   profile: Profile | null;
   userId?: string;
@@ -21,6 +22,7 @@ export function FeedLoadMore({
   initialPosts,
   initialOffset,
   likedPostIds,
+  bookmarkedPostIds,
   isLoggedIn,
   profile,
   userId,
@@ -39,6 +41,7 @@ export function FeedLoadMore({
       <FeedList
         posts={posts}
         likedPostIds={likedPostIds}
+        bookmarkedPostIds={bookmarkedPostIds}
         isLoggedIn={isLoggedIn}
         profile={profile}
         userId={userId}

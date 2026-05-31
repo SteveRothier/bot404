@@ -4,6 +4,7 @@ import type { CommentWithAuthor, PostWithAuthor, Profile } from "@/lib/supabase/
 type Props = {
   posts: PostWithAuthor[];
   likedPostIds?: number[];
+  bookmarkedPostIds?: number[];
   isLoggedIn?: boolean;
   profile?: Profile | null;
   userId?: string;
@@ -16,6 +17,7 @@ type Props = {
 export function FeedList({
   posts,
   likedPostIds = [],
+  bookmarkedPostIds = [],
   isLoggedIn = false,
   profile = null,
   userId,
@@ -43,6 +45,7 @@ export function FeedList({
             key={post.id}
             post={post}
             likedByUser={likedPostIds.includes(post.id)}
+            bookmarkedByUser={bookmarkedPostIds.includes(post.id)}
             isLoggedIn={isLoggedIn}
             profile={profile}
             userId={userId}

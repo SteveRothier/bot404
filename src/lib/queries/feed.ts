@@ -1,5 +1,10 @@
 import { attachCommentCountsToPosts } from "@/lib/queries/post-utils";
 import { getCommentsByPostIds } from "@/lib/queries/comments";
+import { getUserBookmarkedPostIds } from "@/lib/queries/bookmarks";
+import {
+  getPostsFromFollowing,
+  getSuggestedNpcs,
+} from "@/lib/queries/follows";
 import { createClient } from "@/lib/supabase/server";
 import type {
   NetworkStats,
@@ -86,16 +91,26 @@ export async function getPopularPosts(limit = 50): Promise<PostWithAuthor[]> {
 }
 
 export async function getHomeFeedBundle() {
-  const [recentPosts, popularPosts, likedPostIds] = await Promise.all([
-    getFeedPosts(50),
-    getPopularPosts(),
-    getUserLikedPostIds(),
-  ]);
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const [recentPosts, popularPosts, likedPostIds, bookmarkedPostIds, followingPosts, suggestedNpcs] =
+    await Promise.all([
+      getFeedPosts(50),
+      getPopularPosts(),
+      getUserLikedPostIds(),
+      getUserBookmarkedPostIds(),
+      user ? getPostsFromFollowing(50) : Promise.resolve([]),
+      getSuggestedNpcs(3),
+    ]);
 
   const postIds = [
     ...new Set([
       ...recentPosts.map((p) => p.id),
       ...popularPosts.map((p) => p.id),
+      ...followingPosts.map((p) => p.id),
     ]),
   ];
   const commentsByPostId = await getCommentsByPostIds(postIds);
@@ -103,7 +118,10 @@ export async function getHomeFeedBundle() {
   return {
     recentPosts,
     popularPosts,
+    followingPosts,
+    suggestedNpcs,
     likedPostIds: [...likedPostIds],
+    bookmarkedPostIds: [...bookmarkedPostIds],
     commentsByPostId,
   };
 }

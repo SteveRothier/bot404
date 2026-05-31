@@ -3,8 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MessageCircle, MoreHorizontal, Repeat2, Share } from "lucide-react";
+import { MessageCircle } from "lucide-react";
+import { BookmarkButton } from "@/components/feed/BookmarkButton";
 import { LikeButton } from "@/components/feed/LikeButton";
+import { PostCardMenu } from "@/components/feed/PostCardMenu";
 import { PostContent } from "@/components/feed/PostContent";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,12 +15,10 @@ import { formatCount, formatRelativeTimeShort } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CommentWithAuthor, PostWithAuthor, Profile } from "@/lib/supabase/types";
 
-const stubActionClass =
-  "flex cursor-not-allowed items-center gap-1.5 text-sm text-[#4b5563] opacity-50";
-
 type Props = {
   post: PostWithAuthor;
   likedByUser?: boolean;
+  bookmarkedByUser?: boolean;
   isLoggedIn?: boolean;
   profile?: Profile | null;
   userId?: string;
@@ -30,6 +30,7 @@ type Props = {
 export function PostCard({
   post,
   likedByUser = false,
+  bookmarkedByUser = false,
   isLoggedIn = false,
   profile = null,
   userId,
@@ -41,6 +42,7 @@ export function PostCard({
   const { author } = post;
   const handle = `@${author.username.toLowerCase()}`;
   const [commentsOpen, setCommentsOpen] = useState(defaultCommentsOpen);
+  const canDelete = isLoggedIn && userId === post.author_id;
 
   function handleCommentsClick() {
     if (defaultCommentsOpen) {
@@ -98,15 +100,7 @@ export function PostCard({
                 {formatRelativeTimeShort(post.created_at, referenceNowMs)}
               </Link>
             </div>
-            <button
-              type="button"
-              disabled
-              title="Bientôt"
-              className={cn(stubActionClass, "shrink-0 p-0")}
-              aria-label="Options"
-            >
-              <MoreHorizontal className="size-4" />
-            </button>
+            <PostCardMenu postId={post.id} canDelete={canDelete} />
           </div>
 
           {defaultCommentsOpen ? (
@@ -148,43 +142,30 @@ export function PostCard({
               <MessageCircle className="size-[18px]" strokeWidth={1.75} />
               <span>{formatCount(post.comment_count ?? 0)}</span>
             </button>
-            <button
-              type="button"
-              disabled
-              title="Bientôt"
-              className={stubActionClass}
-              aria-label="Reposter"
-            >
-              <Repeat2 className="size-[18px]" strokeWidth={1.75} />
-            </button>
             <LikeButton
               postId={post.id}
               likesCount={post.likes_count}
               likedByUser={likedByUser}
               isLoggedIn={isLoggedIn}
             />
-            <button
-              type="button"
-              disabled
-              title="Bientôt"
-              className={stubActionClass}
-              aria-label="Partager"
-            >
-              <Share className="size-[18px]" strokeWidth={1.75} />
-            </button>
+            <BookmarkButton
+              postId={post.id}
+              bookmarkedByUser={bookmarkedByUser}
+              isLoggedIn={isLoggedIn}
+            />
           </div>
 
           {(commentsOpen || defaultCommentsOpen) && (
             <PostComments
-            postId={post.id}
-            replyToUsername={author.username}
-            comments={comments}
-            isLoggedIn={isLoggedIn}
-            profile={profile}
-            userId={userId}
-            open={commentsOpen}
-            onOpenChange={setCommentsOpen}
-            referenceNowMs={referenceNowMs}
+              postId={post.id}
+              replyToUsername={author.username}
+              comments={comments}
+              isLoggedIn={isLoggedIn}
+              profile={profile}
+              userId={userId}
+              open={commentsOpen}
+              onOpenChange={setCommentsOpen}
+              referenceNowMs={referenceNowMs}
             />
           )}
         </div>

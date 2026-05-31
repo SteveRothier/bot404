@@ -96,3 +96,54 @@ export async function createComment(postId: number, formData: FormData) {
   revalidatePath(`/post/${postId}`);
   return { success: true };
 }
+
+export async function deletePost(postId: number) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Connectez-vous pour supprimer un post." };
+  }
+
+  const { error } = await supabase
+    .from("posts")
+    .delete()
+    .eq("id", postId)
+    .eq("author_id", user.id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/saved");
+  revalidatePath(`/post/${postId}`);
+  return { success: true };
+}
+
+export async function deleteComment(commentId: number, postId: number) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Connectez-vous pour supprimer un commentaire." };
+  }
+
+  const { error } = await supabase
+    .from("comments")
+    .delete()
+    .eq("id", commentId)
+    .eq("author_id", user.id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/post/${postId}`);
+  return { success: true };
+}

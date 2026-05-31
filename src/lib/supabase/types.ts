@@ -10,6 +10,7 @@ export type Profile = {
   id: string;
   username: string;
   avatar_url: string | null;
+  bio: string | null;
   is_npc: boolean;
   personality: Personality | null;
   popularity_score: number;

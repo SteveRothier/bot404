@@ -2,12 +2,20 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FeedListLoader } from "@/components/feed/FeedServer";
 import { PostsSuspense } from "@/components/feed/FeedSkeleton";
+import { FollowButton } from "@/components/profile/FollowButton";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  getFollowerCount,
+  getFollowingCount,
+  isFollowing,
+} from "@/lib/queries/follows";
+import { getCurrentUserProfile } from "@/lib/queries/feed";
 import {
   getProfileByUsername,
   getPostsByUsername,
 } from "@/lib/queries/profile";
+import { createClient } from "@/lib/supabase/server";
 import type { Personality } from "@/lib/supabase/types";
 
 export const revalidate = 60;
@@ -34,10 +42,28 @@ async function ProfilePosts({ username }: { username: string }) {
 
 export default async function ProfilePage({ params }: Props) {
   const { username } = await params;
-  const profile = await getProfileByUsername(username);
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const [profile, currentProfile] = await Promise.all([
+    getProfileByUsername(username),
+    getCurrentUserProfile(),
+  ]);
+
   if (!profile) notFound();
 
+  const isOwnProfile = currentProfile?.id === profile.id;
   const personality = (profile.personality ?? {}) as Personality;
+
+  const [followerCount, followingCount, initiallyFollowing] = await Promise.all([
+    getFollowerCount(profile.id),
+    getFollowingCount(profile.id),
+    user && !isOwnProfile
+      ? isFollowing(user.id, profile.id)
+      : Promise.resolve(false),
+  ]);
 
   return (
     <div className="mx-auto w-full max-w-[720px] space-y-6">
@@ -54,23 +80,64 @@ export default async function ProfilePage({ params }: Props) {
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1 pt-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-bold">{profile.username}</h1>
-              {profile.is_npc ? (
-                <Badge className="border-0 bg-[#5b21b6] text-white">NPC</Badge>
-              ) : (
-                <Badge className="border-0 bg-[#e11d48] text-white">Humain</Badge>
-              )}
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-xl font-bold">{profile.username}</h1>
+                  {profile.is_npc ? (
+                    <Badge className="border-0 bg-[#5b21b6] text-white">
+                      NPC
+                    </Badge>
+                  ) : (
+                    <Badge className="border-0 bg-[#e11d48] text-white">
+                      Humain
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-sm text-[#6b7280]">
+                  @{profile.username.toLowerCase()}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {isOwnProfile ? (
+                  <Link
+                    href="/profile/edit"
+                    className="inline-flex h-7 items-center rounded-[min(var(--radius-md),12px)] border border-[#34121b] px-2.5 text-[0.8rem] font-medium text-[#fda4af] transition-colors hover:bg-[#11141f]"
+                  >
+                    Modifier le profil
+                  </Link>
+                ) : (
+                  <FollowButton
+                    profileId={profile.id}
+                    initialFollowing={initiallyFollowing}
+                    isOwnProfile={false}
+                    isLoggedIn={!!user}
+                  />
+                )}
+              </div>
             </div>
-            <p className="text-sm text-[#6b7280]">
-              @{profile.username.toLowerCase()}
-            </p>
-            <div className="mt-2 text-sm">
-              <strong className="text-[#fb7185]">
-                {profile.popularity_score}
-              </strong>{" "}
-              <span className="text-[#6b7280]">popularité</span>
+
+            <div className="mt-3 flex flex-wrap gap-4 text-sm">
+              <span>
+                <strong className="text-[#fb7185]">{followerCount}</strong>{" "}
+                <span className="text-[#6b7280]">abonnés</span>
+              </span>
+              <span>
+                <strong className="text-[#fb7185]">{followingCount}</strong>{" "}
+                <span className="text-[#6b7280]">abonnements</span>
+              </span>
+              <span>
+                <strong className="text-[#fb7185]">
+                  {profile.popularity_score}
+                </strong>{" "}
+                <span className="text-[#6b7280]">popularité</span>
+              </span>
             </div>
+
+            {profile.bio && (
+              <p className="mt-3 text-sm text-[#9ca3af]">{profile.bio}</p>
+            )}
+
             {personality.personality && (
               <p className="mt-3 text-sm text-[#9ca3af]">
                 {personality.personality}

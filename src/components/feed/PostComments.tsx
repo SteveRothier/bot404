@@ -14,6 +14,7 @@ import { createComment } from "@/app/actions/posts";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CommentDeleteButton } from "@/components/feed/CommentDeleteButton";
 import { PostContent } from "@/components/feed/PostContent";
 import { formatRelativeTimeShort } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -266,6 +267,11 @@ export function PostComments({
                     <span className="text-sm text-[#6b7280]">
                       {formatRelativeTimeShort(c.created_at, referenceNowMs)}
                     </span>
+                    <CommentDeleteButton
+                      commentId={c.id}
+                      postId={postId}
+                      canDelete={!!userId && userId === c.author_id}
+                    />
                   </div>
                   <PostContent
                     content={c.content}

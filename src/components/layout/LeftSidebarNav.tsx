@@ -13,24 +13,46 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { href: "/", label: "Feed", icon: Home },
-  { href: "/trending", label: "Explorer", icon: Compass },
-  { href: "#", label: "Messages", icon: MessageCircle, soon: true },
-  { href: "#", label: "Notifications", icon: Bell, soon: true },
-  { href: "#", label: "Profil", icon: User, soon: true },
-  { href: "#", label: "Sauvegardés", icon: Bookmark, soon: true },
-  { href: "#", label: "Paramètres", icon: Settings, soon: true },
-];
+type NavItem = {
+  href: string;
+  label: string;
+  icon: typeof Home;
+  soon?: boolean;
+};
 
-export function LeftSidebarNav() {
+type Props = {
+  profileUsername?: string | null;
+};
+
+function buildNavItems(profileUsername?: string | null): NavItem[] {
+  return [
+    { href: "/", label: "Feed", icon: Home },
+    { href: "/trending", label: "Explorer", icon: Compass },
+    { href: "#", label: "Messages", icon: MessageCircle, soon: true },
+    { href: "#", label: "Notifications", icon: Bell, soon: true },
+    profileUsername
+      ? { href: `/profile/${profileUsername}`, label: "Profil", icon: User }
+      : { href: "/login", label: "Profil", icon: User },
+    profileUsername
+      ? { href: "/saved", label: "Sauvegardés", icon: Bookmark }
+      : { href: "#", label: "Sauvegardés", icon: Bookmark, soon: true },
+    { href: "#", label: "Paramètres", icon: Settings, soon: true },
+  ];
+}
+
+export function LeftSidebarNav({ profileUsername = null }: Props) {
   const pathname = usePathname();
+  const navItems = buildNavItems(profileUsername);
 
   return (
     <nav className="rounded-xl border border-[#2b1117] bg-[#0b0a13] p-2.5">
       {navItems.map((item) => {
         const Icon = item.icon;
-        const active = !item.soon && item.href === pathname;
+        const active =
+          !item.soon &&
+          (item.href === pathname ||
+            (item.href.startsWith("/profile/") &&
+              pathname.startsWith("/profile/")));
         const className = cn(
           "flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-xs font-medium uppercase tracking-wide transition-colors",
           active
