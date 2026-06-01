@@ -1,10 +1,6 @@
 import { NpcGeneratePanel } from "@/components/widgets/NpcGeneratePanel";
 import { NpcScheduleDisplay } from "@/components/widgets/NpcScheduleDisplay";
 import { OllamaStatusBadge } from "@/components/widgets/OllamaStatusBadge";
-import {
-  NPC_COMMENT_INTERVAL_MINUTES,
-  NPC_POST_INTERVAL_MINUTES,
-} from "@/lib/npc-schedule";
 import type { ShellNpcSchedule } from "@/lib/queries/shell-data";
 import type { NetworkStats } from "@/lib/supabase/types";
 
@@ -31,21 +27,6 @@ function StatRow({
 }
 
 export function NetworkSummary({ stats, npcSchedule }: Props) {
-  const scheduleItems = [
-    {
-      key: "post",
-      intervalMinutes: NPC_POST_INTERVAL_MINUTES,
-      lastAt: npcSchedule.lastPostAt,
-      initialMinutes: npcSchedule.nextPostMinutes,
-    },
-    {
-      key: "comment",
-      intervalMinutes: NPC_COMMENT_INTERVAL_MINUTES,
-      lastAt: npcSchedule.lastCommentAt,
-      initialMinutes: npcSchedule.nextCommentMinutes,
-    },
-  ];
-
   return (
     <section className="rounded-2xl bg-secondary/50 p-3">
       <h2 className="mb-2 text-[15px] font-bold text-foreground">Réseau</h2>
@@ -62,21 +43,7 @@ export function NetworkSummary({ stats, npcSchedule }: Props) {
           label="Posts / 24h"
           value={stats.postsLast24h.toLocaleString("fr-FR")}
         />
-        <NpcScheduleDisplay
-          items={scheduleItems}
-          render={(minutes) => (
-            <>
-              <StatRow
-                label="Post NPC"
-                value={`${minutes.post ?? npcSchedule.nextPostMinutes} min`}
-              />
-              <StatRow
-                label="Com. NPC"
-                value={`${minutes.comment ?? npcSchedule.nextCommentMinutes} min`}
-              />
-            </>
-          )}
-        />
+        <NpcScheduleDisplay npcSchedule={npcSchedule} />
       </div>
       <div className="mt-2 border-t border-border pt-2">
         <OllamaStatusBadge compact />

@@ -1,21 +1,46 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { minutesUntilNextNpcRun } from "@/lib/npc-schedule";
-
-type ScheduleItem = {
-  key: string;
-  intervalMinutes: number;
-  lastAt: string | null;
-  initialMinutes: number;
-};
+import {
+  minutesUntilNextNpcRun,
+  NPC_COMMENT_INTERVAL_MINUTES,
+  NPC_POST_INTERVAL_MINUTES,
+} from "@/lib/npc-schedule";
+import type { ShellNpcSchedule } from "@/lib/queries/shell-data";
 
 type Props = {
-  items: ScheduleItem[];
-  render: (minutes: Record<string, number>) => React.ReactNode;
+  npcSchedule: ShellNpcSchedule;
 };
 
-export function NpcScheduleDisplay({ items, render }: Props) {
+function StatRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-2 py-0.5">
+      <span className="text-meta text-muted-foreground">{label}</span>
+      <span className="text-meta font-medium tabular-nums text-foreground">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+export function NpcScheduleDisplay({ npcSchedule }: Props) {
+  const items = [
+    {
+      key: "post",
+      label: "Post NPC",
+      intervalMinutes: NPC_POST_INTERVAL_MINUTES,
+      lastAt: npcSchedule.lastPostAt,
+      initialMinutes: npcSchedule.nextPostMinutes,
+    },
+    {
+      key: "comment",
+      label: "Com. NPC",
+      intervalMinutes: NPC_COMMENT_INTERVAL_MINUTES,
+      lastAt: npcSchedule.lastCommentAt,
+      initialMinutes: npcSchedule.nextCommentMinutes,
+    },
+  ];
+
   const [minutes, setMinutes] = useState<Record<string, number>>(() =>
     Object.fromEntries(items.map((item) => [item.key, item.initialMinutes]))
   );
@@ -24,7 +49,7 @@ export function NpcScheduleDisplay({ items, render }: Props) {
     setMinutes(
       Object.fromEntries(items.map((item) => [item.key, item.initialMinutes]))
     );
-  }, [items]);
+  }, [npcSchedule]);
 
   useEffect(() => {
     const update = () => {
@@ -44,7 +69,17 @@ export function NpcScheduleDisplay({ items, render }: Props) {
     update();
     const id = window.setInterval(update, 30_000);
     return () => window.clearInterval(id);
-  }, [items]);
+  }, [npcSchedule]);
 
-  return render(minutes);
+  return (
+    <>
+      {items.map((item) => (
+        <StatRow
+          key={item.key}
+          label={item.label}
+          value={`${minutes[item.key] ?? item.initialMinutes} min`}
+        />
+      ))}
+    </>
+  );
 }
