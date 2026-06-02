@@ -91,3 +91,36 @@ export async function createFollowNotification(
     actorId: followerId,
   });
 }
+
+export async function createArchiveUnlockNotification(
+  userId: string,
+  archiveSlug: string
+) {
+  const admin = createAdminClient();
+  const { data: existing } = await admin
+    .from("notifications")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("kind", "archive_unlock")
+    .limit(1);
+
+  if (existing?.length) return;
+
+  await createNotification({
+    userId,
+    kind: "archive_unlock",
+  });
+}
+
+export async function createInvestigationEntryNotification(
+  investigationAuthorId: string,
+  actorId: string,
+  postId: number
+) {
+  await createNotification({
+    userId: investigationAuthorId,
+    kind: "investigation_entry",
+    actorId,
+    postId,
+  });
+}

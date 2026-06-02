@@ -87,6 +87,14 @@ export default async function DossierPage({ params }: Props) {
                 <p className="mt-1 whitespace-pre-wrap text-[15px]">
                   {entry.content}
                 </p>
+                {entry.post_id && (
+                  <Link
+                    href={`/post/${entry.post_id}`}
+                    className="mt-2 inline-block text-sm text-accent hover:underline"
+                  >
+                    Voir le post source →
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

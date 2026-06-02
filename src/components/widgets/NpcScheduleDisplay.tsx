@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   minutesUntilNextNpcRun,
   NPC_COMMENT_INTERVAL_MINUTES,
@@ -10,6 +10,14 @@ import type { ShellNpcSchedule } from "@/lib/queries/shell-data";
 
 type Props = {
   npcSchedule: ShellNpcSchedule;
+};
+
+type ScheduleItem = {
+  key: string;
+  label: string;
+  intervalMinutes: number;
+  lastAt: string | null;
+  initialMinutes: number;
 };
 
 function StatRow({ label, value }: { label: string; value: string }) {
@@ -23,57 +31,63 @@ function StatRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function NpcScheduleDisplay({ npcSchedule }: Props) {
-  const items = [
-    {
-      key: "post",
-      label: "Post NPC",
-      intervalMinutes: NPC_POST_INTERVAL_MINUTES,
-      lastAt: npcSchedule.lastPostAt,
-      initialMinutes: npcSchedule.nextPostMinutes,
-    },
-    {
-      key: "comment",
-      label: "Com. NPC",
-      intervalMinutes: NPC_COMMENT_INTERVAL_MINUTES,
-      lastAt: npcSchedule.lastCommentAt,
-      initialMinutes: npcSchedule.nextCommentMinutes,
-    },
-  ];
+function computeLiveMinutes(items: ScheduleItem[]): Record<string, number> {
+  return Object.fromEntries(
+    items.map((item) => [
+      item.key,
+      minutesUntilNextNpcRun(
+        item.lastAt ? new Date(item.lastAt) : null,
+        item.intervalMinutes
+      ),
+    ])
+  );
+}
 
-  const [minutes, setMinutes] = useState<Record<string, number>>(() =>
-    Object.fromEntries(items.map((item) => [item.key, item.initialMinutes]))
+export function NpcScheduleDisplay({ npcSchedule }: Props) {
+  const scheduleItems = useMemo<ScheduleItem[]>(
+    () => [
+      {
+        key: "post",
+        label: "Post NPC",
+        intervalMinutes: NPC_POST_INTERVAL_MINUTES,
+        lastAt: npcSchedule.lastPostAt,
+        initialMinutes: npcSchedule.nextPostMinutes,
+      },
+      {
+        key: "comment",
+        label: "Com. NPC",
+        intervalMinutes: NPC_COMMENT_INTERVAL_MINUTES,
+        lastAt: npcSchedule.lastCommentAt,
+        initialMinutes: npcSchedule.nextCommentMinutes,
+      },
+    ],
+    [npcSchedule]
+  );
+
+  const serverMinutes = useMemo(
+    () =>
+      Object.fromEntries(
+        scheduleItems.map((item) => [item.key, item.initialMinutes])
+      ),
+    [scheduleItems]
+  );
+
+  const [liveMinutes, setLiveMinutes] = useState<Record<string, number> | null>(
+    null
   );
 
   useEffect(() => {
-    setMinutes(
-      Object.fromEntries(items.map((item) => [item.key, item.initialMinutes]))
-    );
-  }, [npcSchedule]);
-
-  useEffect(() => {
-    const update = () => {
-      setMinutes(
-        Object.fromEntries(
-          items.map((item) => [
-            item.key,
-            minutesUntilNextNpcRun(
-              item.lastAt ? new Date(item.lastAt) : null,
-              item.intervalMinutes
-            ),
-          ])
-        )
-      );
-    };
-
+    const update = () => setLiveMinutes(computeLiveMinutes(scheduleItems));
     update();
     const id = window.setInterval(update, 30_000);
     return () => window.clearInterval(id);
-  }, [npcSchedule]);
+  }, [scheduleItems]);
+
+  const minutes = liveMinutes ?? serverMinutes;
 
   return (
     <>
-      {items.map((item) => (
+      {scheduleItems.map((item) => (
         <StatRow
           key={item.key}
           label={item.label}

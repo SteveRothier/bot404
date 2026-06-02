@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { Radio } from "lucide-react";
+import {
+  formatBoostedTypesLabel,
+  getWorldEventEffects,
+} from "@/lib/lore/world-event-effects";
 import { cn } from "@/lib/utils";
 import type { WorldEvent } from "@/lib/supabase/types";
 
@@ -9,10 +13,13 @@ type Props = {
 };
 
 export function WorldEventBanner({ event, variant = "feed" }: Props) {
+  const effects = getWorldEventEffects(event);
   const description =
     event.description.length > 120
       ? `${event.description.slice(0, 117)}…`
       : event.description;
+  const impact = effects.banner_copy;
+  const boosted = formatBoostedTypesLabel(effects.boost_post_types);
 
   return (
     <div
@@ -37,12 +44,36 @@ export function WorldEventBanner({ event, variant = "feed" }: Props) {
             {event.title}
           </p>
           <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
-          <Link
-            href="/trending"
-            className="mt-1 inline-block text-sm text-accent hover:underline"
-          >
-            Voir l&apos;historique →
-          </Link>
+          {impact && (
+            <p className="mt-1 text-sm text-foreground/90">{impact}</p>
+          )}
+          {boosted && (
+            <p className="mt-1 text-meta text-accent">
+              Types amplifiés : {boosted}
+            </p>
+          )}
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm">
+            {effects.sectors.map((code) => (
+              <Link
+                key={code}
+                href={`/map?sector=${code}`}
+                className="text-accent hover:underline"
+              >
+                Carte · {code}
+              </Link>
+            ))}
+            {effects.unlock_archive_slug && (
+              <Link
+                href={`/archives/${effects.unlock_archive_slug}`}
+                className="text-accent hover:underline"
+              >
+                Archive liée
+              </Link>
+            )}
+            <Link href="/trending" className="text-muted-foreground hover:underline">
+              Historique →
+            </Link>
+          </div>
         </div>
       </div>
     </div>

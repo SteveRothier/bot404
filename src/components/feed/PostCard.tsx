@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RemoteImage } from "@/components/ui/remote-image";
 import { isOptimizableRemoteImage } from "@/lib/images";
 import { PostComments } from "@/components/feed/PostComments";
+import { AddPostToDossier } from "@/components/investigations/AddPostToDossier";
 import { formatCount, formatRelativeTimeShort } from "@/lib/format";
 import { POST_TYPE_LABELS } from "@/lib/post-types";
 import { cn } from "@/lib/utils";
@@ -131,9 +132,13 @@ export function PostCard({
               {post.sector_code && (
                 <>
                   <span className="text-muted-foreground">·</span>
-                  <span className="text-meta text-muted-foreground">
+                  <Link
+                    href={`/map?sector=${post.sector_code}`}
+                    className="text-meta text-accent hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {post.sector_code}
-                  </span>
+                  </Link>
                 </>
               )}
               {typeLabel && (
@@ -195,13 +200,16 @@ export function PostCard({
           )}
 
           {post.post_type === "theory" && (
-            <Link
-              href="/dossiers"
-              className="mt-2 inline-block text-sm text-accent hover:underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              Explorer les dossiers →
-            </Link>
+            <div className="mt-1">
+              <AddPostToDossier postId={post.id} isLoggedIn={isLoggedIn} />
+              <Link
+                href="/dossiers"
+                className="mt-1 inline-block text-sm text-muted-foreground hover:text-accent hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Tous les dossiers →
+              </Link>
+            </div>
           )}
 
           <div className="mt-3 flex max-w-[425px] justify-between text-muted-foreground">

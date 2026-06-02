@@ -1,4 +1,8 @@
 import { processCommentFactionEffects } from "@/lib/factions/simulation";
+import {
+  buildNpcLorePromptBlock,
+  getNpcLoreContext,
+} from "@/lib/lore/lore-context";
 import { checkOllamaStatus } from "@/lib/ollama";
 import { ollamaChat } from "@/lib/npc/ollama";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -48,8 +52,9 @@ export async function generateNpcComment(): Promise<GenerateNpcCommentResult> {
 
   const npc = commenters[Math.floor(Math.random() * commenters.length)] as Profile;
   const p = (npc.personality ?? {}) as Personality;
+  const loreBlock = buildNpcLorePromptBlock(await getNpcLoreContext());
 
-  const system = `Tu es ${npc.username}. Réponds en commentaire (max 200 caractères), ton: ${p.personality ?? "sarcastique"}. Français.`;
+  const system = `Tu es ${npc.username}. Réponds en commentaire (max 200 caractères), ton: ${p.personality ?? "sarcastique"}. Français.${loreBlock}`;
   const user = `Post original: "${post.content}"\nÉcris une réponse courte.`;
 
   const content = await ollamaChat(system, user, 300);

@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { FeedListLoader } from "@/components/feed/FeedServer";
 import { PostsSuspense } from "@/components/feed/FeedSkeleton";
+import { ActiveWorldEventHighlight } from "@/components/lore/ActiveWorldEventHighlight";
+import { getWorldEventEffects } from "@/lib/lore/world-event-effects";
 import { SECTOR_STATUS_LABELS, getPostsBySector, getSectors } from "@/lib/queries/sectors";
+import { getCachedActiveWorldEvents } from "@/lib/queries/world-events";
 import { cn } from "@/lib/utils";
 import type { Sector, SectorStatus } from "@/lib/supabase/types";
 
@@ -31,7 +34,14 @@ export default async function MapPage({
   searchParams: Promise<{ sector?: string }>;
 }) {
   const { sector: selectedCode } = await searchParams;
-  const sectors = await getSectors();
+  const [sectors, activeEvents] = await Promise.all([
+    getSectors(),
+    getCachedActiveWorldEvents(),
+  ]);
+  const activeEvent = activeEvents[0] ?? null;
+  const hotSectors = activeEvent
+    ? getWorldEventEffects(activeEvent).sectors
+    : [];
 
   return (
     <div className="w-full divide-y divide-border">
@@ -42,6 +52,12 @@ export default async function MapPage({
         </p>
       </div>
 
+      {activeEvent && hotSectors.length > 0 && (
+        <section className="px-4 py-4">
+          <ActiveWorldEventHighlight event={activeEvent} />
+        </section>
+      )}
+
       <section className="grid grid-cols-2 gap-2 p-4 sm:grid-cols-4">
         {sectors.map((s: Sector) => (
           <Link
@@ -50,7 +66,8 @@ export default async function MapPage({
             className={cn(
               "rounded-lg border p-3 transition-colors hover:opacity-90",
               STATUS_STYLE[s.status],
-              selectedCode === s.code && "ring-2 ring-accent"
+              selectedCode === s.code && "ring-2 ring-accent",
+              hotSectors.includes(s.code) && "ring-1 ring-accent/60"
             )}
           >
             <p className="text-lg font-bold">{s.code}</p>

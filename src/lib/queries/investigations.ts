@@ -1,9 +1,25 @@
 import { createClient } from "@/lib/supabase/server";
 import type {
+  Investigation,
   InvestigationEntryWithAuthor,
   InvestigationWithAuthor,
   InvestigationVoteKind,
 } from "@/lib/supabase/types";
+
+export async function getOpenInvestigations(
+  limit = 20
+): Promise<Investigation[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("investigations")
+    .select("id, title, description, author_id, status, sector_code, created_at")
+    .eq("status", "open")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !data) return [];
+  return data as Investigation[];
+}
 
 export async function getInvestigations(
   limit = 20

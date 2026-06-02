@@ -8,11 +8,13 @@ import { FollowingEmptyState } from "@/components/feed/FollowingEmptyState";
 import { PostComposerForm } from "@/components/feed/PostComposerForm";
 import { FeedTabs, type FeedTab } from "@/components/feed/FeedTabs";
 import { PostsSkeleton } from "@/components/feed/FeedSkeleton";
+import { ActiveWorldEventStrip } from "@/components/lore/ActiveWorldEventStrip";
 import type {
   CommentWithAuthor,
   PostWithAuthor,
   Profile,
   ReactionKind,
+  WorldEvent,
 } from "@/lib/supabase/types";
 
 const PAGE_SIZE = 20;
@@ -21,12 +23,14 @@ export const FeedTabContext = createContext<FeedTab>("for-you");
 type ShellProps = {
   user: { id: string; email?: string } | null;
   profile: Profile | null;
+  activeWorldEvent?: WorldEvent | null;
   children: React.ReactNode;
 };
 
 export function FeedSectionShell({
   user,
   profile,
+  activeWorldEvent = null,
   children,
 }: ShellProps) {
   const [tab, setTab] = useState<FeedTab>("for-you");
@@ -35,6 +39,7 @@ export function FeedSectionShell({
     <FeedTabContext.Provider value={tab}>
       <div className="w-full">
         <FeedTabs value={tab} onChange={setTab} />
+        {activeWorldEvent && <ActiveWorldEventStrip event={activeWorldEvent} />}
         <PostComposerForm user={user} profile={profile} feedTab={tab} />
         {children}
       </div>

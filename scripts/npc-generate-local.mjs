@@ -67,12 +67,60 @@ const TYPE_INSTRUCTIONS = {
     "Écris UNE rumeur (max 280 caractères) qui commence par « On dit que » ou équivalent. Ambigu, non vérifiable. 0-1 hashtag. Français.",
 };
 
-function buildNpcPostPrompt(npc, postType) {
+function buildNpcLorePromptBlock(activeEvent, latestArchive) {
+  const parts = [];
+  if (activeEvent) {
+    parts.push(
+      `Événement mondial actif : « ${activeEvent.title} » — ${activeEvent.description}`
+    );
+  }
+  if (latestArchive) {
+    parts.push(
+      `Archive récente débloquée : « ${latestArchive.title} » (thème : humanité / simulation).`
+    );
+  }
+  if (parts.length === 0) return "";
+  return `\nContexte lore du réseau (à refléter dans le ton, sans casser le personnage) :\n${parts.join("\n")}`;
+}
+
+async function fetchNpcLoreContext() {
+  const now = new Date().toISOString();
+  const [{ data: events }, { data: archives }] = await Promise.all([
+    supabase
+      .from("world_events")
+      .select("id, title, description, effects, starts_at, ends_at")
+      .lte("starts_at", now)
+      .gte("ends_at", now)
+      .order("starts_at", { ascending: false })
+      .limit(1),
+    supabase
+      .from("archives")
+      .select("id, title, slug, unlocked_at")
+      .not("unlocked_at", "is", null)
+      .order("unlocked_at", { ascending: false })
+      .limit(1),
+  ]);
+  return {
+    activeEvent: events?.[0] ?? null,
+    latestArchive: archives?.[0] ?? null,
+  };
+}
+
+function parseEventEffects(raw) {
+  const e = raw ?? {};
+  const arr = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === "string") : []);
+  const types = arr(e.boost_post_types).filter((t) =>
+    ["message", "theory", "signal", "rumor"].includes(t)
+  );
+  return { sectors: arr(e.sectors), boost_post_types: types };
+}
+
+function buildNpcPostPrompt(npc, postType, loreBlock = "") {
   const p = npc.personality ?? {};
   return `Tu es ${npc.username}, un NPC sur le réseau dystopique Bot404.
 Personnalité: ${p.personality ?? "neutre"}
 Style: ${p.writing_style ?? "court"}
-Sujets: ${(p.topics ?? ["IA"]).join(", ")}
+Sujets: ${(p.topics ?? ["IA"]).join(", ")}${loreBlock}
 ${TYPE_INSTRUCTIONS[postType]}`;
 }
 
@@ -123,16 +171,38 @@ async function generatePosts() {
   }
 
   const npc = npcs[Math.floor(Math.random() * npcs.length)];
-  const postType = pickRandomNpcPostType();
+  const lore = await fetchNpcLoreContext();
+  const loreBlock = buildNpcLorePromptBlock(lore.activeEvent, lore.latestArchive);
+  const effects = lore.activeEvent
+    ? parseEventEffects(lore.activeEvent.effects)
+    : { sectors: [], boost_post_types: [] };
+
+  let postType = pickRandomNpcPostType();
+  if (effects.boost_post_types.length > 0 && Math.random() < 0.55) {
+    postType =
+      effects.boost_post_types[
+        Math.floor(Math.random() * effects.boost_post_types.length)
+      ];
+  }
   result.attempted = 1;
 
-  const system = buildNpcPostPrompt(npc, postType);
+  const system = buildNpcPostPrompt(npc, postType, loreBlock);
   const user = npcPostUserMessage(postType);
 
   const content = await ollamaChat(system, user);
   if (!content) {
     result.failed++;
     return result;
+  }
+
+  const sectorCodes = ["1A", "2B", "3C", "4D", "5E", "6F", "7G", "8H"];
+  let sector_code =
+    Math.random() < 0.4
+      ? sectorCodes[Math.floor(Math.random() * sectorCodes.length)]
+      : null;
+  if (effects.sectors.length > 0 && Math.random() < 0.5) {
+    sector_code =
+      effects.sectors[Math.floor(Math.random() * effects.sectors.length)];
   }
 
   const postDelta = {
@@ -148,6 +218,7 @@ async function generatePosts() {
       author_id: npc.id,
       content: content.slice(0, 500),
       post_type: postType,
+      sector_code,
       likes_count: Math.floor(Math.random() * 500) + 50,
     })
     .select("id")
@@ -177,6 +248,8 @@ async function generatePosts() {
 
 async function generateComments() {
   const result = { attempted: 0, created: 0, failed: 0 };
+  const lore = await fetchNpcLoreContext();
+  const loreBlock = buildNpcLorePromptBlock(lore.activeEvent, lore.latestArchive);
   const since = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
 
   const { data: posts } = await supabase
@@ -206,7 +279,7 @@ async function generateComments() {
     }
     const npc = commenters[Math.floor(Math.random() * commenters.length)];
     const p = npc.personality ?? {};
-    const system = `Tu es ${npc.username}. Réponds en commentaire (max 200 caractères), ton: ${p.personality ?? "sarcastique"}. Français.`;
+    const system = `Tu es ${npc.username}. Réponds en commentaire (max 200 caractères), ton: ${p.personality ?? "sarcastique"}. Français.${loreBlock}`;
     const user = `Post original: "${post.content}"\nÉcris une réponse courte.`;
     const content = await ollamaChat(system, user);
     if (!content) {

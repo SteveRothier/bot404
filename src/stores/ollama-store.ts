@@ -36,7 +36,6 @@ export const useOllamaStore = create<OllamaState>((set, get) => ({
   },
   startPolling: () => {
     if (pollingId !== null) return;
-    void get().refresh();
     pollingId = window.setInterval(() => {
       void get().refresh();
     }, 30_000);

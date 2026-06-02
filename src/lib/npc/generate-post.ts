@@ -1,4 +1,9 @@
 import { processPostFactionEffects } from "@/lib/factions/simulation";
+import {
+  buildNpcLorePromptBlock,
+  getNpcLoreContext,
+} from "@/lib/lore/lore-context";
+import { getWorldEventEffects } from "@/lib/lore/world-event-effects";
 import { checkOllamaStatus } from "@/lib/ollama";
 import {
   buildNpcPostPrompt,
@@ -36,15 +41,44 @@ export async function generateNpcPost(): Promise<GenerateNpcPostResult> {
   }
 
   const npc = npcs[Math.floor(Math.random() * npcs.length)] as Profile;
-  const postType = pickRandomNpcPostType();
+  const loreContext = await getNpcLoreContext();
+  const loreBlock = buildNpcLorePromptBlock(loreContext);
+
+  const eventEffects = loreContext.activeEvent
+    ? getWorldEventEffects(loreContext.activeEvent)
+    : null;
+
+  let postType = pickRandomNpcPostType();
+  if (
+    eventEffects &&
+    eventEffects.boost_post_types.length > 0 &&
+    Math.random() < 0.55
+  ) {
+    postType =
+      eventEffects.boost_post_types[
+        Math.floor(Math.random() * eventEffects.boost_post_types.length)
+      ];
+  }
+
   const sectorCodes = ["1A", "2B", "3C", "4D", "5E", "6F", "7G", "8H"];
-  const sector_code =
+  let sector_code =
     Math.random() < 0.4
       ? sectorCodes[Math.floor(Math.random() * sectorCodes.length)]
       : null;
 
+  if (
+    eventEffects &&
+    eventEffects.sectors.length > 0 &&
+    Math.random() < 0.5
+  ) {
+    sector_code =
+      eventEffects.sectors[
+        Math.floor(Math.random() * eventEffects.sectors.length)
+      ];
+  }
+
   const content = await ollamaChat(
-    buildNpcPostPrompt(npc, postType),
+    buildNpcPostPrompt(npc, postType, loreBlock),
     npcPostUserMessage(postType)
   );
 

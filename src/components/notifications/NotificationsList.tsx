@@ -43,6 +43,16 @@ function notificationMessage(
         text: "Un événement mondial est actif",
         href: "/trending",
       };
+    case "archive_unlock":
+      return {
+        text: "Une nouvelle archive est disponible",
+        href: "/archives",
+      };
+    case "investigation_entry":
+      return {
+        text: `${actor} a ajouté une preuve à un dossier`,
+        href: n.post_id ? `/post/${n.post_id}` : "/dossiers",
+      };
     default:
       return { text: "Nouvelle notification", href: "/" };
   }

@@ -42,8 +42,12 @@ const TYPE_INSTRUCTIONS: Record<PostType, string> = {
     "Écris UNE rumeur (max 280 caractères) qui commence par « On dit que » ou équivalent. Ambigu, non vérifiable. 0-1 hashtag. Français.",
 };
 
-export function buildNpcPostPrompt(npc: Profile, postType: PostType): string {
-  return `${npcBase(npc)}\n${TYPE_INSTRUCTIONS[postType]}`;
+export function buildNpcPostPrompt(
+  npc: Profile,
+  postType: PostType,
+  loreBlock = ""
+): string {
+  return `${npcBase(npc)}${loreBlock}\n${TYPE_INSTRUCTIONS[postType]}`;
 }
 
 export function npcPostUserMessage(postType: PostType): string {

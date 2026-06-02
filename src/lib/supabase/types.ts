@@ -116,6 +116,7 @@ export type InvestigationEntry = {
   investigation_id: number;
   author_id: string;
   content: string;
+  post_id: number | null;
   created_at: string;
 };
 
@@ -129,6 +130,7 @@ export type Archive = {
   title: string;
   content: string;
   unlocked_at: string | null;
+  related_tags: string[];
   created_at: string;
 };
 
@@ -183,7 +185,13 @@ export type DashboardStats = {
   topFaction: Faction | null;
 };
 
-export type NotificationKind = "mention" | "reaction" | "follow" | "world_event";
+export type NotificationKind =
+  | "mention"
+  | "reaction"
+  | "follow"
+  | "world_event"
+  | "archive_unlock"
+  | "investigation_entry";
 
 export type Notification = {
   id: string;

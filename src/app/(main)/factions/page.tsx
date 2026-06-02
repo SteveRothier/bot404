@@ -1,15 +1,25 @@
 import { FactionsListLive } from "@/components/factions/FactionsListLive";
+import { ActiveWorldEventHighlight } from "@/components/lore/ActiveWorldEventHighlight";
 import { FactionControlLive } from "@/components/widgets/FactionControlLive";
 import { getCachedFactions } from "@/lib/queries/cached";
 import { getNpcMembersByFaction } from "@/lib/queries/factions";
+import { getCachedActiveWorldEvents } from "@/lib/queries/world-events";
+import { getWorldEventEffects } from "@/lib/lore/world-event-effects";
 
 export const revalidate = 30;
 
 export default async function FactionsPage() {
-  const [factions, membersByFaction] = await Promise.all([
+  const [factions, membersByFaction, activeEvents] = await Promise.all([
     getCachedFactions(),
     getNpcMembersByFaction(),
+    getCachedActiveWorldEvents(),
   ]);
+
+  const activeEvent = activeEvents[0] ?? null;
+  const eventEffects = activeEvent
+    ? getWorldEventEffects(activeEvent)
+    : null;
+  const highlightedFactions = eventEffects?.factions ?? [];
 
   return (
     <div className="w-full divide-y divide-border">
@@ -19,6 +29,17 @@ export default async function FactionsPage() {
           Contrôle du réseau et alignements NPC
         </p>
       </div>
+
+      {activeEvent && (
+        <section className="px-4 py-4">
+          <ActiveWorldEventHighlight event={activeEvent} />
+          {highlightedFactions.length > 0 && (
+            <p className="mt-2 text-meta text-muted-foreground">
+              Factions sous tension : {highlightedFactions.join(", ")}
+            </p>
+          )}
+        </section>
+      )}
 
       <section className="px-4 py-4">
         <FactionControlLive />
