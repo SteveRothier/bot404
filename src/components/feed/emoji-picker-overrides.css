@@ -1,0 +1,54 @@
+/* Overrides emoji-picker-react — chargé avec le composant, sélecteurs ID pour priorité */
+
+.bot404-emoji-picker aside.EmojiPickerReact #epr-category-nav-id {
+  display: flex !important;
+  width: 100% !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 0 6px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.bot404-emoji-picker .epr-search-container {
+  padding-bottom: 0 !important;
+  position: relative !important;
+}
+
+.bot404-emoji-picker .epr-icn-search {
+  left: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  background-position: 0 -20px !important;
+}
+
+.bot404-emoji-picker .epr-btn-clear-search {
+  right: var(--epr-search-bar-inner-padding, 8px) !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 28px !important;
+  height: 28px !important;
+}
+
+.bot404-emoji-picker .epr-icn-clear-search {
+  background-position: 0 -40px !important;
+}
+
+.bot404-emoji-picker .epr-body {
+  padding-top: 0 !important;
+}
+
+.bot404-emoji-picker .epr-emoji-category-content {
+  padding-top: 0 !important;
+}
+
+.bot404-emoji-picker #epr-category-nav-id .epr-cat-btn {
+  flex: 0 0 auto !important;
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  max-width: 26px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}

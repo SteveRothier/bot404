@@ -9,11 +9,18 @@ import {
   stopFactionsRealtime,
   useFactionsStore,
 } from "@/stores/factions-store";
+import {
+  startNotificationsRealtime,
+  stopNotificationsRealtime,
+  useNotificationsStore,
+} from "@/stores/notifications-store";
 import { useOllamaStore } from "@/stores/ollama-store";
 
 type Props = {
   factions: Faction[];
   ollama: OllamaStatus;
+  userId: string | null;
+  initialUnreadCount: number;
   children: React.ReactNode;
 };
 
@@ -32,13 +39,20 @@ function useFactionsRealtimeEnabled() {
   return isXl || pathname.startsWith("/factions");
 }
 
-export function ClientStoresHydrator({ factions, ollama, children }: Props) {
+export function ClientStoresHydrator({
+  factions,
+  ollama,
+  userId,
+  initialUnreadCount,
+  children,
+}: Props) {
   const factionsRealtimeEnabled = useFactionsRealtimeEnabled();
 
   useEffect(() => {
     useFactionsStore.getState().hydrate(factions);
     useOllamaStore.getState().hydrate(ollama);
-  }, [factions, ollama]);
+    useNotificationsStore.getState().hydrate(initialUnreadCount);
+  }, [factions, ollama, initialUnreadCount]);
 
   useEffect(() => {
     useOllamaStore.getState().startPolling();
@@ -54,6 +68,16 @@ export function ClientStoresHydrator({ factions, ollama, children }: Props) {
 
     return () => stopFactionsRealtime();
   }, [factionsRealtimeEnabled]);
+
+  useEffect(() => {
+    if (!userId) {
+      stopNotificationsRealtime();
+      return;
+    }
+
+    startNotificationsRealtime(userId);
+    return () => stopNotificationsRealtime();
+  }, [userId]);
 
   return children;
 }

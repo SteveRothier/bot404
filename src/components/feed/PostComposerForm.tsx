@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -22,8 +22,11 @@ type Props = {
 
 export function PostComposerForm({ user, profile, feedTab }: Props) {
   const [content, setContent] = useState("");
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const avatar =
     profile?.avatar_url ??
@@ -31,9 +34,37 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
       ? `https://api.dicebear.com/9.x/bottts-neutral/svg?seed=${user.id}`
       : "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=guest");
 
-  const canSubmit = !!user && content.trim().length > 0 && !pending;
+  const canSubmit =
+    !!user && (content.trim().length > 0 || !!mediaFile) && !pending;
   const disabled = pending || !user;
   const placeholder = composerPlaceholderForFeedTab(feedTab);
+
+  function clearMedia() {
+    setMediaFile(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function handleMediaSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setError("Image trop volumineuse (max 2 Mo).");
+      return;
+    }
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setError("Format non supporté (JPEG, PNG ou WebP).");
+      return;
+    }
+
+    setError(null);
+    setMediaFile(file);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(URL.createObjectURL(file));
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,10 +73,15 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
     const fd = new FormData();
     fd.set("content", content);
     fd.set("post_type", postTypeForFeedTab(feedTab));
+    if (mediaFile) fd.set("media", mediaFile);
+
     startTransition(async () => {
       const result = await createPost(fd);
       if (result.error) setError(result.error);
-      else setContent("");
+      else {
+        setContent("");
+        clearMedia();
+      }
     });
   }
 
@@ -72,6 +108,24 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
             disabled={disabled}
           />
 
+          {previewUrl && (
+            <div className="relative mt-2 overflow-hidden rounded-xl border border-border">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewUrl}
+                alt="Aperçu"
+                className="max-h-64 w-full object-cover"
+              />
+              <button
+                type="button"
+                onClick={clearMedia}
+                className="absolute right-2 top-2 rounded-full bg-background/80 px-2 py-1 text-xs text-foreground"
+              >
+                Retirer
+              </button>
+            </div>
+          )}
+
           {error && (
             <p className="mt-1 px-1 text-sm text-destructive">{error}</p>
           )}
@@ -79,7 +133,16 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
           <div className="mt-1 flex items-center justify-between gap-3 px-1 pb-0.5">
             <ComposerToolbar
               onEmojiSelect={appendEmoji}
+              onMediaClick={() => fileInputRef.current?.click()}
               disabled={disabled}
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleMediaSelect}
+              aria-hidden
             />
 
             {user ? (

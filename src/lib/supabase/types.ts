@@ -33,12 +33,16 @@ export type Profile = {
 export type PostType = "message" | "theory" | "signal" | "rumor";
 export type ReactionKind = "relay" | "amplify" | "flag";
 
+export type PostMediaType = "image" | "gif";
+
 export type Post = {
   id: number;
   author_id: string;
   content: string;
   post_type: PostType;
   sector_code: string | null;
+  media_url: string | null;
+  media_type: PostMediaType | null;
   likes_count: number;
   relay_count: number;
   amplify_count: number;
@@ -177,4 +181,20 @@ export type DashboardStats = {
   signalsLast24h: number;
   rumorsLast24h: number;
   topFaction: Faction | null;
+};
+
+export type NotificationKind = "mention" | "reaction" | "follow" | "world_event";
+
+export type Notification = {
+  id: string;
+  user_id: string;
+  kind: NotificationKind;
+  actor_id: string | null;
+  post_id: number | null;
+  read_at: string | null;
+  created_at: string;
+};
+
+export type NotificationWithActor = Notification & {
+  actor: Pick<Profile, "id" | "username" | "avatar_url" | "is_npc"> | null;
 };

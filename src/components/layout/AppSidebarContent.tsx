@@ -2,6 +2,7 @@ import { AuthNav } from "@/components/layout/AuthNav";
 import { AppSidebarLogo } from "@/components/layout/AppSidebarLogo";
 import { LeftSidebarNav } from "@/components/layout/LeftSidebarNav";
 import { SearchBar } from "@/components/layout/SearchBar";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/lib/supabase/types";
 
@@ -20,7 +21,14 @@ export async function AppSidebarContent({
 }: Props) {
   return (
     <div className={cn("flex min-h-full flex-col gap-4 py-2", className)}>
-      <AppSidebarLogo />
+      <div className="flex items-center justify-between gap-2 px-3">
+        <AppSidebarLogo />
+        {user && (
+          <div className="hidden lg:block">
+            <NotificationBell />
+          </div>
+        )}
+      </div>
 
       <div className="px-3">
         <SearchBar />

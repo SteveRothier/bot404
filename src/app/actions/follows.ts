@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { createFollowNotification } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
 
 export async function toggleFollow(followingId: string) {
@@ -39,6 +40,7 @@ export async function toggleFollow(followingId: string) {
     });
 
     if (error) return { error: error.message };
+    await createFollowNotification(user.id, followingId);
   }
 
   revalidatePath("/");

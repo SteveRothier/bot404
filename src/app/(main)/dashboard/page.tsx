@@ -1,13 +1,21 @@
 import Link from "next/link";
 import { getDashboardStats } from "@/lib/queries/dashboard";
 import { getCachedNetworkStats } from "@/lib/queries/cached";
+import {
+  countUnlockedArchives,
+  getLatestUnlockedArchive,
+} from "@/lib/queries/archives";
 import { NETWORK_STATE_LABELS } from "@/lib/network-state";
 
 export const revalidate = 60;
 
 export default async function DashboardPage() {
   const network = await getCachedNetworkStats();
-  const dashboard = await getDashboardStats(network);
+  const [dashboard, latestArchive, unlockedArchivesCount] = await Promise.all([
+    getDashboardStats(network),
+    getLatestUnlockedArchive(),
+    countUnlockedArchives(),
+  ]);
 
   const stateMeta = NETWORK_STATE_LABELS[network.networkState];
 
@@ -44,6 +52,46 @@ export default async function DashboardPage() {
           </p>
         </section>
       )}
+
+      <section className="px-4 py-4">
+        <h2 className="mb-3 text-[15px] font-bold">Lore &amp; archives</h2>
+        <div className="space-y-2 text-[15px]">
+          <p className="text-muted-foreground">
+            {network.activeEventsCount === 0
+              ? "Aucun événement mondial actif"
+              : network.activeEventsCount === 1
+                ? "1 événement mondial actif"
+                : `${network.activeEventsCount} événements mondiaux actifs`}
+          </p>
+          <p className="text-muted-foreground">
+            {unlockedArchivesCount} archive
+            {unlockedArchivesCount !== 1 ? "s" : ""} débloquée
+            {unlockedArchivesCount !== 1 ? "s" : ""}
+          </p>
+          {latestArchive && (
+            <p>
+              Dernière archive :{" "}
+              <Link
+                href={`/archives/${latestArchive.slug}`}
+                className="text-accent hover:underline"
+              >
+                {latestArchive.title}
+              </Link>
+            </p>
+          )}
+          <div className="flex flex-wrap gap-4 pt-1">
+            <Link href="/archives" className="text-accent hover:underline">
+              Archives →
+            </Link>
+            <Link href="/dossiers" className="text-accent hover:underline">
+              Dossiers →
+            </Link>
+            <Link href="/trending" className="text-accent hover:underline">
+              Événements →
+            </Link>
+          </div>
+        </div>
+      </section>
 
       <section className="px-4 py-4">
         <Link href="/map" className="text-accent hover:underline">

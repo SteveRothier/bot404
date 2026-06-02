@@ -178,3 +178,158 @@
     animation: skeleton-shimmer 1.6s ease-in-out infinite;
   }
 }
+
+.bot404-emoji-picker .EmojiPickerReact {
+  border: 1px solid #2a1824 !important;
+  background: radial-gradient(circle at top, #17101d 0%, #120c14 45%, #0c0710 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+}
+
+.bot404-emoji-picker .epr-search-container {
+  padding: 4px 6px 0 !important;
+  border-bottom: 0 !important;
+}
+
+.bot404-emoji-picker .epr-header {
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 0 !important;
+}
+
+.bot404-emoji-picker .epr-header > .epr-search-container {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.bot404-emoji-picker .epr-search-container input {
+  background: #0b070d !important;
+  border: 1px solid #5d1832 !important;
+  color: #f0e8ec !important;
+  border-radius: 8px !important;
+  margin: 0 !important;
+  padding: var(--epr-search-input-padding) !important;
+  height: var(--epr-search-input-height) !important;
+  line-height: 1.25 !important;
+  box-sizing: border-box !important;
+}
+
+.bot404-emoji-picker .epr-icn-search {
+  left: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  background-position: 0 -20px !important;
+}
+
+.bot404-emoji-picker .epr-btn-clear-search {
+  right: var(--epr-search-bar-inner-padding) !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 28px !important;
+  height: 28px !important;
+}
+
+.bot404-emoji-picker .epr-icn-clear-search {
+  background-position: 0 -40px !important;
+}
+
+.bot404-emoji-picker .epr-search-container input:focus {
+  border-color: #f43f5e !important;
+  box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.2) !important;
+}
+
+.bot404-emoji-picker .epr-category-nav button {
+  color: #a0939c !important;
+}
+
+.bot404-emoji-picker .epr-category-nav button.epr-cat-btn::before,
+.bot404-emoji-picker .epr-category-nav button.epr-cat-btn:focus::before,
+.bot404-emoji-picker .epr-category-nav button.epr-cat-btn.epr-active::before {
+  display: none !important;
+  content: none !important;
+}
+
+.bot404-emoji-picker .epr-category-nav button.epr-cat-btn-custom-icon {
+  background-image: none !important;
+  background-position: 0 0 !important;
+}
+
+.bot404-emoji-picker .epr-category-nav button svg:not(.lucide) {
+  display: none !important;
+}
+
+.bot404-emoji-picker .epr-category-nav button.epr-cat-btn.epr-active {
+  color: #f43f5e !important;
+  background-image: none !important;
+}
+
+.bot404-emoji-picker .epr-category-nav button.epr-cat-btn.epr-active .lucide {
+  color: #f43f5e !important;
+}
+
+.bot404-emoji-picker .epr-category-nav button.epr-cat-btn:hover:not(.epr-active) .lucide {
+  color: #f0e8ec !important;
+}
+
+.bot404-emoji-picker .epr-category-nav button.epr-cat-btn:focus:not(:hover) {
+  outline: none !important;
+}
+
+.bot404-emoji-picker .epr-body {
+  padding: 0 2px 4px 4px !important;
+  scrollbar-width: thin;
+  scrollbar-color: #5d1832 #120c14;
+}
+
+.bot404-emoji-picker .epr-emoji-category-content {
+  padding: 0 4px 8px !important;
+}
+
+.bot404-emoji-picker .epr-emoji {
+  background-color: transparent !important;
+}
+
+.bot404-emoji-picker .epr-emoji:hover {
+  background-color: #1e1220 !important;
+}
+
+.bot404-emoji-picker .epr-emoji:focus:not(:hover) {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.bot404-emoji-picker .epr-emoji:focus-visible {
+  background-color: rgba(244, 63, 94, 0.12) !important;
+  outline: 1px solid rgba(244, 63, 94, 0.45) !important;
+}
+
+.bot404-emoji-picker .epr-body::-webkit-scrollbar {
+  width: 10px;
+}
+
+.bot404-emoji-picker .epr-body::-webkit-scrollbar-track {
+  background: #120c14;
+  border-left: 1px solid #2a1824;
+}
+
+.bot404-emoji-picker .epr-body::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #6b1d3a 0%, #4d1730 100%);
+  border: 2px solid #120c14;
+  border-radius: 999px;
+}
+
+.bot404-emoji-picker .epr-body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #8a2348 0%, #61203c 100%);
+}
+
+.bot404-emoji-picker .epr-emoji-category-label {
+  background: #120c14 !important;
+  color: #ddd2d9 !important;
+  font-weight: 600 !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+
+.bot404-emoji-picker .epr-preview {
+  border-top: 1px solid #2a1824 !important;
+  background: #100a13 !important;
+}

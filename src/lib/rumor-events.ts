@@ -43,4 +43,6 @@ export async function maybePromoteRumorToEvent(postId: number) {
     .update({ unlocked_at: new Date().toISOString() })
     .eq("slug", "blackout-7g")
     .is("unlocked_at", null);
+
+  return { unlockedArchiveSlug: "blackout-7g" };
 }

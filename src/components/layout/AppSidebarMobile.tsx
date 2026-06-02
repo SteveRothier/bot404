@@ -24,7 +24,7 @@ export function AppSidebarMobile({
   const { user, profile, profileUsername } = sidebarAuth;
 
   return (
-    <AppSidebarDrawer>
+    <AppSidebarDrawer showNotifications={!!user}>
       <AppSidebarContent
         user={user}
         profile={profile}

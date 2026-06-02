@@ -2,17 +2,41 @@
 
 import { revalidatePath } from "next/cache";
 import { processPostFactionEffects } from "@/lib/factions/simulation";
+import { createMentionNotifications } from "@/lib/notifications";
 import { isValidPostType } from "@/lib/post-types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import type { PostType } from "@/lib/supabase/types";
+import type { PostMediaType, PostType } from "@/lib/supabase/types";
+
+const MAX_MEDIA_BYTES = 2 * 1024 * 1024;
+const ALLOWED_MEDIA_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+
+function mediaTypeFromMime(mime: string): PostMediaType | null {
+  if (ALLOWED_MEDIA_TYPES.has(mime)) return "image";
+  return null;
+}
+
+function extensionFromMime(mime: string): string {
+  if (mime === "image/png") return "png";
+  if (mime === "image/webp") return "webp";
+  return "jpg";
+}
 
 export async function createPost(formData: FormData) {
-  const content = (formData.get("content") as string)?.trim();
+  const content = (formData.get("content") as string)?.trim() ?? "";
   const rawType = (formData.get("post_type") as string) ?? "message";
   const post_type: PostType = isValidPostType(rawType) ? rawType : "message";
+  const mediaFile = formData.get("media");
 
-  if (!content || content.length > 500) {
+  if (!content && !(mediaFile instanceof File && mediaFile.size > 0)) {
+    return { error: "Ajoutez du texte ou une image." };
+  }
+
+  if (content.length > 500) {
     return { error: "Post invalide (max 500 caractères)." };
   }
 
@@ -25,12 +49,50 @@ export async function createPost(formData: FormData) {
     return { error: "Connectez-vous pour poster." };
   }
 
+  let media_url: string | null = null;
+  let media_type: PostMediaType | null = null;
+
+  if (mediaFile instanceof File && mediaFile.size > 0) {
+    if (mediaFile.size > MAX_MEDIA_BYTES) {
+      return { error: "Image trop volumineuse (max 2 Mo)." };
+    }
+
+    const resolvedType = mediaTypeFromMime(mediaFile.type);
+    if (!resolvedType) {
+      return { error: "Format non supporté (JPEG, PNG ou WebP)." };
+    }
+
+    const ext = extensionFromMime(mediaFile.type);
+    const path = `${user.id}/${Date.now()}.${ext}`;
+    const buffer = Buffer.from(await mediaFile.arrayBuffer());
+
+    const { error: uploadError } = await supabase.storage
+      .from("post-media")
+      .upload(path, buffer, {
+        contentType: mediaFile.type,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      return { error: uploadError.message };
+    }
+
+    const { data: publicUrl } = supabase.storage
+      .from("post-media")
+      .getPublicUrl(path);
+
+    media_url = publicUrl.publicUrl;
+    media_type = resolvedType;
+  }
+
   const { data: post, error } = await supabase
     .from("posts")
     .insert({
       author_id: user.id,
-      content,
+      content: content || "",
       post_type,
+      media_url,
+      media_type,
     })
     .select("id")
     .single();
@@ -41,6 +103,9 @@ export async function createPost(formData: FormData) {
 
   if (post?.id) {
     await processPostFactionEffects(createAdminClient(), post.id);
+    if (content) {
+      await createMentionNotifications(content, user.id, post.id);
+    }
   }
 
   revalidatePath("/");
@@ -107,6 +172,8 @@ export async function createComment(postId: number, formData: FormData) {
   if (error) {
     return { error: error.message };
   }
+
+  await createMentionNotifications(content, user.id, postId);
 
   revalidatePath("/");
   revalidatePath(`/post/${postId}`);

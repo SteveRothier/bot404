@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { processReactionFactionEffects } from "@/lib/factions/simulation";
+import { createReactionNotification } from "@/lib/notifications";
 import { isReactionKind } from "@/lib/reactions";
 import { maybePromoteRumorToEvent } from "@/lib/rumor-events";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -67,6 +68,7 @@ export async function toggleReaction(postId: number, kind: string) {
     await processReactionFactionEffects(admin, postId, kind as ReactionKind, 1);
 
     if (kind === "relay" || kind === "amplify") {
+      await createReactionNotification(postId, user.id, kind);
       await maybePromoteRumorToEvent(postId);
     }
   }

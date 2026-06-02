@@ -3,6 +3,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { AppShellFallback } from "@/components/layout/AppShellFallback";
 import { getCachedSidebarAuth } from "@/lib/queries/cached";
 import { getShellData } from "@/lib/queries/shell-data";
+import { getUnreadNotificationCount } from "@/lib/queries/notifications";
 
 type Props = {
   children: React.ReactNode;
@@ -16,6 +17,9 @@ async function AppShellWithData({
   sidebarAuth: Awaited<ReturnType<typeof getCachedSidebarAuth>>;
 }) {
   const shell = await getShellData();
+  const initialUnreadCount = sidebarAuth.user
+    ? await getUnreadNotificationCount()
+    : 0;
 
   return (
     <AppShell
@@ -25,6 +29,7 @@ async function AppShellWithData({
       npcSchedule={shell.npcSchedule}
       ollama={shell.ollama}
       sidebarAuth={sidebarAuth}
+      initialUnreadCount={initialUnreadCount}
     >
       {children}
     </AppShell>

@@ -20,6 +20,7 @@ type Props = {
   npcSchedule: ShellNpcSchedule;
   ollama: OllamaStatus;
   sidebarAuth: SidebarAuth;
+  initialUnreadCount: number;
 };
 
 export function AppShell({
@@ -30,9 +31,17 @@ export function AppShell({
   npcSchedule,
   ollama,
   sidebarAuth,
+  initialUnreadCount,
 }: Props) {
+  const userId = sidebarAuth.user?.id ?? null;
+
   return (
-    <ClientStoresHydrator factions={factions} ollama={ollama}>
+    <ClientStoresHydrator
+      factions={factions}
+      ollama={ollama}
+      userId={userId}
+      initialUnreadCount={initialUnreadCount}
+    >
       <div className="min-h-screen bg-background">
         <div className="mx-auto flex max-w-[1280px] items-start gap-6 px-3 lg:gap-8 lg:px-4">
           <LeftSidebar sidebarAuth={sidebarAuth} />

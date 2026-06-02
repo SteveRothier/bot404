@@ -6,11 +6,15 @@ import { FeedList } from "@/components/feed/FeedList";
 import { FollowingEmptyState } from "@/components/feed/FollowingEmptyState";
 import { PostComposerForm } from "@/components/feed/PostComposerForm";
 import { FeedTabs, type FeedTab } from "@/components/feed/FeedTabs";
+import { ArchiveUnlockBanner } from "@/components/lore/ArchiveUnlockBanner";
+import { WorldEventBanner } from "@/components/lore/WorldEventBanner";
 import type {
+  Archive,
   CommentWithAuthor,
   PostWithAuthor,
   Profile,
   ReactionKind,
+  WorldEvent,
 } from "@/lib/supabase/types";
 
 const PAGE_SIZE = 20;
@@ -19,16 +23,26 @@ export const FeedTabContext = createContext<FeedTab>("for-you");
 type ShellProps = {
   user: { id: string; email?: string } | null;
   profile: Profile | null;
+  activeWorldEvent?: WorldEvent | null;
+  recentArchive?: Archive | null;
   children: React.ReactNode;
 };
 
-export function FeedSectionShell({ user, profile, children }: ShellProps) {
+export function FeedSectionShell({
+  user,
+  profile,
+  activeWorldEvent = null,
+  recentArchive = null,
+  children,
+}: ShellProps) {
   const [tab, setTab] = useState<FeedTab>("for-you");
 
   return (
     <FeedTabContext.Provider value={tab}>
       <div className="w-full">
         <FeedTabs value={tab} onChange={setTab} />
+        {activeWorldEvent && <WorldEventBanner event={activeWorldEvent} />}
+        {recentArchive && <ArchiveUnlockBanner archive={recentArchive} />}
         <PostComposerForm user={user} profile={profile} feedTab={tab} />
         {children}
       </div>

@@ -167,6 +167,27 @@ export function PostCard({
             </div>
           )}
 
+          {post.media_url && (
+            <div className="mt-2 overflow-hidden rounded-xl border border-border">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={post.media_url}
+                alt=""
+                className="max-h-96 w-full object-cover"
+              />
+            </div>
+          )}
+
+          {post.post_type === "theory" && (
+            <Link
+              href="/dossiers"
+              className="mt-2 inline-block text-sm text-accent hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Explorer les dossiers →
+            </Link>
+          )}
+
           <div className="mt-3 flex max-w-[425px] justify-between text-muted-foreground">
             <button
               type="button"

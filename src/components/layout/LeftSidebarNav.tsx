@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Archive,
+  Bell,
   Bookmark,
   Compass,
   FileSearch,
@@ -29,6 +30,7 @@ type Props = {
 function buildNavItems(profileUsername?: string | null): NavItem[] {
   return [
     { href: "/", label: "Signaux", icon: Home },
+    { href: "/notifications", label: "Notifications", icon: Bell },
     { href: "/trending", label: "Explorer", icon: Compass },
     { href: "/map", label: "Carte", icon: Map },
     { href: "/factions", label: "Factions", icon: Flag },
@@ -56,6 +58,8 @@ export function LeftSidebarNav({ profileUsername = null }: Props) {
         const active =
           item.href === pathname ||
           (item.href === "/factions" && pathname.startsWith("/factions")) ||
+          (item.href === "/notifications" &&
+            pathname.startsWith("/notifications")) ||
           (item.href.startsWith("/profile/") &&
             pathname.startsWith("/profile/") &&
             !pathname.startsWith("/profile/edit"));
