@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { createComment } from "@/app/actions/posts";
+import { NarrativeQueuedBanner } from "@/components/lore/NarrativeQueuedBanner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CommentDeleteButton } from "@/components/feed/CommentDeleteButton";
 import { ComposerTextarea } from "@/components/feed/ComposerTextarea";
@@ -37,8 +38,10 @@ export function PostComments({
   referenceNowMs = Date.now(),
 }: Props) {
   const [error, setError] = useState<string | null>(null);
+  const [queuedMessage, setQueuedMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [content, setContent] = useState("");
+  const dismissQueued = useCallback(() => setQueuedMessage(null), []);
 
   const replyAvatar =
     profile?.avatar_url ??
@@ -68,6 +71,9 @@ export function PostComments({
       else {
         setContent("");
         onOpenChange?.(true);
+        if (result.narrativeQueued) {
+          setQueuedMessage(NARRATIVE_COPY.queuedInteraction);
+        }
       }
     });
   }
@@ -113,6 +119,13 @@ export function PostComments({
 
                 {error && (
                   <p className="mt-1 px-1 text-sm text-destructive">{error}</p>
+                )}
+
+                {queuedMessage && (
+                  <NarrativeQueuedBanner
+                    message={queuedMessage}
+                    onDismiss={dismissQueued}
+                  />
                 )}
 
                 <div className="mt-1 flex items-center justify-between gap-3 px-1 pb-0.5">

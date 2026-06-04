@@ -406,3 +406,36 @@ narrative tick failed undefined
 [03/06/2026 21:32:01] START posts 
 narrative tick failed undefined
 {"mode":{"posts":true,"comments":false},"model":"qwen3.5:4b","narrative":null,"posts":{"attempted":1,"created":1,"failed":0},"comments":{"attempted":0,"created":0,"failed":0}}
+[03/06/2026 22:02:01] START posts 
+narrative tick failed undefined
+{"mode":{"posts":true,"comments":false},"model":"qwen3.5:4b","narrative":null,"posts":{"attempted":1,"created":1,"failed":0},"comments":{"attempted":0,"created":0,"failed":0}}
+[03/06/2026 22:32:01] START posts 
+narrative tick failed undefined
+{"mode":{"posts":true,"comments":false},"model":"qwen3.5:4b","narrative":null,"posts":{"attempted":1,"created":1,"failed":0},"comments":{"attempted":0,"created":0,"failed":0}}
+[03/06/2026 23:02:01] START posts 
+narrative tick failed undefined
+{"mode":{"posts":true,"comments":false},"model":"qwen3.5:4b","narrative":null,"posts":{"attempted":1,"created":1,"failed":0},"comments":{"attempted":0,"created":0,"failed":0}}
+[03/06/2026 23:32:01] START posts 
+narrative tick failed undefined
+{"mode":{"posts":true,"comments":false},"model":"qwen3.5:4b","narrative":null,"posts":{"attempted":1,"created":1,"failed":0},"comments":{"attempted":0,"created":0,"failed":0}}
+[04/06/2026 00:02:01] START posts 
+narrative tick failed undefined
+{"mode":{"posts":true,"comments":false},"model":"qwen3.5:4b","narrative":null,"posts":{"attempted":1,"created":1,"failed":0},"comments":{"attempted":0,"created":0,"failed":0}}
+[04/06/2026 00:32:01] START posts 
+narrative tick failed undefined
+{"mode":{"posts":true,"comments":false},"model":"qwen3.5:4b","narrative":null,"posts":{"attempted":1,"created":1,"failed":0},"comments":{"attempted":0,"created":0,"failed":0}}
+[04/06/2026 01:02:01] START posts 
+narrative tick failed undefined
+{"mode":{"posts":true,"comments":false},"model":"qwen3.5:4b","narrative":null,"posts":{"attempted":1,"created":1,"failed":0},"comments":{"attempted":0,"created":0,"failed":0}}
+[04/06/2026 10:11:17] START posts 
+narrative tick failed undefined
+{"mode":{"posts":true,"comments":false},"model":"qwen3.5:4b","narrative":null,"posts":{"attempted":1,"created":1,"failed":0},"comments":{"attempted":0,"created":0,"failed":0}}
+[04/06/2026 10:32:01] START posts 
+narrative tick failed undefined
+{"mode":{"posts":true,"comments":false},"model":"qwen3.5:4b","narrative":null,"posts":{"attempted":1,"created":1,"failed":0},"comments":{"attempted":0,"created":0,"failed":0}}
+[04/06/2026 11:02:01] START posts 
+narrative tick failed undefined
+{"mode":{"posts":true,"comments":false},"model":"qwen3.5:4b","narrative":null,"posts":{"attempted":1,"created":1,"failed":0},"comments":{"attempted":0,"created":0,"failed":0}}
+[04/06/2026 11:32:01] START posts 
+narrative tick failed undefined
+{"mode":{"posts":true,"comments":false},"model":"qwen3.5:4b","narrative":null,"posts":{"attempted":1,"created":1,"failed":0},"comments":{"attempted":0,"created":0,"failed":0}}

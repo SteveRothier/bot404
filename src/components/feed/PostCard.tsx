@@ -15,6 +15,7 @@ import { PostComments } from "@/components/feed/PostComments";
 import { AddPostToDossier } from "@/components/investigations/AddPostToDossier";
 import { formatCount, formatRelativeTimeShort } from "@/lib/format";
 import { POST_TYPE_LABELS } from "@/lib/post-types";
+import { NARRATIVE_COPY } from "@/lib/narrative/copy";
 import { cn } from "@/lib/utils";
 import type {
   CommentWithAuthor,
@@ -146,6 +147,14 @@ export function PostCard({
                   <span className="text-muted-foreground">·</span>
                   <span className="text-meta text-muted-foreground">
                     {typeLabel}
+                  </span>
+                </>
+              )}
+              {post.narrative_signal_id && author.is_npc && (
+                <>
+                  <span className="text-muted-foreground">·</span>
+                  <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-meta text-violet-600 dark:text-violet-400">
+                    {NARRATIVE_COPY.commentBadge}
                   </span>
                 </>
               )}

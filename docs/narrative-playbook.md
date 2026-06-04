@@ -20,6 +20,8 @@ npm run dev
 
 **Joueur / test manuel** : [`comment-jouer.md`](comment-jouer.md) — pas de jargon technique.
 
+**Session de validation** : [`session-jeu-reactif.md`](session-jeu-reactif.md) — checklist 15 min ; test auto : `npm run npc:play:session`.
+
 Variables `.env.local` : `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, optionnel `OLLAMA_URL`, `OLLAMA_MODEL`.
 
 ---

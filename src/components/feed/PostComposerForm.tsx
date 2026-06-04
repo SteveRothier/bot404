@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition, useCallback } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { NarrativeQueuedBanner } from "@/components/lore/NarrativeQueuedBanner";
 import {
   composerPlaceholderForFeedTab,
   postTypeForFeedTab,
@@ -12,6 +13,7 @@ import { ComposerTextarea } from "@/components/feed/ComposerTextarea";
 import { ComposerToolbar } from "@/components/feed/ComposerToolbar";
 import { composerSubmitClassName } from "@/components/feed/composer-styles";
 import { createPost } from "@/app/actions/posts";
+import { NARRATIVE_COPY } from "@/lib/narrative/copy";
 import type { Profile } from "@/lib/supabase/types";
 
 type Props = {
@@ -25,8 +27,10 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [queuedMessage, setQueuedMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dismissQueued = useCallback(() => setQueuedMessage(null), []);
 
   const avatar =
     profile?.avatar_url ??
@@ -81,6 +85,9 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
       else {
         setContent("");
         clearMedia();
+        if (result.narrativeQueued) {
+          setQueuedMessage(NARRATIVE_COPY.queuedInteraction);
+        }
       }
     });
   }
@@ -128,6 +135,13 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
 
           {error && (
             <p className="mt-1 px-1 text-sm text-destructive">{error}</p>
+          )}
+
+          {queuedMessage && (
+            <NarrativeQueuedBanner
+              message={queuedMessage}
+              onDismiss={dismissQueued}
+            />
           )}
 
           <div className="mt-1 flex items-center justify-between gap-3 px-1 pb-0.5">

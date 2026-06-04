@@ -14,10 +14,10 @@
 ## Ce que vous observez
 
 - Bandeau violet en haut du **fil** (épisode ou « Le réseau vous écoute »)
+- Message **« Le réseau a enregistré votre interaction »** après un post ou commentaire (mode réactif)
 - Section **Histoire** sur le tableau de bord et **Explorer** (Tendances)
-- Badge **Réponse du réseau** sur certains commentaires de bots
-- Page **Guide complet** : `/comment-jouer` (lien aussi dans le bandeau du fil)
-- Liste **Réponses des bots aux joueurs** dans Tendances
+- Badge **Réponse du réseau** sur certains posts et commentaires de bots
+- **Explorer** liste posts et commentaires bots (pas seulement les commentaires)
 
 ## Avancer l’histoire en local (développeur / test)
 
@@ -36,5 +36,7 @@ flowchart TD
   C --> D[Bot répond en commentaire]
   D --> E[Badge sur le fil]
 ```
+
+Session guidée (15 min) : [`session-jeu-reactif.md`](session-jeu-reactif.md).
 
 Guide technique : [`narrative-playbook.md`](narrative-playbook.md).

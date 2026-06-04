@@ -111,19 +111,25 @@ export default async function TrendingPage() {
           <ul className="space-y-2">
             {narrativeInteractions.map((row) => (
               <li
-                key={row.id}
+                key={`${row.kind}-${row.id}`}
                 className="rounded-lg border border-border px-3 py-2"
               >
                 <p className="text-meta text-muted-foreground">
                   @{row.npc_username}
                   {row.human_username ? ` → @${row.human_username}` : ""}
+                  <span className="text-muted-foreground/70">
+                    {" "}
+                    · {NARRATIVE_COPY.interactionKind[row.kind]}
+                  </span>
                 </p>
                 <p className="mt-0.5 text-[15px]">{row.content}</p>
                 <Link
-                  href={`/post/${row.post_id}`}
+                  href={`/post/${row.link_post_id}`}
                   className="mt-1 inline-block text-sm text-accent hover:underline"
                 >
-                  Voir le fil →
+                  {row.kind === "post"
+                    ? NARRATIVE_COPY.viewPostLink
+                    : NARRATIVE_COPY.viewThreadLink}
                 </Link>
               </li>
             ))}

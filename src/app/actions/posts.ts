@@ -6,6 +6,7 @@ import {
   enqueueHumanCommentSignal,
   enqueueHumanPostSignal,
 } from "@/lib/narrative/signals";
+import { isEmergentModeActive } from "@/lib/narrative/queries";
 import { createMentionNotifications } from "@/lib/notifications";
 import { isValidPostType } from "@/lib/post-types";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -28,6 +29,19 @@ function extensionFromMime(mime: string): string {
   if (mime === "image/png") return "png";
   if (mime === "image/webp") return "webp";
   return "jpg";
+}
+
+async function shouldNotifyNarrativeQueued(userId: string): Promise<boolean> {
+  if (!(await isEmergentModeActive())) return false;
+
+  const supabase = createAdminClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_npc")
+    .eq("id", userId)
+    .maybeSingle();
+
+  return profile?.is_npc === false;
 }
 
 export async function createPost(formData: FormData) {
@@ -113,8 +127,12 @@ export async function createPost(formData: FormData) {
     await enqueueHumanPostSignal(user.id, post.id, content, post_type);
   }
 
+  const narrativeQueued = post?.id
+    ? await shouldNotifyNarrativeQueued(user.id)
+    : false;
+
   revalidatePath("/");
-  return { success: true };
+  return { success: true, narrativeQueued };
 }
 
 export async function toggleLike(postId: number) {
@@ -188,9 +206,13 @@ export async function createComment(postId: number, formData: FormData) {
     await enqueueHumanCommentSignal(user.id, postId, comment.id, content);
   }
 
+  const narrativeQueued = comment?.id
+    ? await shouldNotifyNarrativeQueued(user.id)
+    : false;
+
   revalidatePath("/");
   revalidatePath(`/post/${postId}`);
-  return { success: true };
+  return { success: true, narrativeQueued };
 }
 
 export async function deletePost(postId: number) {

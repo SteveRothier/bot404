@@ -27,6 +27,14 @@ export const NARRATIVE_COPY = {
   },
   inactive: "Aucune histoire active pour le moment.",
   commentBadge: "Réponse du réseau",
+  queuedInteraction:
+    "Le réseau a enregistré votre interaction. Une réponse de bot peut arriver sous peu (tick auto ~15 min).",
+  interactionKind: {
+    post: "post",
+    comment: "commentaire",
+  },
+  viewPostLink: "Voir le post →",
+  viewThreadLink: "Voir le fil →",
 } as const;
 
 export function formatScriptedProgressStep(
