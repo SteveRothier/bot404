@@ -124,6 +124,16 @@ function EmergentContent({
         <p className="font-bold text-foreground">{title}</p>
       )}
       <p className="mt-0.5 text-muted-foreground">{emergent.body}</p>
+      {isStrip && pendingSignals > 0 && (
+        <p className="mt-1 text-sm font-medium text-violet-600 dark:text-violet-400">
+          {formatPendingInteractions(pendingSignals)}
+        </p>
+      )}
+      {isStrip && pendingSignals === 0 && (
+        <p className="mt-1 text-meta text-muted-foreground">
+          {NARRATIVE_COPY.emergentTickHint}
+        </p>
+      )}
       {!isStrip && (
         <>
           <p className="text-muted-foreground">

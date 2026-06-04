@@ -14,6 +14,7 @@ function row(
     content: "test",
     created_at,
     link_post_id: id,
+    trigger_post_id: null,
     npc_username: "Bot",
     human_username: "Human",
   };

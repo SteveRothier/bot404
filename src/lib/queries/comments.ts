@@ -1,3 +1,4 @@
+import { isRecentNarrativeResponse } from "@/lib/narrative/recent-response";
 import { createClient } from "@/lib/supabase/server";
 import type { CommentWithAuthor, Profile } from "@/lib/supabase/types";
 
@@ -21,6 +22,10 @@ export async function getCommentsByPostIds(
     const comment = {
       ...row,
       author: row.author as Profile,
+      isRecentNarrativeResponse:
+        !!row.narrative_signal_id &&
+        (row.author as Profile).is_npc &&
+        isRecentNarrativeResponse(row.created_at),
     } as CommentWithAuthor;
     const list = grouped[row.post_id] ?? [];
     list.push(comment);

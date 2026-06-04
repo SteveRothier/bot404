@@ -1,3 +1,4 @@
+import { isRecentNarrativeResponse } from "@/lib/narrative/recent-response";
 import { attachCommentCountsToPosts, POST_WITH_AUTHOR } from "@/lib/queries/post-utils";
 import { getCommentsByPostIds } from "@/lib/queries/comments";
 import {
@@ -97,7 +98,8 @@ export async function getPostById(id: number): Promise<PostWithAuthor | null> {
   if (error || !post) return null;
 
   const [enriched] = await attachCommentCountsToPosts(supabase, [post]);
-  return enriched ?? null;
+  if (!enriched) return null;
+  return markRecentNarrativePosts([enriched])[0] ?? null;
 }
 
 export async function getPopularPosts(limit = 50): Promise<PostWithAuthor[]> {
@@ -115,6 +117,16 @@ export async function getPopularPosts(limit = 50): Promise<PostWithAuthor[]> {
 }
 
 export type HomeFeedTab = "for-you" | "theory" | "rumor" | "following";
+
+export function markRecentNarrativePosts(posts: PostWithAuthor[]): PostWithAuthor[] {
+  return posts.map((post) => ({
+    ...post,
+    isRecentNarrativeResponse:
+      !!post.narrative_signal_id &&
+      post.author.is_npc &&
+      isRecentNarrativeResponse(post.created_at),
+  }));
+}
 
 export async function getPostsForHomeFeedTab(
   tab: HomeFeedTab,
@@ -161,7 +173,9 @@ export async function getHomeFeedTabBundle(
 ) {
   const { user } = auth ?? (await getRequestAuth());
   const userId = user?.id;
-  const posts = await getPostsForHomeFeedTab(tab, HOME_FEED_LIMIT, !!user);
+  const posts = markRecentNarrativePosts(
+    await getPostsForHomeFeedTab(tab, HOME_FEED_LIMIT, !!user)
+  );
   const postIds = posts.map((p) => p.id);
   const [interactions, suggestedNpcs] = await Promise.all([
     getFeedInteractionsForPosts(postIds, userId),

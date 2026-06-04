@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import { FeedList } from "@/components/feed/FeedList";
 import { PostCard } from "@/components/feed/PostCard";
+import { NarrativeEmergentPostBanner } from "@/components/lore/NarrativeEmergentPostBanner";
 import { getPostById } from "@/lib/queries/feed";
 import { getFeedInteractionContext } from "@/lib/queries/feed-context";
+import { getEmergentPostContext } from "@/lib/queries/narrative-ui";
 import type { RequestAuth } from "@/lib/queries/auth";
 import type { PostWithAuthor } from "@/lib/supabase/types";
 
@@ -53,10 +55,17 @@ export async function PostDetailLoader({ postId, auth }: PostDetailProps) {
   const post = await getPostById(postId);
   if (!post) notFound();
 
-  const ctx = await getFeedInteractionContext([postId], auth);
+  const [ctx, emergentContext] = await Promise.all([
+    getFeedInteractionContext([postId], auth),
+    getEmergentPostContext(postId),
+  ]);
 
   return (
-    <PostCard
+    <>
+      {emergentContext && (
+        <NarrativeEmergentPostBanner context={emergentContext} />
+      )}
+      <PostCard
       post={post}
       likedByUser={ctx.likedPostIds.includes(post.id)}
       bookmarkedByUser={ctx.bookmarkedPostIds.includes(post.id)}
@@ -68,5 +77,6 @@ export async function PostDetailLoader({ postId, auth }: PostDetailProps) {
       referenceNowMs={referenceNowMs}
       defaultCommentsOpen
     />
+    </>
   );
 }

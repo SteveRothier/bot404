@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { getDashboardStats } from "@/lib/queries/dashboard";
 import { getCachedNetworkStats } from "@/lib/queries/cached";
+import { NarrativeInteractionsList } from "@/components/lore/NarrativeInteractionsList";
 import { NarrativeStatusCard } from "@/components/lore/NarrativeStatusCard";
 import { NARRATIVE_COPY } from "@/lib/narrative/copy";
 import { getNarrativeStateForUi } from "@/lib/narrative/queries";
+import { getRecentNarrativeInteractions } from "@/lib/queries/narrative-ui";
 import {
   countUnlockedArchives,
   getLatestUnlockedArchive,
@@ -14,12 +16,13 @@ export const revalidate = 60;
 
 export default async function DashboardPage() {
   const network = await getCachedNetworkStats();
-  const [dashboard, latestArchive, unlockedArchivesCount, narrativeState] =
+  const [dashboard, latestArchive, unlockedArchivesCount, narrativeState, recentInteractions] =
     await Promise.all([
     getDashboardStats(network),
     getLatestUnlockedArchive(),
     countUnlockedArchives(),
     getNarrativeStateForUi(),
+    getRecentNarrativeInteractions(2),
   ]);
 
   const stateMeta = NETWORK_STATE_LABELS[network.networkState];
@@ -68,6 +71,20 @@ export default async function DashboardPage() {
           <p className="text-[15px] text-muted-foreground">
             {NARRATIVE_COPY.inactive}
           </p>
+        )}
+        {recentInteractions.length > 0 && (
+          <div className="mt-4">
+            <h3 className="mb-2 text-meta font-semibold uppercase tracking-wide text-muted-foreground">
+              Dernières réponses
+            </h3>
+            <NarrativeInteractionsList interactions={recentInteractions} />
+            <Link
+              href="/trending"
+              className="mt-2 inline-block text-sm text-accent hover:underline"
+            >
+              Voir tout dans Explorer →
+            </Link>
+          </div>
         )}
       </section>
 

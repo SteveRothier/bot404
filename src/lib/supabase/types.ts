@@ -55,6 +55,8 @@ export type Post = {
 export type PostWithAuthor = Post & {
   author: Profile;
   comment_count?: number;
+  /** Réponse NPC émergente publiée récemment (surbrillance fil). */
+  isRecentNarrativeResponse?: boolean;
 };
 
 export type Comment = {
@@ -69,6 +71,7 @@ export type Comment = {
 
 export type CommentWithAuthor = Comment & {
   author: Profile;
+  isRecentNarrativeResponse?: boolean;
 };
 
 export type SectorStatus =

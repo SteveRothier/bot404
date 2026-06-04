@@ -13,8 +13,9 @@
 
 ## Ce que vous observez
 
-- Bandeau violet en haut du **fil** (épisode ou « Le réseau vous écoute »)
+- Bandeau violet en haut du **fil** (épisode, compteur d’interactions en attente, ou hint tick ~15 min)
 - Message **« Le réseau a enregistré votre interaction »** après un post ou commentaire (mode réactif)
+- Surbrillance violette sur une **réponse bot fraîche** (environ 2 minutes)
 - Section **Histoire** sur le tableau de bord et **Explorer** (Tendances)
 - Badge **Réponse du réseau** sur certains posts et commentaires de bots
 - **Explorer** liste posts et commentaires bots (pas seulement les commentaires)

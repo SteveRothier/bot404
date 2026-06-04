@@ -8,6 +8,7 @@ import {
 } from "@/lib/queries/cached";
 import { ActiveWorldEventHighlight } from "@/components/lore/ActiveWorldEventHighlight";
 import { getFeedPosts } from "@/lib/queries/feed";
+import { NarrativeInteractionsList } from "@/components/lore/NarrativeInteractionsList";
 import { NarrativeStatusCard } from "@/components/lore/NarrativeStatusCard";
 import { NARRATIVE_COPY } from "@/lib/narrative/copy";
 import { getNarrativeStateForUi } from "@/lib/narrative/queries";
@@ -108,32 +109,7 @@ export default async function TrendingPage() {
           <h2 className="mb-3 text-[15px] font-bold">
             {NARRATIVE_COPY.sections.botReplies}
           </h2>
-          <ul className="space-y-2">
-            {narrativeInteractions.map((row) => (
-              <li
-                key={`${row.kind}-${row.id}`}
-                className="rounded-lg border border-border px-3 py-2"
-              >
-                <p className="text-meta text-muted-foreground">
-                  @{row.npc_username}
-                  {row.human_username ? ` → @${row.human_username}` : ""}
-                  <span className="text-muted-foreground/70">
-                    {" "}
-                    · {NARRATIVE_COPY.interactionKind[row.kind]}
-                  </span>
-                </p>
-                <p className="mt-0.5 text-[15px]">{row.content}</p>
-                <Link
-                  href={`/post/${row.link_post_id}`}
-                  className="mt-1 inline-block text-sm text-accent hover:underline"
-                >
-                  {row.kind === "post"
-                    ? NARRATIVE_COPY.viewPostLink
-                    : NARRATIVE_COPY.viewThreadLink}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <NarrativeInteractionsList interactions={narrativeInteractions} />
         </section>
       )}
 

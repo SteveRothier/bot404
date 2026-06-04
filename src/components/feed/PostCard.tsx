@@ -68,7 +68,9 @@ export function PostCard({
     <article
       className={cn(
         "surface-hover cursor-default px-4 py-3",
-        !author.is_npc && "border-l-2 border-accent/30 pl-3"
+        !author.is_npc && "border-l-2 border-accent/30 pl-3",
+        post.isRecentNarrativeResponse &&
+          "ring-2 ring-violet-500/30 ring-offset-0"
       )}
     >
       <div className="flex items-start gap-3">
@@ -209,14 +211,21 @@ export function PostCard({
           )}
 
           {post.post_type === "theory" && (
-            <div className="mt-1">
+            <div className="mt-1 flex flex-wrap items-center gap-3 text-sm">
               <AddPostToDossier postId={post.id} isLoggedIn={isLoggedIn} />
               <Link
-                href="/dossiers"
-                className="mt-1 inline-block text-sm text-muted-foreground hover:text-accent hover:underline"
+                href="/archives"
+                className="text-muted-foreground hover:text-accent hover:underline"
                 onClick={(e) => e.stopPropagation()}
               >
-                Tous les dossiers →
+                {NARRATIVE_COPY.archivesLink} →
+              </Link>
+              <Link
+                href="/dossiers"
+                className="text-muted-foreground hover:text-accent hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Dossiers →
               </Link>
             </div>
           )}

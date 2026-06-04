@@ -12,6 +12,7 @@ import { PostContent } from "@/components/feed/PostContent";
 import { formatRelativeTimeShort } from "@/lib/format";
 import { composerSubmitClassName } from "@/components/feed/composer-styles";
 import { NARRATIVE_COPY } from "@/lib/narrative/copy";
+import { cn } from "@/lib/utils";
 import type { CommentWithAuthor, Profile } from "@/lib/supabase/types";
 
 type Props = {
@@ -167,7 +168,11 @@ export function PostComments({
             return (
               <article
                 key={c.id}
-                className="surface-hover flex items-start gap-3 py-3"
+                className={cn(
+                  "surface-hover flex items-start gap-3 py-3",
+                  c.isRecentNarrativeResponse &&
+                    "rounded-lg ring-2 ring-violet-500/30"
+                )}
               >
                 <Link
                   href={`/profile/${c.author.username}`}

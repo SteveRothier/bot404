@@ -1,37 +1,25 @@
 # Débrief session — mode réactif
 
-Dernière validation automatique : `npm run npc:play:session`.
+## Validation manuelle (navigateur)
 
-## Résultat technique (automatisé)
+- [ ] Bandeau fil : compteur d’interactions en attente ou hint tick (~15 min)
+- [ ] Poster une théorie → bandeau « Le réseau a enregistré votre interaction »
+- [ ] `npm run npc:tick` → badge « Réponse du réseau » + surbrillance violette (2 min)
+- [ ] `/trending` → posts et commentaires, lien « Votre post → » si pertinent
+- [ ] Page `/post/[id]` sur réponse bot → encart « En réponse à @humain »
 
-| Étape | Statut | Détail |
-|-------|--------|--------|
-| Ollama | OK | en ligne |
-| Arc émergent | OK | `reseau-reactif` active |
-| Post théorie + tick | OK | réponse bot (post ou commentaire) |
+Test auto : `npm run npc:play:session`
 
-## Lacunes UX — résolues
+## UX narrative (implémenté)
 
-| Sujet | Statut |
-|-------|--------|
-| Posts émergents dans Explorer | OK — `getRecentNarrativeInteractions` fusionne posts + commentaires |
-| Badge sur posts NPC émergents | OK — `PostCard` + `narrative_signal_id` |
-| Feedback après action humaine | OK — bandeau `NarrativeQueuedBanner` (composer + commentaires) |
-
-## À valider manuellement dans le navigateur
-
-- [ ] Poster une théorie → bandeau violet « enregistré votre interaction »
-- [ ] `npm run npc:tick` → badge « Réponse du réseau » sur post ou commentaire bot
-- [ ] `/trending` → entrées `post` et `commentaire` dans « Réponses des bots aux joueurs »
-
-## Planificateur Windows
-
-- Tâche `bot404-narrative-tick` (15 min) — logs : `logs/narrative-tick.log`
-- « Aucun signal en attente » sans post humain récent : **normal**
-
-## Suite possible (contenu)
-
-- Acte 2 scripté ou événements lore déclenchés par le joueur
+| Fonction | Fichiers |
+|----------|----------|
+| Pending sur bandeau fil | `NarrativeStatusCard` |
+| Explorer unifié + trigger | `narrative-ui.ts`, `NarrativeInteractionsList` |
+| Surbrillance réponse récente | `recent-response.ts`, `PostCard`, `PostComments` |
+| Contexte page post | `NarrativeEmergentPostBanner`, `FeedServer` |
+| Dashboard dernières réponses | `dashboard/page.tsx` |
+| Liens Archives sur théories | `PostCard` |
 
 ## Commandes
 

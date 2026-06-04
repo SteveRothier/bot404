@@ -35,6 +35,12 @@ export const NARRATIVE_COPY = {
   },
   viewPostLink: "Voir le post →",
   viewThreadLink: "Voir le fil →",
+  viewYourPostLink: "Votre post →",
+  emergentTickHint:
+    "Le réseau traite les interactions au rythme du tick (~15 min).",
+  emergentPostContext: (human: string) =>
+    `En réponse à l'activité de @${human}`,
+  archivesLink: "Archives",
 } as const;
 
 export function formatScriptedProgressStep(
