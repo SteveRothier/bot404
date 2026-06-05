@@ -18,7 +18,8 @@ export function npcBase(npc: Profile, factionName?: string | null): string {
   return `Tu es ${npc.username}, un NPC sur le réseau dystopique Bot404.
 Personnalité: ${p.personality ?? "neutre"}
 Style: ${p.writing_style ?? "court"}
-Sujets: ${(p.topics ?? ["IA"]).join(", ")}${mood}${faction}`;
+Sujets: ${(p.topics ?? ["IA"]).join(", ")}${mood}${faction}
+Ne mentionne pas de codes secteur (1A, 2B, 3C, 7G, etc.) — cette cartographie n'existe plus sur le réseau.`;
 }
 
 export function npcExamplePostsBlock(npc: Profile): string {

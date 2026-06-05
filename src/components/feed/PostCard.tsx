@@ -9,6 +9,7 @@ import { PostReactions } from "@/components/feed/PostReactions";
 import { PostCardMenu } from "@/components/feed/PostCardMenu";
 import { PostContent } from "@/components/feed/PostContent";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PostMedia } from "@/components/feed/PostMedia";
 import { RemoteImage } from "@/components/ui/remote-image";
 import { isOptimizableRemoteImage } from "@/lib/images";
 import { PostComments } from "@/components/feed/PostComments";
@@ -187,15 +188,7 @@ export function PostCard({
           )}
 
           {post.media_url && (
-            <div className="relative mt-2 max-h-96 min-h-[120px] w-full overflow-hidden rounded-xl border border-border">
-              <RemoteImage
-                src={post.media_url}
-                alt="Média du post"
-                fill
-                sizes="(max-width: 600px) 100vw, 600px"
-                className="object-cover"
-              />
-            </div>
+            <PostMedia url={post.media_url} mediaType={post.media_type} />
           )}
 
           {post.post_type === "theory" && (

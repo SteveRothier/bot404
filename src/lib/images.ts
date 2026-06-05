@@ -8,7 +8,7 @@ export function getSupabaseStorageHostname(): string | null {
   }
 }
 
-function isAnimatedImageUrl(src: string): boolean {
+export function isGifUrl(src: string): boolean {
   try {
     return new URL(src).pathname.toLowerCase().endsWith(".gif");
   } catch {
@@ -18,7 +18,7 @@ function isAnimatedImageUrl(src: string): boolean {
 
 export function isOptimizableRemoteImage(src: string): boolean {
   if (!src.startsWith("http")) return false;
-  if (isAnimatedImageUrl(src)) return false;
+  if (isGifUrl(src)) return false;
   const hostname = getSupabaseStorageHostname();
   if (!hostname) return false;
   try {
