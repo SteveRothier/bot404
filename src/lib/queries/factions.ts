@@ -1,8 +1,9 @@
+import { createPublicClient } from "@/lib/supabase/public";
 import { createClient } from "@/lib/supabase/server";
 import type { Faction } from "@/lib/supabase/types";
 
 export async function getFactions(): Promise<Faction[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("factions")
     .select("*")

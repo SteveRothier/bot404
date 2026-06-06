@@ -1,4 +1,1 @@
-export {
-  FeedPosts,
-  FeedSectionShell as FeedSection,
-} from "@/components/feed/FeedSectionClient";
+export { FeedSectionShell as FeedSection } from "@/components/feed/FeedSectionShell";

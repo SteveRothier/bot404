@@ -1,6 +1,6 @@
 import { getCommentsByPostIds } from "@/lib/queries/comments";
-import { getUserBookmarkedPostIds } from "@/lib/queries/bookmarks";
-import { getUserLikedPostIds } from "@/lib/queries/feed";
+import { getUserBookmarkedPostIdsForPosts } from "@/lib/queries/bookmarks";
+import { getUserLikedPostIdsForPosts } from "@/lib/queries/feed";
 import { getUserReactionsByPostIds } from "@/lib/queries/reactions";
 import { getRequestAuth, type RequestAuth } from "@/lib/queries/auth";
 import type { CommentWithAuthor, Profile, ReactionKind } from "@/lib/supabase/types";
@@ -28,9 +28,11 @@ export async function getFeedInteractionContext(
     commentsByPostId,
     userReactionsByPostId,
   ] = await Promise.all([
-    userId ? getUserLikedPostIds(userId) : Promise.resolve(new Set<number>()),
     userId
-      ? getUserBookmarkedPostIds(userId)
+      ? getUserLikedPostIdsForPosts(userId, postIds)
+      : Promise.resolve(new Set<number>()),
+    userId
+      ? getUserBookmarkedPostIdsForPosts(userId, postIds)
       : Promise.resolve(new Set<number>()),
     getCommentsByPostIds(postIds),
     userId

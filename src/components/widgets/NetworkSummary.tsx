@@ -1,8 +1,25 @@
-import { NpcGeneratePanel } from "@/components/widgets/NpcGeneratePanel";
+"use client";
+
+import dynamic from "next/dynamic";
 import { NpcScheduleDisplay } from "@/components/widgets/NpcScheduleDisplay";
-import { OllamaStatusBadge } from "@/components/widgets/OllamaStatusBadge";
 import type { ShellNpcSchedule } from "@/lib/queries/shell-data";
 import type { NetworkStats } from "@/lib/supabase/types";
+
+const OllamaStatusBadge = dynamic(
+  () =>
+    import("@/components/widgets/OllamaStatusBadge").then(
+      (m) => m.OllamaStatusBadge
+    ),
+  { ssr: false, loading: () => null }
+);
+
+const NpcGeneratePanel = dynamic(
+  () =>
+    import("@/components/widgets/NpcGeneratePanel").then(
+      (m) => m.NpcGeneratePanel
+    ),
+  { ssr: false, loading: () => null }
+);
 
 type Props = {
   stats: NetworkStats;

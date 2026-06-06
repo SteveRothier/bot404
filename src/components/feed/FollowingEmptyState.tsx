@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { resolveAvatarUrl } from "@/lib/avatars";
 import type { Profile } from "@/lib/supabase/types";
 
 type Props = {
@@ -25,7 +26,7 @@ export function FollowingEmptyState({ suggestedNpcs }: Props) {
             >
               <Avatar className="size-10 rounded-full">
                 <AvatarImage
-                  src={npc.avatar_url ?? undefined}
+                  src={resolveAvatarUrl(npc.avatar_url, npc.username)}
                   className="rounded-full object-cover"
                 />
                 <AvatarFallback className="rounded-full bg-secondary text-xs">

@@ -9,6 +9,7 @@ import {
 } from "@/app/actions/notifications";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { NotificationKind, NotificationWithActor } from "@/lib/supabase/types";
+import { resolveAvatarUrl } from "@/lib/avatars";
 import { cn } from "@/lib/utils";
 import { useNotificationsStore } from "@/stores/notifications-store";
 
@@ -125,10 +126,9 @@ export function NotificationsList({ notifications, referenceNowMs }: Props) {
                 <Avatar className="size-10 shrink-0 rounded-lg">
                   <AvatarImage
                     src={
-                      n.actor?.avatar_url ??
-                      (n.actor
-                        ? `https://api.dicebear.com/9.x/bottts-neutral/svg?seed=${n.actor.id}`
-                        : undefined)
+                      n.actor
+                        ? resolveAvatarUrl(n.actor.avatar_url, n.actor.id)
+                        : undefined
                     }
                     className="rounded-lg object-cover"
                   />

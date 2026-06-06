@@ -1,4 +1,9 @@
+import bundleAnalyzer from "@next/bundle-analyzer";
 import type { NextConfig } from "next";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
 function supabaseImagePattern() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -29,9 +34,30 @@ const nextConfig: NextConfig = {
         destination: "/trending",
         permanent: true,
       },
+      {
+        source: "/dossiers",
+        destination: "/trending",
+        permanent: true,
+      },
+      {
+        source: "/dossier/:id",
+        destination: "/trending",
+        permanent: true,
+      },
+      {
+        source: "/archives",
+        destination: "/trending",
+        permanent: true,
+      },
+      {
+        source: "/archives/:slug",
+        destination: "/trending",
+        permanent: true,
+      },
     ];
   },
   images: {
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
         protocol: "https",
@@ -43,4 +69,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);

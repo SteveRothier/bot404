@@ -18,33 +18,55 @@ export type EmergentPostContext = {
   triggerPostId: number | null;
 };
 
-async function resolveSignalContext(signalId: number | null): Promise<{
+type SignalContext = {
   humanUsername: string | null;
   triggerPostId: number | null;
-}> {
-  if (!signalId) return { humanUsername: null, triggerPostId: null };
+};
+
+async function resolveSignalContexts(
+  signalIds: number[]
+): Promise<Map<number, SignalContext>> {
+  const unique = [...new Set(signalIds.filter((id) => id > 0))];
+  const result = new Map<number, SignalContext>();
+  if (unique.length === 0) return result;
 
   const supabase = createAdminClient();
-  const { data: signal } = await supabase
+  const { data: signals } = await supabase
     .from("narrative_signals")
-    .select("author_id, post_id")
-    .eq("id", signalId)
-    .maybeSingle();
+    .select("id, author_id, post_id")
+    .in("id", unique);
 
-  if (!signal?.author_id) {
-    return { humanUsername: null, triggerPostId: signal?.post_id ?? null };
+  if (!signals?.length) return result;
+
+  const authorIds = [
+    ...new Set(signals.map((s) => s.author_id).filter(Boolean)),
+  ] as string[];
+
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, username")
+    .in("id", authorIds);
+
+  const usernameById = new Map(
+    (profiles ?? []).map((p) => [p.id, p.username] as const)
+  );
+
+  for (const signal of signals) {
+    result.set(signal.id, {
+      humanUsername: signal.author_id
+        ? (usernameById.get(signal.author_id) ?? null)
+        : null,
+      triggerPostId: signal.post_id ?? null,
+    });
   }
 
-  const { data: human } = await supabase
-    .from("profiles")
-    .select("username")
-    .eq("id", signal.author_id)
-    .maybeSingle();
+  return result;
+}
 
-  return {
-    humanUsername: human?.username ?? null,
-    triggerPostId: signal.post_id ?? null,
-  };
+async function resolveSignalContext(signalId: number | null): Promise<SignalContext> {
+  if (!signalId) return { humanUsername: null, triggerPostId: null };
+  const map = await resolveSignalContexts([signalId]);
+  return map.get(signalId) ?? { humanUsername: null, triggerPostId: null };
 }
 
 export async function getEmergentPostContext(
@@ -98,13 +120,22 @@ export async function getRecentNarrativeInteractions(
       .limit(fetchLimit),
   ]);
 
+  const signalIds = [
+    ...(comments ?? []).map((c) => c.narrative_signal_id),
+    ...(posts ?? []).map((p) => p.narrative_signal_id),
+  ].filter((id): id is number => id != null);
+
+  const contexts = await resolveSignalContexts(signalIds);
   const rows: NarrativeInteractionRow[] = [];
 
   for (const c of comments ?? []) {
     const author = c.author as { username?: string; is_npc?: boolean } | null;
-    if (!author?.is_npc) continue;
+    if (!author?.is_npc || !c.narrative_signal_id) continue;
 
-    const ctx = await resolveSignalContext(c.narrative_signal_id);
+    const ctx = contexts.get(c.narrative_signal_id) ?? {
+      humanUsername: null,
+      triggerPostId: null,
+    };
 
     rows.push({
       id: c.id,
@@ -120,9 +151,12 @@ export async function getRecentNarrativeInteractions(
 
   for (const p of posts ?? []) {
     const author = p.author as { username?: string; is_npc?: boolean } | null;
-    if (!author?.is_npc) continue;
+    if (!author?.is_npc || !p.narrative_signal_id) continue;
 
-    const ctx = await resolveSignalContext(p.narrative_signal_id);
+    const ctx = contexts.get(p.narrative_signal_id) ?? {
+      humanUsername: null,
+      triggerPostId: null,
+    };
 
     rows.push({
       id: p.id,

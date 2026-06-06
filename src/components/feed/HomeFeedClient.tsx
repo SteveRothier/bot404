@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  createContext,
   useCallback,
   useContext,
   useEffect,
@@ -10,58 +9,25 @@ import {
 } from "react";
 import { loadHomeFeedTab } from "@/app/actions/feed";
 import {
-  FeedBridgeProvider,
   useRegisterFeedBridge,
   type FeedBridgeApi,
 } from "@/components/feed/FeedBridgeContext";
+import { FeedTabContext } from "@/components/feed/FeedSectionShell";
 import { FeedLoadMore } from "@/components/feed/FeedLoadMore";
 import { FeedList } from "@/components/feed/FeedList";
 import { FollowingEmptyState } from "@/components/feed/FollowingEmptyState";
-import { PostComposerForm } from "@/components/feed/PostComposerForm";
-import { FeedTabs, type FeedTab } from "@/components/feed/FeedTabs";
 import { PostsSkeleton } from "@/components/feed/FeedSkeleton";
-import { ActiveWorldEventStrip } from "@/components/lore/ActiveWorldEventStrip";
+import type { FeedTab } from "@/components/feed/FeedTabs";
 import type {
   CommentWithAuthor,
   PostWithAuthor,
   Profile,
   ReactionKind,
-  WorldEvent,
 } from "@/lib/supabase/types";
 
 const PAGE_SIZE = 20;
-export const FeedTabContext = createContext<FeedTab>("for-you");
 
-type ShellProps = {
-  user: { id: string; email?: string } | null;
-  profile: Profile | null;
-  activeWorldEvent?: WorldEvent | null;
-  children: React.ReactNode;
-};
-
-export function FeedSectionShell({
-  user,
-  profile,
-  activeWorldEvent = null,
-  children,
-}: ShellProps) {
-  const [tab, setTab] = useState<FeedTab>("for-you");
-
-  return (
-    <FeedBridgeProvider>
-      <FeedTabContext.Provider value={tab}>
-        <div className="w-full">
-          <FeedTabs value={tab} onChange={setTab} />
-          {activeWorldEvent && <ActiveWorldEventStrip event={activeWorldEvent} />}
-          <PostComposerForm user={user} profile={profile} feedTab={tab} />
-          {children}
-        </div>
-      </FeedTabContext.Provider>
-    </FeedBridgeProvider>
-  );
-}
-
-type PostsProps = {
+type Props = {
   recentPosts: PostWithAuthor[];
   theoryPosts: PostWithAuthor[];
   rumorPosts: PostWithAuthor[];
@@ -93,7 +59,7 @@ function prependUnique(post: PostWithAuthor, list: PostWithAuthor[]) {
   return [post, ...list.filter((p) => p.id !== post.id)];
 }
 
-export function FeedPosts({
+export function HomeFeedClient({
   recentPosts: initialRecentPosts,
   theoryPosts: initialTheoryPosts,
   rumorPosts: initialRumorPosts,
@@ -106,7 +72,7 @@ export function FeedPosts({
   commentsByPostId: initialCommentsByPostId,
   userReactionsByPostId: initialUserReactionsByPostId,
   referenceNowMs,
-}: PostsProps) {
+}: Props) {
   const tab = useContext(FeedTabContext);
   const registerBridge = useRegisterFeedBridge();
   const isLoggedIn = !!user;

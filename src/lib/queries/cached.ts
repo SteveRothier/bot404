@@ -1,13 +1,20 @@
 import { cache } from "react";
-import { getFactions } from "@/lib/queries/factions";
-import { getNetworkStats, getTrendingSnapshot } from "@/lib/queries/feed";
-import { getPopularHashtags } from "@/lib/queries/hashtags";
-import { getShellData } from "@/lib/queries/shell-data";
+import {
+  getCachedActiveWorldEventsData,
+  getCachedFactionsData,
+  getCachedNetworkStatsData,
+  getCachedPopularHashtagsData,
+  getCachedShellDataCrossRequest,
+  getCachedTrendingSnapshotData,
+} from "@/lib/queries/data-cache";
 import { getSidebarAuth } from "@/lib/queries/sidebar-auth";
 
-export const getCachedFactions = cache(getFactions);
-export const getCachedNetworkStats = cache(getNetworkStats);
-export const getCachedPopularHashtags = cache(getPopularHashtags);
-export const getCachedTrendingSnapshot = cache(getTrendingSnapshot);
+export const getCachedFactions = cache(getCachedFactionsData);
+export const getCachedNetworkStats = cache(getCachedNetworkStatsData);
+export const getCachedPopularHashtags = cache((limit = 5) =>
+  getCachedPopularHashtagsData(limit)
+);
+export const getCachedTrendingSnapshot = cache(getCachedTrendingSnapshotData);
+export const getCachedActiveWorldEvents = cache(getCachedActiveWorldEventsData);
 export const getCachedSidebarAuth = cache(getSidebarAuth);
-export const getCachedShellData = cache(getShellData);
+export const getCachedShellData = cache(getCachedShellDataCrossRequest);

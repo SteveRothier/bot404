@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useOllamaStore } from "@/stores/ollama-store";
 
@@ -10,6 +11,12 @@ type Props = {
 export function OllamaStatusBadge({ compact = false }: Props) {
   const online = useOllamaStore((s) => s.online);
   const model = useOllamaStore((s) => s.model);
+
+  useEffect(() => {
+    void useOllamaStore.getState().refresh();
+    useOllamaStore.getState().startPolling();
+    return () => useOllamaStore.getState().stopPolling();
+  }, []);
 
   if (compact) {
     return (

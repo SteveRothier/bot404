@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { revalidateDataCaches } from "@/lib/queries/cache-tags";
 import { checkNpcCooldown, setNpcCooldown } from "@/lib/npc/cooldown";
 import { generateNpcComment } from "@/lib/npc/generate-comment";
 import { generateNpcPost } from "@/lib/npc/generate-post";
@@ -66,6 +67,7 @@ export async function generateNpcPostAction() {
           await setNpcCooldown(auth.user.id, "post");
           revalidatePath("/");
           revalidatePath("/trending");
+          revalidateDataCaches();
           return {
             success: true,
             author: inner.author ?? "NPC",
@@ -80,6 +82,7 @@ export async function generateNpcPostAction() {
           await setNpcCooldown(auth.user.id, "post");
           revalidatePath("/");
           revalidatePath("/trending");
+          revalidateDataCaches();
           return {
             success: true,
             author: extracted.author ?? "NPC",
@@ -98,6 +101,7 @@ export async function generateNpcPostAction() {
 
     revalidatePath("/");
     revalidatePath("/trending");
+    revalidateDataCaches();
     return {
       success: true,
       author: result.author,
@@ -129,6 +133,7 @@ export async function generateNpcCommentAction() {
           revalidatePath("/");
           revalidatePath(`/post/${inner.post_id}`);
           revalidatePath("/trending");
+          revalidateDataCaches();
           return {
             success: true,
             author: inner.author ?? "NPC",
@@ -150,6 +155,7 @@ export async function generateNpcCommentAction() {
         revalidatePath("/");
         revalidatePath(`/post/${postId}`);
         revalidatePath("/trending");
+        revalidateDataCaches();
         return {
           success: true,
           author,
@@ -169,6 +175,7 @@ export async function generateNpcCommentAction() {
     revalidatePath("/");
     revalidatePath(`/post/${result.postId}`);
     revalidatePath("/trending");
+    revalidateDataCaches();
     return {
       success: true,
       author: result.author,

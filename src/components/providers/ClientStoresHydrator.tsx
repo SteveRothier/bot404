@@ -56,11 +56,6 @@ export function ClientStoresHydrator({
     }
   }, [factions, ollama.model, initialUnreadCount]);
 
-  useEffect(() => {
-    void useOllamaStore.getState().refresh();
-    useOllamaStore.getState().startPolling();
-    return () => useOllamaStore.getState().stopPolling();
-  }, []);
 
   useEffect(() => {
     if (factionsRealtimeEnabled) {

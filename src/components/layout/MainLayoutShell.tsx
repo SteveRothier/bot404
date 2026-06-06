@@ -1,8 +1,9 @@
 import { Suspense } from "react";
-import { AppShell } from "@/components/layout/AppShell";
-import { AppShellFallback } from "@/components/layout/AppShellFallback";
+import { AppSidebarMobile } from "@/components/layout/AppSidebarMobile";
+import { LeftSidebar } from "@/components/layout/LeftSidebar";
+import { RightSidebarLoader } from "@/components/layout/RightSidebarLoader";
+import { ClientStoresHydrator } from "@/components/providers/ClientStoresHydrator";
 import { getCachedSidebarAuth } from "@/lib/queries/cached";
-import { getCachedShellData } from "@/lib/queries/cached";
 import { getDefaultOllamaStatus } from "@/lib/ollama";
 import { getUnreadNotificationCount } from "@/lib/queries/notifications";
 
@@ -10,44 +11,49 @@ type Props = {
   children: React.ReactNode;
 };
 
-async function AppShellWithData({
-  children,
-  sidebarAuth,
-}: {
-  children: React.ReactNode;
-  sidebarAuth: Awaited<ReturnType<typeof getCachedSidebarAuth>>;
-}) {
-  const [shell, initialUnreadCount] = await Promise.all([
-    getCachedShellData(),
-    sidebarAuth.user ? getUnreadNotificationCount() : Promise.resolve(0),
-  ]);
-
+function RightSidebarSkeleton() {
   return (
-    <AppShell
-      stats={shell.stats}
-      hashtags={shell.hashtags}
-      factions={shell.factions}
-      npcSchedule={shell.npcSchedule}
-      loreAlerts={shell.loreAlerts}
-      ollama={getDefaultOllamaStatus()}
-      sidebarAuth={sidebarAuth}
-      initialUnreadCount={initialUnreadCount}
+    <aside
+      className="sidebar-sticky hidden w-80 shrink-0 flex-col gap-4 xl:flex"
+      aria-hidden
     >
-      {children}
-    </AppShell>
+      <div className="h-32 animate-pulse rounded-2xl bg-secondary/50" />
+      <div className="h-40 animate-pulse rounded-2xl bg-secondary/50" />
+      <div className="h-48 animate-pulse rounded-2xl bg-secondary/50" />
+    </aside>
   );
 }
 
 export async function MainLayoutShell({ children }: Props) {
   const sidebarAuth = await getCachedSidebarAuth();
+  const userId = sidebarAuth.user?.id ?? null;
+  const initialUnreadCount = userId
+    ? await getUnreadNotificationCount()
+    : 0;
 
   return (
-    <Suspense
-      fallback={
-        <AppShellFallback sidebarAuth={sidebarAuth}>{children}</AppShellFallback>
-      }
+    <ClientStoresHydrator
+      factions={[]}
+      ollama={getDefaultOllamaStatus()}
+      userId={userId}
+      initialUnreadCount={initialUnreadCount}
     >
-      <AppShellWithData sidebarAuth={sidebarAuth}>{children}</AppShellWithData>
-    </Suspense>
+      <div className="min-h-screen bg-background">
+        <div className="mx-auto flex max-w-[1280px] items-start gap-6 px-3 lg:gap-8 lg:px-4">
+          <LeftSidebar sidebarAuth={sidebarAuth} />
+
+          <div className="flex min-w-0 flex-1 flex-col">
+            <AppSidebarMobile sidebarAuth={sidebarAuth} />
+            <main className="min-w-0 flex-1 border-l border-border py-0 lg:max-w-[600px]">
+              {children}
+            </main>
+          </div>
+
+          <Suspense fallback={<RightSidebarSkeleton />}>
+            <RightSidebarLoader />
+          </Suspense>
+        </div>
+      </div>
+    </ClientStoresHydrator>
   );
 }

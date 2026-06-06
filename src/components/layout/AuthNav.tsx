@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { resolveAvatarUrl } from "@/lib/avatars";
 import type { Profile } from "@/lib/supabase/types";
 
 type Props = {
@@ -34,9 +35,7 @@ export function AuthNav({ user, profile }: Props) {
     );
   }
 
-  const avatar =
-    profile?.avatar_url ??
-    `https://api.dicebear.com/9.x/bottts-neutral/svg?seed=${user.id}`;
+  const avatar = resolveAvatarUrl(profile?.avatar_url, user.id);
 
   return (
     <div className="flex items-center gap-2">

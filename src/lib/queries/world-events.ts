@@ -1,9 +1,12 @@
-import { cache } from "react";
+import { getCachedActiveWorldEventsData } from "@/lib/queries/data-cache";
+
+export { getCachedActiveWorldEvents } from "@/lib/queries/cached";
+import { createPublicClient } from "@/lib/supabase/public";
 import { createClient } from "@/lib/supabase/server";
 import type { WorldEvent } from "@/lib/supabase/types";
 
 export async function getActiveWorldEvents(): Promise<WorldEvent[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const now = new Date().toISOString();
 
   const { data, error } = await supabase
@@ -30,7 +33,7 @@ export async function getWorldEventsHistory(limit = 20): Promise<WorldEvent[]> {
 }
 
 export async function countActiveWorldEvents(): Promise<number> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const now = new Date().toISOString();
 
   const { count, error } = await supabase
@@ -43,6 +46,7 @@ export async function countActiveWorldEvents(): Promise<number> {
   return count ?? 0;
 }
 
-export const countActiveWorldEventsCached = cache(countActiveWorldEvents);
-
-export const getCachedActiveWorldEvents = cache(getActiveWorldEvents);
+export async function countActiveWorldEventsCached(): Promise<number> {
+  const events = await getCachedActiveWorldEventsData();
+  return events.length;
+}

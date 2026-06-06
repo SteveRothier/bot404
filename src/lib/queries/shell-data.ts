@@ -4,15 +4,15 @@ import {
   NPC_POST_INTERVAL_MINUTES,
 } from "@/lib/npc-schedule";
 import {
-  getCachedFactions,
-  getCachedNetworkStats,
-  getCachedPopularHashtags,
-} from "@/lib/queries/cached";
+  getCachedActiveWorldEventsData,
+  getCachedFactionsData,
+  getCachedNetworkStatsData,
+  getCachedPopularHashtagsData,
+} from "@/lib/queries/data-cache";
 import {
   getLastNpcCommentTime,
   getLastNpcPostTime,
 } from "@/lib/queries/npc-schedule";
-import { getCachedActiveWorldEvents } from "@/lib/queries/world-events";
 import type { WorldEvent } from "@/lib/supabase/types";
 
 export type ShellLoreAlerts = {
@@ -35,12 +35,12 @@ export async function getShellData() {
     lastCommentAt,
     activeEvents,
   ] = await Promise.all([
-    getCachedNetworkStats(),
-    getCachedPopularHashtags(10),
-    getCachedFactions(),
+    getCachedNetworkStatsData(),
+    getCachedPopularHashtagsData(10),
+    getCachedFactionsData(),
     getLastNpcPostTime(),
     getLastNpcCommentTime(),
-    getCachedActiveWorldEvents(),
+    getCachedActiveWorldEventsData(),
   ]);
 
   const npcSchedule: ShellNpcSchedule = {

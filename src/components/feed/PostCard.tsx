@@ -10,9 +10,14 @@ import { PostCardMenu } from "@/components/feed/PostCardMenu";
 import { PostContent } from "@/components/feed/PostContent";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PostMedia } from "@/components/feed/PostMedia";
-import { RemoteImage } from "@/components/ui/remote-image";
-import { isOptimizableRemoteImage } from "@/lib/images";
-import { PostComments } from "@/components/feed/PostComments";
+import dynamic from "next/dynamic";
+
+const PostComments = dynamic(
+  () =>
+    import("@/components/feed/PostComments").then((m) => m.PostComments),
+  { ssr: false, loading: () => null }
+);
+import { resolveAvatarUrl } from "@/lib/avatars";
 import { formatCount, formatRelativeTimeShort } from "@/lib/format";
 import { POST_TYPE_LABELS } from "@/lib/post-types";
 import { NARRATIVE_COPY } from "@/lib/narrative/copy";
@@ -80,24 +85,11 @@ export function PostCard({
           onClick={(e) => e.stopPropagation()}
         >
           <Avatar className="size-10 rounded-lg">
-            {author.avatar_url &&
-            isOptimizableRemoteImage(author.avatar_url) ? (
-              <div className="relative size-full overflow-hidden rounded-lg">
-                <RemoteImage
-                  src={author.avatar_url}
-                  alt={author.username}
-                  fill
-                  sizes="40px"
-                  className="rounded-lg object-cover"
-                />
-              </div>
-            ) : (
-              <AvatarImage
-                src={author.avatar_url ?? undefined}
-                alt={author.username}
-                className="rounded-lg object-cover"
-              />
-            )}
+            <AvatarImage
+              src={resolveAvatarUrl(author.avatar_url, author.username)}
+              alt={author.username}
+              className="rounded-lg object-cover"
+            />
             <AvatarFallback className="rounded-lg bg-secondary text-xs text-muted-foreground">
               {author.username.slice(0, 2)}
             </AvatarFallback>

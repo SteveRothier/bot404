@@ -9,9 +9,10 @@ import {
   getSuggestedNpcs,
 } from "@/lib/queries/follows";
 import { getUserReactionsByPostIds } from "@/lib/queries/reactions";
-import { countActiveWorldEventsCached } from "@/lib/queries/world-events";
+import { countActiveWorldEvents } from "@/lib/queries/world-events";
 import { computeNetworkState } from "@/lib/network-state";
 import { getRequestAuth, type RequestAuth } from "@/lib/queries/auth";
+import { createPublicClient } from "@/lib/supabase/public";
 import { createClient } from "@/lib/supabase/server";
 
 import type {
@@ -205,7 +206,7 @@ export async function getHomeFeedBundle(auth?: RequestAuth) {
 }
 
 export async function getTrendingSnapshot(): Promise<TrendingSnapshot | null> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data, error } = await supabase
     .from("trending_snapshots")
@@ -219,14 +220,14 @@ export async function getTrendingSnapshot(): Promise<TrendingSnapshot | null> {
 }
 
 export async function getNetworkStats(): Promise<NetworkStats> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
   const [
     { count: npcCount },
     { count: humanCount },
     { count: postsCount },
-    { data: flaggedPosts },
+    { data: flagsSum },
     activeEventsCount,
   ] = await Promise.all([
     supabase
@@ -241,15 +242,14 @@ export async function getNetworkStats(): Promise<NetworkStats> {
       .from("posts")
       .select("*", { count: "exact", head: true })
       .gte("created_at", since24h),
-    supabase.from("posts").select("flag_count").gte("created_at", since24h),
-    countActiveWorldEventsCached(),
+    supabase.rpc("total_flags_last_24h"),
+    countActiveWorldEvents(),
   ]);
 
   const total = (npcCount ?? 0) + (humanCount ?? 0);
   const humanPct = total > 0 ? (humanCount ?? 0) / total : 0.0003;
   const humanPercent = (humanPct * 100).toFixed(2);
-  const totalFlags24h =
-    flaggedPosts?.reduce((sum, p) => sum + (p.flag_count ?? 0), 0) ?? 0;
+  const totalFlags24h = Number(flagsSum ?? 0);
 
   const networkState = computeNetworkState({
     humanPercent: humanPct,

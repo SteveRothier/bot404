@@ -135,10 +135,13 @@ export async function getNarrativeStateForUi(): Promise<NarrativeUiState> {
       .eq("status", "pending"),
   ]);
 
-  const scriptedProgress =
-    scripted !== null ? await getScriptedProgress(scripted.id) : null;
-  const failedBeatsCount =
-    scripted !== null ? await getFailedBeatsCount(scripted.id) : 0;
+  const [scriptedProgress, failedBeatsCount] =
+    scripted !== null
+      ? await Promise.all([
+          getScriptedProgress(scripted.id),
+          getFailedBeatsCount(scripted.id),
+        ])
+      : [null, 0];
 
   return {
     scriptedActive: scripted !== null,

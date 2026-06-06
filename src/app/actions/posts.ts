@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { revalidateDataCaches } from "@/lib/queries/cache-tags";
 import { processPostFactionEffects } from "@/lib/factions/simulation";
 import {
   enqueueHumanCommentSignal,
@@ -135,6 +136,7 @@ export async function createPost(formData: FormData) {
     : false;
 
   revalidatePath("/");
+  revalidateDataCaches();
   return { success: true, postId: post.id, narrativeQueued };
 }
 
@@ -171,6 +173,7 @@ export async function toggleLike(postId: number) {
   }
 
   revalidatePath("/");
+  revalidateDataCaches();
   return { success: true, liked: !existing };
 }
 
@@ -215,6 +218,7 @@ export async function createComment(postId: number, formData: FormData) {
 
   revalidatePath("/");
   revalidatePath(`/post/${postId}`);
+  revalidateDataCaches();
   return { success: true, commentId: comment.id, narrativeQueued };
 }
 
@@ -241,6 +245,7 @@ export async function deletePost(postId: number) {
   revalidatePath("/");
   revalidatePath("/saved");
   revalidatePath(`/post/${postId}`);
+  revalidateDataCaches();
   return { success: true };
 }
 
@@ -266,5 +271,6 @@ export async function deleteComment(commentId: number, postId: number) {
 
   revalidatePath("/");
   revalidatePath(`/post/${postId}`);
+  revalidateDataCaches();
   return { success: true };
 }

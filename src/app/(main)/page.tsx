@@ -1,60 +1,31 @@
-import { FeedRealtime } from "@/components/feed/FeedRealtime";
-import { FeedPosts, FeedSection } from "@/components/feed/FeedSection";
+import { FeedRealtimeLazy } from "@/components/feed/FeedRealtimeLazy";
+import { FeedSection } from "@/components/feed/FeedSection";
+import { HomeFeedLoader } from "@/components/feed/HomeFeedLoader";
 import { PostsSuspense } from "@/components/feed/FeedSkeleton";
 import { getRequestAuth } from "@/lib/queries/auth";
-import { getHomeFeedBundle } from "@/lib/queries/feed";
-import { getCachedActiveWorldEvents } from "@/lib/queries/world-events";
-import type { Profile } from "@/lib/supabase/types";
+import { getCachedActiveWorldEvents } from "@/lib/queries/cached";
 
 export const revalidate = 60;
 
-type HomeFeedPostsProps = {
-  referenceNowMs: number;
-  user: { id: string; email?: string } | null;
-  profile: Profile | null;
-};
-
-async function HomeFeedPosts({
-  referenceNowMs,
-  user,
-  profile,
-}: HomeFeedPostsProps) {
-  const auth = { user, profile };
-  const data = await getHomeFeedBundle(auth);
-
-  return (
-    <FeedPosts
-      {...data}
-      user={user}
-      profile={profile}
-      referenceNowMs={referenceNowMs}
-    />
-  );
-}
-
 export default async function HomePage() {
   const referenceNowMs = Date.now();
-  const [{ user, profile }, activeEvents] = await Promise.all([
+  const [auth, activeEvents] = await Promise.all([
     getRequestAuth(),
     getCachedActiveWorldEvents(),
   ]);
   const activeWorldEvent = activeEvents[0] ?? null;
 
   return (
-    <FeedRealtime>
+    <FeedRealtimeLazy>
       <FeedSection
-        user={user}
-        profile={profile}
+        user={auth.user}
+        profile={auth.profile}
         activeWorldEvent={activeWorldEvent}
       >
         <PostsSuspense>
-          <HomeFeedPosts
-            referenceNowMs={referenceNowMs}
-            user={user}
-            profile={profile}
-          />
+          <HomeFeedLoader auth={auth} referenceNowMs={referenceNowMs} />
         </PostsSuspense>
       </FeedSection>
-    </FeedRealtime>
+    </FeedRealtimeLazy>
   );
 }

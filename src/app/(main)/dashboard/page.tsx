@@ -11,12 +11,13 @@ import { NETWORK_STATE_LABELS } from "@/lib/network-state";
 export const revalidate = 60;
 
 export default async function DashboardPage() {
-  const network = await getCachedNetworkStats();
-  const [dashboard, narrativeState, recentInteractions] = await Promise.all([
-    getDashboardStats(network),
-    getNarrativeStateForUi(),
-    getRecentNarrativeInteractions(2),
-  ]);
+  const [network, dashboard, narrativeState, recentInteractions] =
+    await Promise.all([
+      getCachedNetworkStats(),
+      getCachedNetworkStats().then(getDashboardStats),
+      getNarrativeStateForUi(),
+      getRecentNarrativeInteractions(2),
+    ]);
 
   const stateMeta = NETWORK_STATE_LABELS[network.networkState];
 

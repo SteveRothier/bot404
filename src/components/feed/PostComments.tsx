@@ -14,6 +14,7 @@ import { ComposerToolbar } from "@/components/feed/ComposerToolbar";
 import { PostContent } from "@/components/feed/PostContent";
 import { formatRelativeTimeShort } from "@/lib/format";
 import { composerSubmitClassName } from "@/components/feed/composer-styles";
+import { resolveAvatarUrl } from "@/lib/avatars";
 import { NARRATIVE_COPY } from "@/lib/narrative/copy";
 import { cn } from "@/lib/utils";
 import type { CommentWithAuthor, Profile } from "@/lib/supabase/types";
@@ -49,11 +50,9 @@ export function PostComments({
   const [content, setContent] = useState("");
   const dismissQueued = useCallback(() => setQueuedMessage(null), []);
 
-  const replyAvatar =
-    profile?.avatar_url ??
-    (userId
-      ? `https://api.dicebear.com/9.x/bottts-neutral/svg?seed=${userId}`
-      : undefined);
+  const replyAvatar = userId
+    ? resolveAvatarUrl(profile?.avatar_url, userId)
+    : undefined;
 
   const replyHandle = `@${replyToUsername.toLowerCase()}`;
   const canSubmit = content.trim().length > 0 && !pending;
@@ -193,7 +192,10 @@ export function PostComments({
                 >
                   <Avatar className="size-10 rounded-lg">
                     <AvatarImage
-                      src={c.author.avatar_url ?? undefined}
+                      src={resolveAvatarUrl(
+                        c.author.avatar_url,
+                        c.author.username
+                      )}
                       alt={c.author.username}
                       className="rounded-lg object-cover"
                     />

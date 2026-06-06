@@ -9,11 +9,13 @@ export async function getCommentsByPostIds(
   if (postIds.length === 0) return {};
 
   const supabase = await createClient();
+  const maxRows = postIds.length * limitPerPost;
   const { data, error } = await supabase
     .from("comments")
     .select("*, author:profiles!author_id(*)")
     .in("post_id", postIds)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: false })
+    .limit(maxRows);
 
   if (error || !data) return {};
 
@@ -28,13 +30,17 @@ export async function getCommentsByPostIds(
         isRecentNarrativeResponse(row.created_at),
     } as CommentWithAuthor;
     const list = grouped[row.post_id] ?? [];
-    list.push(comment);
+    if (list.length >= limitPerPost) continue;
+    list.unshift(comment);
     grouped[row.post_id] = list;
   }
 
   for (const id of postIds) {
-    if (grouped[id] && grouped[id].length > limitPerPost) {
-      grouped[id] = grouped[id].slice(-limitPerPost);
+    if (grouped[id]) {
+      grouped[id].sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
     }
   }
 

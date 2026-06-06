@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { revalidateDataCaches } from "@/lib/queries/cache-tags";
 import { processReactionFactionEffects } from "@/lib/factions/simulation";
 import { runNarrativeEscalation } from "@/lib/narrative/escalation";
 import { enqueueReactionSignal } from "@/lib/narrative/signals";
@@ -47,6 +48,7 @@ export async function toggleReaction(postId: number, kind: string) {
       -1
     );
     revalidatePath("/");
+    revalidateDataCaches();
     return { success: true, kind: null };
   }
 
@@ -79,5 +81,6 @@ export async function toggleReaction(postId: number, kind: string) {
 
   revalidatePath("/");
   revalidatePath(`/post/${postId}`);
+  revalidateDataCaches();
   return { success: true, kind };
 }

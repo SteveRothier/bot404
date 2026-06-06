@@ -3,15 +3,15 @@ import {
   getPostsByHashtagPattern,
   hashtagSearchPattern,
 } from "@/lib/queries/hashtag-posts";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import type { TrendingHashtag } from "@/lib/supabase/types";
 
-const CONTENT_LIMIT = 500;
+const CONTENT_LIMIT = 100;
 
 export async function getPopularHashtags(
   limit = 5
 ): Promise<TrendingHashtag[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const [postsRes, commentsRes] = await Promise.all([
     supabase

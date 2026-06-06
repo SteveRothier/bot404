@@ -16,6 +16,7 @@ import { composerSubmitClassName } from "@/components/feed/composer-styles";
 import { fetchFeedPostById } from "@/app/actions/feed";
 import { createPost } from "@/app/actions/posts";
 import { useFeedBridge } from "@/components/feed/FeedBridgeContext";
+import { resolveAvatarUrl } from "@/lib/avatars";
 import { NARRATIVE_COPY } from "@/lib/narrative/copy";
 import type { Profile } from "@/lib/supabase/types";
 
@@ -37,11 +38,10 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dismissQueued = useCallback(() => setQueuedMessage(null), []);
 
-  const avatar =
-    profile?.avatar_url ??
-    (user
-      ? `https://api.dicebear.com/9.x/bottts-neutral/svg?seed=${user.id}`
-      : "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=guest");
+  const avatar = resolveAvatarUrl(
+    profile?.avatar_url,
+    user?.id ?? "guest"
+  );
 
   const canSubmit =
     !!user && (content.trim().length > 0 || !!mediaFile) && !pending;
