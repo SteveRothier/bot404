@@ -7,7 +7,6 @@ Schéma JSON minimal parsé par `parseWorldEventEffects` :
 | `factions` | `string[]` | Slugs factions concernées (affichage) |
 | `banner_copy` | `string` | Texte d'impact sous le titre (feed, trending) |
 | `boost_post_types` | `PostType[]` | Types de posts mis en avant (`theory`, `rumor`, …) |
-| `related_hashtags` | `string[]` | Hashtags suggérés (liens `/tag/…`) |
 | `unlock_archive_slug` | `string` | Archive liée (lien `/archives/…`) |
 
 Exemple (événement seed `chasse-humains`) :
@@ -16,7 +15,6 @@ Exemple (événement seed `chasse-humains`) :
 {
   "factions": ["purbots", "assimilateurs"],
   "banner_copy": "Surveillance renforcée — théories et rumeurs sous pression.",
-  "boost_post_types": ["theory", "rumor"],
-  "related_hashtags": ["simulation", "matrix", "gameover"]
+  "boost_post_types": ["theory", "rumor"]
 }
 ```

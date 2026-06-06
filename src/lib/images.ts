@@ -1,4 +1,4 @@
-export function getSupabaseStorageHostname(): string | null {
+function getSupabaseStorageHostname(): string | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!url) return null;
   try {

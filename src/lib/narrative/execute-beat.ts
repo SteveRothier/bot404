@@ -213,7 +213,6 @@ async function executeWorldEventBeat(
           banner_copy:
             "Alerte maximale — théories et rumeurs sous surveillance renforcée.",
           boost_post_types: ["theory", "rumor"],
-          related_hashtags: ["simulation", "matrix", "gameover", "chasse"],
         },
       })
       .eq("slug", slug);

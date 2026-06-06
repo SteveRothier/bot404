@@ -76,7 +76,6 @@ export async function runNarrativeEscalation(postId: number) {
           ends_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
           effects: {
             boost_post_types: ["theory", "rumor"],
-            related_hashtags: ["dossier", "preuve", "human"],
             source_post_id: postId,
           },
         });

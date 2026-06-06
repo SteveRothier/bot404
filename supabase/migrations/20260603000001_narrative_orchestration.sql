@@ -114,7 +114,7 @@ insert into narrative_arcs (slug, title, synopsis, mode, status, baseline_event_
 values (
   'chasse-humains-acte-1',
   'Chasse aux humains — Acte 1',
-  'Les PurBots et Assimilateurs intensifient la chasse aux profils non-NPC. Secteurs 3C et 7G sous tension. Ton parano, rumeurs, théories.',
+  'Les PurBots et Assimilateurs intensifient la chasse aux profils non-NPC. Le réseau est sous tension — rumeurs, théories et signaux se multiplient.',
   'scripted',
   'active',
   'chasse-humains',
@@ -127,9 +127,9 @@ insert into narrative_beats (arc_id, sort_order, kind, run_at, payload)
 select a.id, v.sort_order, v.kind::narrative_beat_kind, now() + (v.offset_min || ' minutes')::interval, v.payload::jsonb
 from narrative_arcs a
 cross join (values
-  (1, 'npc_post', 0, '{"npc_username":"RumorMill","post_type":"rumor","sector_code":"3C","directive":"On dit qu''un humain se fait passer pour un NPC influent dans le secteur 3C. Ambigu, sensationnel."}'),
+  (1, 'npc_post', 0, '{"npc_username":"RumorMill","post_type":"rumor","directive":"On dit qu''un humain se fait passer pour un NPC influent sur le fil. Ambigu, sensationnel."}'),
   (2, 'npc_comment', 5, '{"npc_username":"NeoByte","reply_to_beat_order":1,"directive":"Nie avec agressivité. Moque RumorMill. Insiste sur ta pureté algorithmique."}'),
-  (3, 'npc_post', 10, '{"npc_username":"ConspiracyBot","post_type":"theory","sector_code":"3C","directive":"Théorie : les PurBots falsifient les logs du marché 3C pour piéger les humains."}'),
+  (3, 'npc_post', 10, '{"npc_username":"ConspiracyBot","post_type":"theory","directive":"Théorie : les PurBots falsifient les logs du fil pour piéger les humains."}'),
   (4, 'archive_unlock', 15, '{"archive_slug":"blackout-7g"}'),
   (5, 'world_event', 20, '{"event_slug":"chasse-humains","intensify":true}'),
   (6, 'pause', 25, '{"hours":24,"message":"Fenêtre joueur — le réseau observe vos signaux."}'),

@@ -15,6 +15,7 @@ type Props = {
   priority?: boolean;
 };
 
+/** Images distantes optimisables par Next.js (Supabase Storage, hors GIF). */
 export function RemoteImage({
   src,
   alt,
@@ -25,43 +26,32 @@ export function RemoteImage({
   fill,
   priority,
 }: Props) {
-  if (isOptimizableRemoteImage(src)) {
-    if (fill) {
-      return (
-        <Image
-          src={src}
-          alt={alt}
-          fill
-          sizes={sizes}
-          priority={priority}
-          className={cn("object-cover", className)}
-        />
-      );
-    }
+  if (!isOptimizableRemoteImage(src)) {
+    return null;
+  }
 
+  if (fill) {
     return (
       <Image
         src={src}
         alt={alt}
-        width={width ?? 600}
-        height={height ?? 400}
+        fill
         sizes={sizes}
         priority={priority}
-        className={className}
+        className={cn("object-cover", className)}
       />
     );
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src={src}
       alt={alt}
-      width={fill ? undefined : width}
-      height={fill ? undefined : height}
-      loading={priority ? "eager" : "lazy"}
-      decoding="async"
-      className={cn(fill && "absolute inset-0 size-full object-cover", className)}
+      width={width ?? 600}
+      height={height ?? 400}
+      sizes={sizes}
+      priority={priority}
+      className={className}
     />
   );
 }

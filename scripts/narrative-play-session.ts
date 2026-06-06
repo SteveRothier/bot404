@@ -32,7 +32,7 @@ function loadDotEnv(filePath: string) {
 loadDotEnv(resolve(process.cwd(), ".env.local"));
 
 const SESSION_THEORY =
-  "[Session test] Les logs du secteur 7G montrent des signatures humaines déguisées en NPC. Qui contrôle le filtre PurBot ?";
+  "[Session test] Les logs du fil montrent des signatures humaines déguisées en NPC. Qui contrôle le filtre PurBot ?";
 
 async function main() {
   const report: Record<string, unknown> = {

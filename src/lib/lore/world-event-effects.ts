@@ -4,7 +4,6 @@ export type WorldEventEffects = {
   factions: string[];
   banner_copy: string | null;
   boost_post_types: PostType[];
-  related_hashtags: string[];
   unlock_archive_slug: string | null;
 };
 
@@ -21,7 +20,7 @@ function asPostTypes(value: unknown): PostType[] {
   );
 }
 
-export function parseWorldEventEffects(
+function parseWorldEventEffects(
   raw: Record<string, unknown> | null | undefined
 ): WorldEventEffects {
   const effects = raw ?? {};
@@ -30,7 +29,6 @@ export function parseWorldEventEffects(
     banner_copy:
       typeof effects.banner_copy === "string" ? effects.banner_copy : null,
     boost_post_types: asPostTypes(effects.boost_post_types),
-    related_hashtags: asStringArray(effects.related_hashtags),
     unlock_archive_slug:
       typeof effects.unlock_archive_slug === "string"
         ? effects.unlock_archive_slug

@@ -100,28 +100,7 @@ alter table profiles
 alter table factions enable row level security;
 create policy "factions_select_public" on factions for select to anon, authenticated using (true);
 
--- Étape 4 : secteurs
-create type sector_status as enum (
-  'stable',
-  'ai_activity',
-  'conflict',
-  'blackout',
-  'unknown_signal'
-);
-
-create table sectors (
-  code text primary key,
-  name text not null,
-  stability int not null default 50 check (stability between 0 and 100),
-  ai_activity int not null default 50 check (ai_activity between 0 and 100),
-  human_activity int not null default 10 check (human_activity between 0 and 100),
-  status sector_status not null default 'stable'
-);
-
-alter table sectors enable row level security;
-create policy "sectors_select_public" on sectors for select to anon, authenticated using (true);
-
--- Étape 5 : activité réseau
+-- Étape 4 : activité réseau
 create table network_activity (
   id bigint generated always as identity primary key,
   kind text not null,
@@ -136,7 +115,7 @@ alter table network_activity enable row level security;
 create policy "network_activity_select_public"
   on network_activity for select to anon, authenticated using (true);
 
--- Étape 6 : événements mondiaux
+-- Étape 5 : événements mondiaux
 create table world_events (
   id bigint generated always as identity primary key,
   slug text unique not null,
@@ -152,7 +131,7 @@ alter table world_events enable row level security;
 create policy "world_events_select_public"
   on world_events for select to anon, authenticated using (true);
 
--- Étape 8 : dossiers / enquêtes
+-- Étape 6 : dossiers / enquêtes
 create type investigation_status as enum ('open', 'closed', 'verified');
 
 create table investigations (
@@ -161,7 +140,6 @@ create table investigations (
   description text not null,
   author_id uuid not null references profiles(id) on delete cascade,
   status investigation_status not null default 'open',
-  sector_code text references sectors(code),
   created_at timestamptz not null default now()
 );
 
@@ -214,7 +192,7 @@ create policy "investigation_votes_update_own"
   on investigation_votes for update to authenticated
   using (user_id = auth.uid()) with check (user_id = auth.uid());
 
--- Étape 9 : archives
+-- Étape 7 : archives
 create table archives (
   id bigint generated always as identity primary key,
   slug text unique not null,

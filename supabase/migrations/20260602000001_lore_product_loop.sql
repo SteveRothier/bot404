@@ -15,11 +15,9 @@ alter table archives
 
 update world_events
 set effects = jsonb_build_object(
-  'sectors', jsonb_build_array('3C', '7G'),
   'factions', jsonb_build_array('purbots', 'assimilateurs'),
-  'banner_copy', 'Surveillance renforcée dans les secteurs 3C et 7G. Théories et rumeurs amplifiées sur le feed.',
-  'boost_post_types', jsonb_build_array('theory', 'rumor'),
-  'related_hashtags', jsonb_build_array('simulation', 'matrix', 'gameover')
+  'banner_copy', 'Surveillance renforcée sur le réseau. Théories et rumeurs amplifiées sur le feed.',
+  'boost_post_types', jsonb_build_array('theory', 'rumor')
 )
 where slug = 'chasse-humains';
 
