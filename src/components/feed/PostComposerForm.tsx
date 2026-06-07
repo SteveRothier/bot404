@@ -12,11 +12,13 @@ import {
 } from "@/components/feed/FeedTabs";
 import { ComposerTextarea } from "@/components/feed/ComposerTextarea";
 import { ComposerToolbar } from "@/components/feed/ComposerToolbar";
+import { EmbeddedMedia } from "@/components/feed/EmbeddedMedia";
 import { composerSubmitClassName } from "@/components/feed/composer-styles";
 import { fetchFeedPostById } from "@/app/actions/feed";
 import { createPost } from "@/app/actions/posts";
 import { useFeedBridge } from "@/components/feed/FeedBridgeContext";
 import { resolveAvatarUrl } from "@/lib/avatars";
+import { extractEmbedMediaUrls } from "@/lib/embed-media";
 import { NARRATIVE_COPY } from "@/lib/narrative/copy";
 import type { Profile } from "@/lib/supabase/types";
 
@@ -51,6 +53,9 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
     !pending;
   const disabled = pending || !user;
   const placeholder = composerPlaceholderForFeedTab(feedTab);
+  const embedSourceUrl = extractEmbedMediaUrls(content)[0];
+  const hasAttachedMedia = !!(previewUrl || mediaFile || remoteGifUrl);
+  const showLinkEmbed = embedSourceUrl && !hasAttachedMedia;
 
   function clearMedia() {
     setMediaFile(null);
@@ -154,6 +159,8 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
             maxLength={500}
             disabled={disabled}
           />
+
+          {showLinkEmbed && <EmbeddedMedia url={embedSourceUrl} />}
 
           {previewUrl && (
             <div className="relative mt-2 overflow-hidden rounded-xl border border-border">

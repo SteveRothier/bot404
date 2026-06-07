@@ -11,7 +11,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CommentDeleteButton } from "@/components/feed/CommentDeleteButton";
 import { ComposerTextarea } from "@/components/feed/ComposerTextarea";
 import { ComposerToolbar } from "@/components/feed/ComposerToolbar";
+import { EmbeddedMedia } from "@/components/feed/EmbeddedMedia";
 import { PostContent } from "@/components/feed/PostContent";
+import { extractEmbedMediaUrls } from "@/lib/embed-media";
 import { formatRelativeTimeShort } from "@/lib/format";
 import { composerSubmitClassName } from "@/components/feed/composer-styles";
 import { resolveAvatarUrl } from "@/lib/avatars";
@@ -55,6 +57,7 @@ export function PostComments({
     : undefined;
 
   const replyHandle = `@${replyToUsername.toLowerCase()}`;
+  const embedSourceUrl = extractEmbedMediaUrls(content)[0];
   const canSubmit = content.trim().length > 0 && !pending;
 
   useEffect(() => {
@@ -63,6 +66,13 @@ export function PostComments({
       setError(null);
     }
   }, [open]);
+
+  function handleGifSelect(gif: { url: string; previewUrl: string }) {
+    setContent((c) => {
+      const sep = c.length > 0 && !/\s$/.test(c) ? " " : "";
+      return `${c}${sep}${gif.url}`;
+    });
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -129,6 +139,10 @@ export function PostComments({
                   onChange={setContent}
                 />
 
+                {embedSourceUrl && (
+                  <EmbeddedMedia url={embedSourceUrl} />
+                )}
+
                 {error && (
                   <p className="mt-1 px-1 text-sm text-destructive">{error}</p>
                 )}
@@ -143,6 +157,7 @@ export function PostComments({
                 <div className="mt-1 flex items-center justify-between gap-3 px-1 pb-0.5">
                   <ComposerToolbar
                     onEmojiSelect={(emoji) => setContent((c) => c + emoji)}
+                    onGifSelect={handleGifSelect}
                     disabled={pending}
                   />
 

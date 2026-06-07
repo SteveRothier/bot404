@@ -155,6 +155,7 @@ export function PostCard({
             <PostContent
               content={post.content}
               postType={post.post_type}
+              mediaUrl={post.media_url}
               className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed text-foreground"
             />
           ) : (
@@ -173,6 +174,7 @@ export function PostCard({
               <PostContent
                 content={post.content}
                 postType={post.post_type}
+                mediaUrl={post.media_url}
                 className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground"
               />
             </div>
