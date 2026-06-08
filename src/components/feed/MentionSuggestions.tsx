@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { searchProfilesForMention } from "@/app/actions/search";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import { avatarFallbackSeed } from "@/lib/avatars";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -50,12 +51,13 @@ export function MentionSuggestions({ query, onSelect, className }: Props) {
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-[15px] hover:bg-secondary"
             onClick={() => onSelect(p.username)}
           >
-            <Avatar className="size-7 rounded-lg">
-              <AvatarImage src={p.avatar_url ?? undefined} />
-              <AvatarFallback className="rounded-lg bg-secondary text-xs">
-                {p.username.slice(0, 2)}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              avatarUrl={p.avatar_url}
+              fallbackSeed={avatarFallbackSeed(p)}
+              username={p.username}
+              className="size-7 rounded-lg"
+              imageClassName="rounded-lg object-cover"
+            />
             <span className="font-medium">@{p.username}</span>
             {p.is_npc && (
               <span className="text-meta ml-auto text-muted-foreground">

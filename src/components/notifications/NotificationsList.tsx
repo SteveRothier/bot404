@@ -7,9 +7,8 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/app/actions/notifications";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import type { NotificationKind, NotificationWithActor } from "@/lib/supabase/types";
-import { resolveAvatarUrl } from "@/lib/avatars";
 import { cn } from "@/lib/utils";
 import { useNotificationsStore } from "@/stores/notifications-store";
 
@@ -123,19 +122,13 @@ export function NotificationsList({ notifications, referenceNowMs }: Props) {
                   unread && "bg-accent/5"
                 )}
               >
-                <Avatar className="size-10 shrink-0 rounded-lg">
-                  <AvatarImage
-                    src={
-                      n.actor
-                        ? resolveAvatarUrl(n.actor.avatar_url, n.actor.id)
-                        : undefined
-                    }
-                    className="rounded-lg object-cover"
-                  />
-                  <AvatarFallback className="rounded-lg bg-secondary text-xs">
-                    {n.actor?.username?.slice(0, 2) ?? "??"}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar
+                  avatarUrl={n.actor?.avatar_url}
+                  fallbackSeed={n.actor?.id ?? "system"}
+                  username={n.actor?.username ?? "??"}
+                  className="size-10 shrink-0 rounded-lg"
+                  imageClassName="rounded-lg object-cover"
+                />
                 <div className="min-w-0 flex-1">
                   <p className="text-[15px] text-foreground">{text}</p>
                   <p className="mt-0.5 text-meta text-muted-foreground">

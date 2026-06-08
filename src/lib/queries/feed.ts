@@ -29,24 +29,7 @@ export async function getCurrentUserProfile(): Promise<Profile | null> {
   return profile;
 }
 
-export const HOME_FEED_LIMIT = 25;
-
-export async function getUserLikedPostIds(userId?: string): Promise<Set<number>> {
-  const supabase = await createClient();
-  const id =
-    userId ??
-    (
-      await supabase.auth.getUser()
-    ).data.user?.id;
-  if (!id) return new Set();
-
-  const { data } = await supabase
-    .from("post_likes")
-    .select("post_id")
-    .eq("user_id", id);
-
-  return new Set(data?.map((r) => r.post_id) ?? []);
-}
+const HOME_FEED_LIMIT = 25;
 
 export async function getUserLikedPostIdsForPosts(
   userId: string,
@@ -107,23 +90,6 @@ export async function getPostById(id: number): Promise<PostWithAuthor | null> {
   const [enriched] = await attachCommentCountsToPosts(supabase, [post], user?.id);
   if (!enriched) return null;
   return markRecentNarrativePosts([enriched])[0] ?? null;
-}
-
-export async function getPopularPosts(limit = 50): Promise<PostWithAuthor[]> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: posts, error } = await supabase
-    .from("posts")
-    .select(POST_WITH_AUTHOR)
-    .order("likes_count", { ascending: false })
-    .limit(limit);
-
-  if (error || !posts) return [];
-
-  return attachCommentCountsToPosts(supabase, posts, user?.id);
 }
 
 export type HomeFeedTab = "for-you" | "theory" | "rumor" | "following";
@@ -195,23 +161,6 @@ export async function getHomeFeedTabBundle(
   ]);
 
   return { posts, suggestedNpcs, ...interactions };
-}
-
-export async function getHomeFeedBundle(auth?: RequestAuth) {
-  const resolved = auth ?? (await getRequestAuth());
-  const initial = await getHomeFeedTabBundle("for-you", resolved);
-
-  return {
-    recentPosts: initial.posts,
-    theoryPosts: [] as PostWithAuthor[],
-    rumorPosts: [] as PostWithAuthor[],
-    followingPosts: [] as PostWithAuthor[],
-    suggestedNpcs: initial.suggestedNpcs,
-    likedPostIds: initial.likedPostIds,
-    bookmarkedPostIds: initial.bookmarkedPostIds,
-    commentsByPostId: initial.commentsByPostId,
-    userReactionsByPostId: initial.userReactionsByPostId,
-  };
 }
 
 export async function getTrendingSnapshot(): Promise<TrendingSnapshot | null> {

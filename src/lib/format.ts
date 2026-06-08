@@ -1,13 +1,3 @@
-import { formatDistance } from "date-fns";
-import { fr } from "date-fns/locale";
-
-export function formatRelativeTime(date: string, nowMs = Date.now()): string {
-  return formatDistance(new Date(date), new Date(nowMs), {
-    addSuffix: false,
-    locale: fr,
-  });
-}
-
 /** Format court type mockup : 2m, 4h, 3j */
 export function formatRelativeTimeShort(
   date: string,

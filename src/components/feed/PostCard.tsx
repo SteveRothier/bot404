@@ -8,7 +8,7 @@ import { BookmarkButton } from "@/components/feed/BookmarkButton";
 import { PostReactions } from "@/components/feed/PostReactions";
 import { PostCardMenu } from "@/components/feed/PostCardMenu";
 import { PostContent } from "@/components/feed/PostContent";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { PostMedia } from "@/components/feed/PostMedia";
 import { PostPoll } from "@/components/feed/PostPoll";
 import dynamic from "next/dynamic";
@@ -18,7 +18,7 @@ const PostComments = dynamic(
     import("@/components/feed/PostComments").then((m) => m.PostComments),
   { ssr: false, loading: () => null }
 );
-import { resolveAvatarUrl } from "@/lib/avatars";
+import { avatarFallbackSeed } from "@/lib/avatars";
 import { formatCount, formatRelativeTimeShort } from "@/lib/format";
 import { isPollExpired } from "@/lib/polls";
 import { POST_TYPE_LABELS } from "@/lib/post-types";
@@ -91,16 +91,14 @@ export function PostCard({
           className="shrink-0 self-start"
           onClick={(e) => e.stopPropagation()}
         >
-          <Avatar className="size-10 rounded-lg">
-            <AvatarImage
-              src={resolveAvatarUrl(author.avatar_url, author.username)}
-              alt={author.username}
-              className="rounded-lg object-cover"
-            />
-            <AvatarFallback className="rounded-lg bg-secondary text-xs text-muted-foreground">
-              {author.username.slice(0, 2)}
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar
+            avatarUrl={author.avatar_url}
+            fallbackSeed={avatarFallbackSeed(author)}
+            username={author.username}
+            className="size-10 rounded-lg"
+            imageClassName="rounded-lg object-cover"
+            fallbackClassName="rounded-lg bg-transparent"
+          />
         </Link>
 
         <div className="min-w-0 flex-1">

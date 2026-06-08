@@ -7,7 +7,7 @@ import { fetchFeedCommentById } from "@/app/actions/feed";
 import { createComment } from "@/app/actions/posts";
 import { useFeedBridge } from "@/components/feed/FeedBridgeContext";
 import { NarrativeQueuedBanner } from "@/components/lore/NarrativeQueuedBanner";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { CommentDeleteButton } from "@/components/feed/CommentDeleteButton";
 import { ComposerTextarea } from "@/components/feed/ComposerTextarea";
 import { ComposerToolbar } from "@/components/feed/ComposerToolbar";
@@ -16,7 +16,7 @@ import { PostContent } from "@/components/feed/PostContent";
 import { extractEmbedMediaUrls } from "@/lib/embed-media";
 import { formatRelativeTimeShort } from "@/lib/format";
 import { composerSubmitClassName } from "@/components/feed/composer-styles";
-import { resolveAvatarUrl } from "@/lib/avatars";
+import { avatarFallbackSeed } from "@/lib/avatars";
 import { NARRATIVE_COPY } from "@/lib/narrative/copy";
 import { cn } from "@/lib/utils";
 import type { CommentWithAuthor, Profile } from "@/lib/supabase/types";
@@ -51,10 +51,6 @@ export function PostComments({
   const [pending, startTransition] = useTransition();
   const [content, setContent] = useState("");
   const dismissQueued = useCallback(() => setQueuedMessage(null), []);
-
-  const replyAvatar = userId
-    ? resolveAvatarUrl(profile?.avatar_url, userId)
-    : undefined;
 
   const replyHandle = `@${replyToUsername.toLowerCase()}`;
   const embedSourceUrl = extractEmbedMediaUrls(content)[0];
@@ -119,15 +115,16 @@ export function PostComments({
             </p>
 
             <div className="flex items-start gap-3">
-              <Avatar className="size-10 shrink-0 rounded-lg">
-                <AvatarImage
-                  src={replyAvatar}
-                  className="rounded-lg object-cover"
+              {userId && (
+                <UserAvatar
+                  avatarUrl={profile?.avatar_url}
+                  fallbackSeed={userId}
+                  username={profile?.username ?? "??"}
+                  className="size-10 shrink-0 rounded-lg"
+                  imageClassName="rounded-lg object-cover"
+                  fallbackClassName="rounded-lg bg-transparent"
                 />
-                <AvatarFallback className="rounded-lg bg-transparent text-xs text-muted-foreground">
-                  {profile?.username?.slice(0, 2) ?? "??"}
-                </AvatarFallback>
-              </Avatar>
+              )}
 
               <div className="min-w-0 flex-1">
                 <ComposerTextarea
@@ -205,19 +202,14 @@ export function PostComments({
                   className="shrink-0 self-start"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <Avatar className="size-10 rounded-lg">
-                    <AvatarImage
-                      src={resolveAvatarUrl(
-                        c.author.avatar_url,
-                        c.author.username
-                      )}
-                      alt={c.author.username}
-                      className="rounded-lg object-cover"
-                    />
-                    <AvatarFallback className="rounded-lg bg-transparent text-xs text-muted-foreground">
-                      {c.author.username.slice(0, 2)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    avatarUrl={c.author.avatar_url}
+                    fallbackSeed={avatarFallbackSeed(c.author)}
+                    username={c.author.username}
+                    className="size-10 rounded-lg"
+                    imageClassName="rounded-lg object-cover"
+                    fallbackClassName="rounded-lg bg-transparent"
+                  />
                 </Link>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1 text-[15px]">

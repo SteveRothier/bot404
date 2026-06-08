@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Button } from "@/components/ui/button";
-import { resolveAvatarUrl } from "@/lib/avatars";
 import type { Profile } from "@/lib/supabase/types";
 
 type Props = {
@@ -35,17 +34,15 @@ export function AuthNav({ user, profile }: Props) {
     );
   }
 
-  const avatar = resolveAvatarUrl(profile?.avatar_url, user.id);
-
   return (
     <div className="flex items-center gap-2">
       <Link href={profile ? `/profile/${profile.username}` : "/"}>
-        <Avatar className="h-9 w-9">
-          <AvatarImage src={avatar} />
-          <AvatarFallback className="bg-secondary text-xs">
-            {(profile?.username ?? "U").slice(0, 2)}
-          </AvatarFallback>
-        </Avatar>
+        <UserAvatar
+          avatarUrl={profile?.avatar_url}
+          fallbackSeed={user.id}
+          username={profile?.username ?? "U"}
+          className="h-9 w-9"
+        />
       </Link>
       <Button
         size="sm"

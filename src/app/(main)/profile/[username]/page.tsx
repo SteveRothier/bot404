@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { FeedListLoader } from "@/components/feed/FeedServer";
 import { PostsSuspense } from "@/components/feed/FeedSkeleton";
 import { FollowButton } from "@/components/profile/FollowButton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import { avatarFallbackSeed } from "@/lib/avatars";
 import {
   getFollowerCount,
   getFollowingCount,
@@ -64,15 +65,14 @@ export default async function ProfilePage({ params }: Props) {
     <div className="w-full">
       <div className="border-b border-border px-4 pb-4 pt-2">
         <div className="flex items-start justify-between gap-4">
-          <Avatar className="size-20 rounded-full">
-            <AvatarImage
-              src={profile.avatar_url ?? undefined}
-              className="rounded-full object-cover"
-            />
-            <AvatarFallback className="rounded-full bg-secondary text-lg">
-              {profile.username.slice(0, 2)}
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar
+            avatarUrl={profile.avatar_url}
+            fallbackSeed={avatarFallbackSeed(profile)}
+            username={profile.username}
+            className="size-20 rounded-full"
+            imageClassName="rounded-full object-cover"
+            fallbackClassName="rounded-full text-lg"
+          />
           <div className="pt-1">
             {isOwnProfile ? (
               <Link

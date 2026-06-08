@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateProfile } from "@/app/actions/profile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import { isDiscordAvatarUrl } from "@/lib/avatars";
 import type { Profile } from "@/lib/supabase/types";
 
 type Props = {
@@ -16,6 +18,14 @@ export function ProfileEditForm({ profile }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url ?? "");
+  const [previewError, setPreviewError] = useState(false);
+
+  const hasCustomUrl = avatarUrl.trim().length > 0;
+
+  useEffect(() => {
+    setPreviewError(false);
+  }, [avatarUrl]);
 
   return (
     <form
@@ -35,6 +45,33 @@ export function ProfileEditForm({ profile }: Props) {
         });
       }}
     >
+      <div className="flex items-center gap-4">
+        <UserAvatar
+          avatarUrl={avatarUrl || null}
+          fallbackSeed={profile.id}
+          username={profile.username}
+          allowDicebearFallback={!hasCustomUrl}
+          onImageError={() => setPreviewError(true)}
+          onImageLoad={() => setPreviewError(false)}
+          className="size-16 rounded-full"
+          imageClassName="rounded-full object-cover"
+          fallbackClassName="rounded-full text-base"
+        />
+        <div className="min-w-0">
+          <p className="text-sm text-muted-foreground">
+            Aperçu de votre avatar
+          </p>
+          {previewError && hasCustomUrl && (
+            <p className="mt-1 text-sm text-destructive">
+              Impossible de charger cette image.
+              {isDiscordAvatarUrl(avatarUrl)
+                ? " Les liens Discord expirent — copiez un lien récent ou hébergez l’image ailleurs (Imgur, Supabase Storage…)."
+                : " Vérifiez que l’URL est publique et pointe vers une image."}
+            </p>
+          )}
+        </div>
+      </div>
+
       <div>
         <label htmlFor="bio" className="mb-1 block text-[15px] font-bold">
           Bio
@@ -57,11 +94,19 @@ export function ProfileEditForm({ profile }: Props) {
         <Input
           id="avatar_url"
           name="avatar_url"
-          type="url"
-          defaultValue={profile.avatar_url ?? ""}
+          type="text"
+          inputMode="url"
+          autoComplete="url"
+          spellCheck={false}
+          value={avatarUrl}
+          onChange={(e) => setAvatarUrl(e.target.value)}
           placeholder="https://…"
           className="rounded-xl border-border bg-secondary"
         />
+        <p className="mt-1 text-meta text-muted-foreground">
+          Les URLs Discord expirent : au enregistrement, l&apos;image est
+          copiée sur le serveur pour un affichage permanent.
+        </p>
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}

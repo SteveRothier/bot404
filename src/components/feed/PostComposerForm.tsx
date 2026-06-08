@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { NarrativeQueuedBanner } from "@/components/lore/NarrativeQueuedBanner";
 import {
   composerPlaceholderForFeedTab,
@@ -22,7 +22,6 @@ import { composerSubmitClassName } from "@/components/feed/composer-styles";
 import { fetchFeedPostById } from "@/app/actions/feed";
 import { createPost } from "@/app/actions/posts";
 import { useFeedBridge } from "@/components/feed/FeedBridgeContext";
-import { resolveAvatarUrl } from "@/lib/avatars";
 import { extractEmbedMediaUrls } from "@/lib/embed-media";
 import { POLL_MIN_OPTIONS } from "@/lib/polls";
 import { NARRATIVE_COPY } from "@/lib/narrative/copy";
@@ -48,11 +47,6 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
   const [pending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dismissQueued = useCallback(() => setQueuedMessage(null), []);
-
-  const avatar = resolveAvatarUrl(
-    profile?.avatar_url,
-    user?.id ?? "guest"
-  );
 
   const embedSourceUrl = extractEmbedMediaUrls(content)[0];
   const hasAttachedMedia = !!(previewUrl || mediaFile || remoteGifUrl);
@@ -175,12 +169,14 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
   return (
     <section className="border-b border-border px-4 py-4">
       <form onSubmit={handleSubmit} className="flex items-start gap-3">
-        <Avatar className="size-10 shrink-0 rounded-lg">
-          <AvatarImage src={avatar} className="rounded-lg object-cover" />
-          <AvatarFallback className="rounded-lg bg-transparent text-xs text-muted-foreground">
-            {profile?.username?.slice(0, 2) ?? "??"}
-          </AvatarFallback>
-        </Avatar>
+        <UserAvatar
+          avatarUrl={profile?.avatar_url}
+          fallbackSeed={user?.id ?? "guest"}
+          username={profile?.username ?? "??"}
+          className="size-10 shrink-0 rounded-lg"
+          imageClassName="rounded-lg object-cover"
+          fallbackClassName="rounded-lg bg-transparent"
+        />
 
         <div className="min-w-0 flex-1">
           <ComposerTextarea

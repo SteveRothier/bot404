@@ -37,12 +37,3 @@ export async function getPostsByProfileId(
 
   return attachCommentCountsToPosts(supabase, posts, user?.id);
 }
-
-export async function getPostsByUsername(
-  username: string,
-  limit = 30
-): Promise<PostWithAuthor[]> {
-  const profile = await getProfileByUsername(username);
-  if (!profile) return [];
-  return getPostsByProfileId(profile.id, limit);
-}

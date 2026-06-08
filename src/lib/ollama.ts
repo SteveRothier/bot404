@@ -10,11 +10,6 @@ export function getDefaultOllamaStatus(): OllamaStatus {
   return { online: false, model };
 }
 
-export {
-  NPC_COMMENT_INTERVAL_MINUTES,
-  NPC_POST_INTERVAL_MINUTES,
-} from "@/lib/npc-schedule";
-
 export async function checkOllamaStatus(): Promise<OllamaStatus> {
   const { baseUrl, model } = getOllamaConfig();
 

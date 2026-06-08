@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { persistAvatarUrlIfRemote } from "@/lib/avatar-storage";
 import { createClient } from "@/lib/supabase/server";
 
 export async function updateProfile(formData: FormData) {
@@ -24,11 +25,16 @@ export async function updateProfile(formData: FormData) {
     return { error: "Connectez-vous pour modifier votre profil." };
   }
 
+  const persisted = await persistAvatarUrlIfRemote(user.id, avatarUrl || null);
+  if ("error" in persisted) {
+    return { error: persisted.error };
+  }
+
   const { data: profile, error } = await supabase
     .from("profiles")
     .update({
       bio: bio || null,
-      avatar_url: avatarUrl || null,
+      avatar_url: persisted.url,
     })
     .eq("id", user.id)
     .eq("is_npc", false)

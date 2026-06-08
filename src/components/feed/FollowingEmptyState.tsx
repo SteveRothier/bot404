@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { resolveAvatarUrl } from "@/lib/avatars";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import { avatarFallbackSeed } from "@/lib/avatars";
 import type { Profile } from "@/lib/supabase/types";
 
 type Props = {
@@ -24,15 +24,13 @@ export function FollowingEmptyState({ suggestedNpcs }: Props) {
               href={`/profile/${npc.username}`}
               className="surface-hover flex items-center gap-3 rounded-lg px-3 py-2"
             >
-              <Avatar className="size-10 rounded-full">
-                <AvatarImage
-                  src={resolveAvatarUrl(npc.avatar_url, npc.username)}
-                  className="rounded-full object-cover"
-                />
-                <AvatarFallback className="rounded-full bg-secondary text-xs">
-                  {npc.username.slice(0, 2)}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar
+                avatarUrl={npc.avatar_url}
+                fallbackSeed={avatarFallbackSeed(npc)}
+                username={npc.username}
+                className="size-10 rounded-full"
+                imageClassName="rounded-full object-cover"
+              />
               <div className="min-w-0 text-left">
                 <p className="truncate font-bold text-foreground">
                   {npc.username}

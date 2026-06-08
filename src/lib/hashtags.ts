@@ -1,4 +1,3 @@
-export const HASHTAG_REGEX = /(#[\w\u00C0-\u024F]+)/gi;
 export const HASHTAG_MATCH_REGEX = /#[\w\u00C0-\u024F]+/gi;
 export const HASHTAG_TOKEN_REGEX = /^#[\w\u00C0-\u024F]+$/i;
 
