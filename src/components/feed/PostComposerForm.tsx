@@ -23,9 +23,14 @@ import { fetchFeedPostById } from "@/app/actions/feed";
 import { createPost } from "@/app/actions/posts";
 import { useFeedBridge } from "@/components/feed/FeedBridgeContext";
 import { extractEmbedMediaUrls } from "@/lib/embed-media";
-import { POLL_MIN_OPTIONS } from "@/lib/polls";
+import {
+  POLL_MIN_OPTIONS,
+  validatePollDraft,
+} from "@/lib/polls";
 import { NARRATIVE_COPY } from "@/lib/narrative/copy";
 import type { Profile } from "@/lib/supabase/types";
+
+const POST_MAX_LENGTH = 500;
 
 type Props = {
   user: { id: string; email?: string } | null;
@@ -53,10 +58,17 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
   const showLinkEmbed = embedSourceUrl && !hasAttachedMedia && !pollDraft;
   const filledPollChoices =
     pollDraft?.optionFields.filter((o) => o.trim().length > 0).length ?? 0;
+  const pollValidationError = pollDraft
+    ? validatePollDraft({
+        options: pollDraft.optionFields.map((o) => o.trim()).filter(Boolean),
+        durationMinutes: pollDraft.durationMinutes,
+      })
+    : null;
   const pollReady =
     !!pollDraft &&
     content.trim().length > 0 &&
-    filledPollChoices >= POLL_MIN_OPTIONS;
+    filledPollChoices >= POLL_MIN_OPTIONS &&
+    !pollValidationError;
   const canSubmit =
     !!user &&
     !pending &&
@@ -64,7 +76,17 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
       (!pollDraft &&
         (content.trim().length > 0 || !!mediaFile || !!remoteGifUrl)));
   const disabled = pending || !user;
-  const placeholder = composerPlaceholderForFeedTab(feedTab);
+  const placeholder = user
+    ? composerPlaceholderForFeedTab(feedTab)
+    : "Connectez-vous pour publier…";
+  const submitHint = pollDraft
+    ? pollValidationError ??
+      (content.trim().length === 0
+        ? "Ajoutez un message au sondage"
+        : filledPollChoices < POLL_MIN_OPTIONS
+          ? `${POLL_MIN_OPTIONS} choix minimum`
+          : null)
+    : null;
 
   function clearMedia() {
     setMediaFile(null);
@@ -166,12 +188,37 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
     setContent((c) => c + emoji);
   }
 
+  if (!user) {
+    return (
+      <section className="border-b border-border px-4 py-4">
+        <div className="flex items-start gap-3 opacity-60">
+          <UserAvatar
+            avatarUrl={null}
+            fallbackSeed="guest"
+            username="?"
+            className="size-10 shrink-0 rounded-lg"
+            imageClassName="rounded-lg object-cover"
+            fallbackClassName="rounded-lg bg-transparent"
+          />
+          <div className="min-w-0 flex-1 rounded-xl border border-dashed border-border bg-secondary/30 px-4 py-3">
+            <p className="text-[15px] text-muted-foreground">
+              <Link href="/login" className="font-bold text-accent hover:underline">
+                Connectez-vous
+              </Link>{" "}
+              pour publier un signal, une théorie ou un sondage.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="border-b border-border px-4 py-4">
       <form onSubmit={handleSubmit} className="flex items-start gap-3">
         <UserAvatar
           avatarUrl={profile?.avatar_url}
-          fallbackSeed={user?.id ?? "guest"}
+          fallbackSeed={user.id}
           username={profile?.username ?? "??"}
           className="size-10 shrink-0 rounded-lg"
           imageClassName="rounded-lg object-cover"
@@ -183,9 +230,13 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
             placeholder={placeholder}
             value={content}
             onChange={setContent}
-            maxLength={500}
+            maxLength={POST_MAX_LENGTH}
             disabled={disabled}
           />
+
+          <p className="px-1 text-right text-xs tabular-nums text-muted-foreground">
+            {content.length}/{POST_MAX_LENGTH}
+          </p>
 
           {showLinkEmbed && <EmbeddedMedia url={embedSourceUrl} />}
 
@@ -217,7 +268,13 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
           )}
 
           {error && (
-            <p className="mt-1 px-1 text-sm text-destructive">{error}</p>
+            <p className="mt-1 px-1 text-sm text-destructive" role="alert">
+              {error}
+            </p>
+          )}
+
+          {pollDraft && submitHint && (
+            <p className="mt-1 px-1 text-sm text-muted-foreground">{submitHint}</p>
           )}
 
           {queuedMessage && (
@@ -250,19 +307,14 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
               aria-hidden
             />
 
-            {user ? (
-              <button
-                type="submit"
-                disabled={!canSubmit}
-                className={composerSubmitClassName(canSubmit)}
-              >
-                {pending ? "..." : "Émettre"}
-              </button>
-            ) : (
-              <Link href="/login" className={composerSubmitClassName(true)}>
-                Émettre
-              </Link>
-            )}
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              title={submitHint ?? undefined}
+              className={composerSubmitClassName(canSubmit)}
+            >
+              {pending ? "..." : pollDraft && !canSubmit ? "Complétez le sondage" : "Émettre"}
+            </button>
           </div>
         </div>
       </form>

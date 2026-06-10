@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toggleFollow } from "@/app/actions/follows";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/stores/toast-store";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -46,10 +47,12 @@ export function FollowButton({
       onClick={() => {
         startTransition(async () => {
           const result = await toggleFollow(profileId);
-          if (!result.error) {
-            setFollowing((value) => !value);
-            router.refresh();
+          if (result.error) {
+            toast(result.error);
+            return;
           }
+          setFollowing((value) => !value);
+          router.refresh();
         });
       }}
       className={cn(

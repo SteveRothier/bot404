@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PostCard } from "@/components/feed/PostCard";
 import type {
   CommentWithAuthor,
@@ -37,6 +38,19 @@ export function FeedList({
     return (
       <div className="px-4 py-16 text-center">
         <p className="text-[15px] text-muted-foreground">{emptyMessage}</p>
+        {!isLoggedIn && (
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-[15px]">
+            <Link
+              href="/login"
+              className="rounded-full bg-accent px-4 py-2 font-bold text-accent-foreground hover:bg-accent/90"
+            >
+              Se connecter
+            </Link>
+            <Link href="/trending" className="text-accent hover:underline">
+              Explorer les tendances
+            </Link>
+          </div>
+        )}
       </div>
     );
   }

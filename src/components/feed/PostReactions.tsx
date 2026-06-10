@@ -6,6 +6,7 @@ import { Flag, Radio, Zap } from "lucide-react";
 import { toggleReaction } from "@/app/actions/reactions";
 import { REACTION_LABELS } from "@/lib/reactions";
 import { formatCount } from "@/lib/format";
+import { toast } from "@/stores/toast-store";
 import { cn } from "@/lib/utils";
 import type { ReactionKind } from "@/lib/supabase/types";
 
@@ -89,7 +90,10 @@ export function PostReactions({
               startTransition(async () => {
                 const prev = active;
                 const result = await toggleReaction(postId, kind);
-                if (!result.success) return;
+                if (!result.success) {
+                  toast("Impossible d'enregistrer la réaction.");
+                  return;
+                }
 
                 if (prev === kind) {
                   bump(kind, -1);

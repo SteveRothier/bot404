@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { AppSidebarMobile } from "@/components/layout/AppSidebarMobile";
 import { LeftSidebar } from "@/components/layout/LeftSidebar";
 import { RightSidebarLoader } from "@/components/layout/RightSidebarLoader";
 import { ClientStoresHydrator } from "@/components/providers/ClientStoresHydrator";
@@ -39,15 +38,12 @@ export async function MainLayoutShell({ children }: Props) {
       initialUnreadCount={initialUnreadCount}
     >
       <div className="min-h-screen bg-background">
-        <div className="mx-auto flex max-w-[1280px] items-start gap-6 px-3 lg:gap-8 lg:px-4">
+        <div className="mx-auto flex max-w-[1280px] items-start gap-2 px-2 sm:gap-4 sm:px-3 lg:gap-6 lg:px-4">
           <LeftSidebar sidebarAuth={sidebarAuth} />
 
-          <div className="flex min-w-0 flex-1 flex-col">
-            <AppSidebarMobile sidebarAuth={sidebarAuth} />
-            <main className="min-w-0 flex-1 border-l border-border py-0 lg:max-w-[600px]">
-              {children}
-            </main>
-          </div>
+          <main className="min-w-0 flex-1 border-l border-border py-0">
+            {children}
+          </main>
 
           <Suspense fallback={<RightSidebarSkeleton />}>
             <RightSidebarLoader />

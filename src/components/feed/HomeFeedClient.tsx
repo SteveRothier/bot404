@@ -94,6 +94,7 @@ export function HomeFeedClient({
     () => new Set(["for-you"])
   );
   const [loadingTab, setLoadingTab] = useState<FeedTab | null>(null);
+  const [tabLoadError, setTabLoadError] = useState<string | null>(null);
   const [recentPosts, setRecentPosts] = useState(initialRecentPosts);
   const [theoryPosts, setTheoryPosts] = useState(initialTheoryPosts);
   const [rumorPosts, setRumorPosts] = useState(initialRumorPosts);
@@ -175,34 +176,41 @@ export function HomeFeedClient({
 
     let cancelled = false;
     setLoadingTab(tab);
+    setTabLoadError(null);
 
-    loadHomeFeedTab(tab).then((payload) => {
-      if (cancelled) return;
-      setTabCache((prev) => new Set(prev).add(tab));
-      if (tab === "theory") setTheoryPosts(payload.posts);
-      if (tab === "rumor") setRumorPosts(payload.posts);
-      if (tab === "following") {
-        setFollowingPosts(payload.posts);
-        if (payload.suggestedNpcs.length > 0) {
-          setSuggestedNpcs(payload.suggestedNpcs);
+    loadHomeFeedTab(tab)
+      .then((payload) => {
+        if (cancelled) return;
+        setTabCache((prev) => new Set(prev).add(tab));
+        if (tab === "theory") setTheoryPosts(payload.posts);
+        if (tab === "rumor") setRumorPosts(payload.posts);
+        if (tab === "following") {
+          setFollowingPosts(payload.posts);
+          if (payload.suggestedNpcs.length > 0) {
+            setSuggestedNpcs(payload.suggestedNpcs);
+          }
         }
-      }
-      setLikedPostIds((prev) => [
-        ...new Set([...prev, ...payload.likedPostIds]),
-      ]);
-      setBookmarkedPostIds((prev) => [
-        ...new Set([...prev, ...payload.bookmarkedPostIds]),
-      ]);
-      setCommentsByPostId((prev) => ({
-        ...prev,
-        ...payload.commentsByPostId,
-      }));
-      setUserReactionsByPostId((prev) => ({
-        ...prev,
-        ...payload.userReactionsByPostId,
-      }));
-      setLoadingTab(null);
-    });
+        setLikedPostIds((prev) => [
+          ...new Set([...prev, ...payload.likedPostIds]),
+        ]);
+        setBookmarkedPostIds((prev) => [
+          ...new Set([...prev, ...payload.bookmarkedPostIds]),
+        ]);
+        setCommentsByPostId((prev) => ({
+          ...prev,
+          ...payload.commentsByPostId,
+        }));
+        setUserReactionsByPostId((prev) => ({
+          ...prev,
+          ...payload.userReactionsByPostId,
+        }));
+        setLoadingTab(null);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setTabLoadError("Impossible de charger ce fil.");
+        setLoadingTab(null);
+      });
 
     return () => {
       cancelled = true;
@@ -230,8 +238,23 @@ export function HomeFeedClient({
     return <PostsSkeleton count={3} />;
   }
 
+  if (tabLoadError) {
+    return (
+      <div className="px-4 py-16 text-center">
+        <p className="text-[15px] text-destructive" role="alert">
+          {tabLoadError}
+        </p>
+      </div>
+    );
+  }
+
   if (tab === "following" && posts.length === 0) {
-    return <FollowingEmptyState suggestedNpcs={suggestedNpcs} />;
+    return (
+      <FollowingEmptyState
+        suggestedNpcs={suggestedNpcs}
+        isLoggedIn={isLoggedIn}
+      />
+    );
   }
 
   if (showLoadMore && posts.length > 0) {

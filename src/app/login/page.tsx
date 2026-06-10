@@ -13,12 +13,14 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [message, setMessage] = useState<string | null>(null);
+  const [messageIsError, setMessageIsError] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
+    setMessageIsError(false);
     const supabase = createClient();
 
     if (mode === "signup") {
@@ -32,11 +34,12 @@ export default function LoginPage() {
       });
       setLoading(false);
       if (error) {
+        setMessageIsError(true);
         setMessage(error.message);
         return;
       }
       if (data.session) {
-        window.location.href = "/";
+        window.location.href = "/profile/edit";
         return;
       }
       if (data.user && !data.user.email_confirmed_at) {
@@ -53,8 +56,10 @@ export default function LoginPage() {
         password,
       });
       setLoading(false);
-      if (error) setMessage(error.message);
-      else window.location.href = "/";
+      if (error) {
+        setMessageIsError(true);
+        setMessage(error.message);
+      } else window.location.href = "/";
     }
   }
 
@@ -103,7 +108,16 @@ export default function LoginPage() {
             className="rounded-xl border-border bg-secondary"
           />
           {message && (
-            <p className="text-sm text-muted-foreground">{message}</p>
+            <p
+              className={
+                messageIsError
+                  ? "text-sm text-destructive"
+                  : "text-sm text-muted-foreground"
+              }
+              role={messageIsError ? "alert" : "status"}
+            >
+              {message}
+            </p>
           )}
           <Button
             type="submit"

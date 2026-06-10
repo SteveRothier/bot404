@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FeedListLoader } from "@/components/feed/FeedServer";
 import { PostsSuspense } from "@/components/feed/FeedSkeleton";
+import { SearchBarPage } from "@/components/layout/SearchBar";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { avatarFallbackSeed } from "@/lib/avatars";
 import { searchNetwork } from "@/lib/queries/search";
@@ -60,11 +61,14 @@ export default async function SearchPage({ searchParams }: Props) {
     <div className="w-full">
       <div className="border-b border-border px-4 py-4">
         <h1 className="text-xl font-bold">Recherche</h1>
-        <p className="mt-1 text-[15px] text-muted-foreground">
-          {query
-            ? `Résultats pour « ${query} »`
-            : "Entrez au moins 2 caractères dans la barre de recherche."}
-        </p>
+        <div className="mt-3">
+          <SearchBarPage initialQuery={query} />
+        </div>
+        {query.length >= 2 && (
+          <p className="mt-2 text-[15px] text-muted-foreground">
+            Résultats pour « {query} »
+          </p>
+        )}
       </div>
 
       {query.length >= 2 && (

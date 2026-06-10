@@ -84,9 +84,17 @@ export function NotificationsList({ notifications, referenceNowMs }: Props) {
 
   if (notifications.length === 0) {
     return (
-      <p className="px-4 py-8 text-center text-muted-foreground">
-        Aucune notification pour l&apos;instant.
-      </p>
+      <div className="px-4 py-8 text-center">
+        <p className="text-muted-foreground">
+          Aucune notification pour l&apos;instant.
+        </p>
+        <Link
+          href="/trending"
+          className="mt-3 inline-block text-[15px] text-accent hover:underline"
+        >
+          Explorer le réseau
+        </Link>
+      </div>
     );
   }
 

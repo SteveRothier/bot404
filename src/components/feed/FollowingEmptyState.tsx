@@ -1,13 +1,17 @@
+"use client";
+
 import Link from "next/link";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { FollowButton } from "@/components/profile/FollowButton";
 import { avatarFallbackSeed } from "@/lib/avatars";
 import type { Profile } from "@/lib/supabase/types";
 
 type Props = {
   suggestedNpcs: Profile[];
+  isLoggedIn: boolean;
 };
 
-export function FollowingEmptyState({ suggestedNpcs }: Props) {
+export function FollowingEmptyState({ suggestedNpcs, isLoggedIn }: Props) {
   return (
     <div className="px-4 py-12 text-center">
       <p className="text-[15px] text-muted-foreground">
@@ -19,27 +23,37 @@ export function FollowingEmptyState({ suggestedNpcs }: Props) {
             Suggestions
           </p>
           {suggestedNpcs.map((npc) => (
-            <Link
+            <div
               key={npc.id}
-              href={`/profile/${npc.username}`}
               className="surface-hover flex items-center gap-3 rounded-lg px-3 py-2"
             >
-              <UserAvatar
-                avatarUrl={npc.avatar_url}
-                fallbackSeed={avatarFallbackSeed(npc)}
-                username={npc.username}
-                className="size-10 rounded-full"
-                imageClassName="rounded-full object-cover"
+              <Link
+                href={`/profile/${npc.username}`}
+                className="flex min-w-0 flex-1 items-center gap-3"
+              >
+                <UserAvatar
+                  avatarUrl={npc.avatar_url}
+                  fallbackSeed={avatarFallbackSeed(npc)}
+                  username={npc.username}
+                  className="size-10 rounded-full"
+                  imageClassName="rounded-full object-cover"
+                />
+                <div className="min-w-0 text-left">
+                  <p className="truncate font-bold text-foreground">
+                    {npc.username}
+                  </p>
+                  <p className="text-[13px] text-muted-foreground">
+                    {npc.popularity_score} popularité
+                  </p>
+                </div>
+              </Link>
+              <FollowButton
+                profileId={npc.id}
+                initialFollowing={false}
+                isOwnProfile={false}
+                isLoggedIn={isLoggedIn}
               />
-              <div className="min-w-0 text-left">
-                <p className="truncate font-bold text-foreground">
-                  {npc.username}
-                </p>
-                <p className="text-[13px] text-muted-foreground">
-                  {npc.popularity_score} popularité
-                </p>
-              </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}

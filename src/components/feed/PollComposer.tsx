@@ -5,6 +5,7 @@ import { Plus, X } from "lucide-react";
 import {
   POLL_LABEL_MAX,
   POLL_MAX_OPTIONS,
+  POLL_MIN_DURATION_MINUTES,
   POLL_MIN_OPTIONS,
   pollDurationFromParts,
   type PollDraftInput,
@@ -178,6 +179,11 @@ export function PollComposer({ draft, onChange, onRemove, disabled }: Props) {
             </label>
           ))}
         </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {draft.durationMinutes < POLL_MIN_DURATION_MINUTES
+            ? `Durée minimum : ${POLL_MIN_DURATION_MINUTES} min`
+            : `${POLL_MIN_OPTIONS} choix minimum requis`}
+        </p>
       </div>
 
       <div className="border-t border-border/60 px-3 py-2">

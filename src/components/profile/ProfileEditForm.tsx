@@ -28,6 +28,7 @@ export function ProfileEditForm({ profile }: Props) {
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
   const [clearAvatar, setClearAvatar] = useState(false);
   const [previewError, setPreviewError] = useState(false);
+  const [bioLength, setBioLength] = useState(profile.bio?.length ?? 0);
 
   const previewSource = clearAvatar
     ? null
@@ -114,7 +115,7 @@ export function ProfileEditForm({ profile }: Props) {
           fallbackClassName="rounded-full text-base"
         />
         <div className="min-w-0 flex-1 space-y-2">
-          <p className="text-sm text-muted-foreground">
+          <p id="avatar-file-label" className="text-sm text-muted-foreground">
             Aperçu de votre avatar
           </p>
           <div className="flex flex-wrap gap-2">
@@ -146,6 +147,7 @@ export function ProfileEditForm({ profile }: Props) {
             type="file"
             accept="image/jpeg,image/png,image/webp,image/gif"
             className="hidden"
+            aria-labelledby="avatar-file-label"
             onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null)}
           />
           {previewError && hasCustomPreview && !avatarFile && (
@@ -168,12 +170,17 @@ export function ProfileEditForm({ profile }: Props) {
           name="bio"
           maxLength={160}
           defaultValue={profile.bio ?? ""}
+          onChange={(e) => setBioLength(e.target.value.length)}
           rows={3}
           placeholder="Quelques mots sur vous…"
           className="rounded-xl border-border bg-secondary"
         />
+        <p className="mt-1 text-right text-xs tabular-nums text-muted-foreground">
+          {bioLength}/160
+        </p>
       </div>
 
+      {!avatarFile && (
       <div>
         <label htmlFor="avatar_url" className="mb-1 block text-[15px] font-bold">
           URL avatar (optionnel)
@@ -196,10 +203,11 @@ export function ProfileEditForm({ profile }: Props) {
         />
         <p className="mt-1 text-meta text-muted-foreground">
           Préférez « Choisir une image » pour un avatar permanent. Les URLs
-          Discord expirent ; au enregistrement, une URL externe est copiée sur
+          Discord expirent ; à l&apos;enregistrement, une URL externe est copiée sur
           le serveur.
         </p>
       </div>
+      )}
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 

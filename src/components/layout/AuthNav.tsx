@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { LogIn } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Button } from "@/components/ui/button";
+import { SidebarNavItem } from "@/components/layout/SidebarNavItem";
+import { cn } from "@/lib/utils";
 import type { Profile } from "@/lib/supabase/types";
 
 type Props = {
@@ -23,32 +26,49 @@ export function AuthNav({ user, profile }: Props) {
 
   if (!user) {
     return (
-      <Link href="/login">
-        <Button
-          size="sm"
-          className="rounded-full bg-foreground px-4 font-bold text-background hover:bg-foreground/90"
+      <SidebarNavItem label="Connexion">
+        <Link
+          href="/login"
+          aria-label="Connexion"
+          className={cn(
+            "inline-flex items-center justify-center rounded-full font-bold transition-colors",
+            "size-[52px] bg-foreground text-background hover:bg-foreground/90",
+            "lg:h-9 lg:w-auto lg:px-4 lg:text-sm"
+          )}
         >
-          Connexion
-        </Button>
-      </Link>
+          <LogIn className="size-[22px] lg:hidden" strokeWidth={2} />
+          <span className="hidden lg:inline">Connexion</span>
+        </Link>
+      </SidebarNavItem>
     );
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <Link href={profile ? `/profile/${profile.username}` : "/"}>
-        <UserAvatar
-          avatarUrl={profile?.avatar_url}
-          fallbackSeed={user.id}
-          username={profile?.username ?? "U"}
-          className="h-9 w-9"
-        />
-      </Link>
+    <div
+      className={cn(
+        "flex items-center",
+        "justify-center gap-0 lg:justify-start lg:gap-2"
+      )}
+    >
+      <SidebarNavItem label="Mon profil">
+        <Link
+          href={profile ? `/profile/${profile.username}` : "/"}
+          aria-label="Mon profil"
+          className="flex shrink-0 items-center justify-center rounded-full lg:justify-start"
+        >
+          <UserAvatar
+            avatarUrl={profile?.avatar_url}
+            fallbackSeed={user.id}
+            username={profile?.username ?? "U"}
+            className="h-9 w-9"
+          />
+        </Link>
+      </SidebarNavItem>
       <Button
         size="sm"
         variant="ghost"
         onClick={signOut}
-        className="hidden text-sm text-muted-foreground sm:inline-flex"
+        className="hidden text-sm text-muted-foreground lg:inline-flex"
       >
         Déco
       </Button>

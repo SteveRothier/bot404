@@ -1,7 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { MentionSuggestions } from "@/components/feed/MentionSuggestions";
+import {
+  MentionSuggestions,
+  type MentionSuggestionsHandle,
+} from "@/components/feed/MentionSuggestions";
 import { Textarea } from "@/components/ui/textarea";
 import {
   getActiveMentionQuery,
@@ -29,6 +32,7 @@ export function ComposerTextarea({
   minHeight = "min-h-[52px]",
 }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const mentionRef = useRef<MentionSuggestionsHandle>(null);
   const [cursor, setCursor] = useState(0);
   const mentionQuery = getActiveMentionQuery(value, cursor);
 
@@ -65,10 +69,16 @@ export function ComposerTextarea({
         onSelect={syncCursor}
         onKeyUp={syncCursor}
         onClick={syncCursor}
+        onKeyDown={(e) => {
+          if (mentionRef.current?.handleKeyDown(e)) return;
+        }}
         maxLength={maxLength}
         disabled={disabled}
+        aria-autocomplete="list"
+        aria-expanded={!!mentionQuery}
       />
       <MentionSuggestions
+        ref={mentionRef}
         query={mentionQuery ?? ""}
         onSelect={handleMentionSelect}
       />

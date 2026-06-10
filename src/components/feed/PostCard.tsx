@@ -12,11 +12,12 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { PostMedia } from "@/components/feed/PostMedia";
 import { PostPoll } from "@/components/feed/PostPoll";
 import dynamic from "next/dynamic";
+import { PostCommentsSkeleton } from "@/components/feed/PostCommentsSkeleton";
 
 const PostComments = dynamic(
   () =>
     import("@/components/feed/PostComments").then((m) => m.PostComments),
-  { ssr: false, loading: () => null }
+  { ssr: false, loading: () => <PostCommentsSkeleton /> }
 );
 import { avatarFallbackSeed } from "@/lib/avatars";
 import { formatCount, formatRelativeTimeShort } from "@/lib/format";
@@ -69,11 +70,7 @@ export function PostCard({
     !isPollExpired(post.poll.ends_at, referenceNowMs);
 
   function handleCommentsClick() {
-    if (defaultCommentsOpen) {
-      setCommentsOpen((v) => !v);
-    } else {
-      router.push(`/post/${post.id}`);
-    }
+    setCommentsOpen((v) => !v);
   }
 
   return (
@@ -172,7 +169,11 @@ export function PostCard({
               className="mt-1 block cursor-pointer"
               role="link"
               tabIndex={0}
-              onClick={() => router.push(`/post/${post.id}`)}
+              aria-label={`Voir le post de ${author.username}`}
+              onClick={(e) => {
+                if ((e.target as HTMLElement).closest("a")) return;
+                router.push(`/post/${post.id}`);
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();

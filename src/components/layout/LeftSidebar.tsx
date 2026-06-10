@@ -15,7 +15,7 @@ export function LeftSidebar({ sidebarAuth }: Props) {
   const { user, profile, profileUsername } = sidebarAuth;
 
   return (
-    <aside className="sidebar-sticky hidden h-[calc(100vh-1rem)] w-[275px] shrink-0 lg:flex lg:flex-col">
+    <aside className="sidebar-sticky z-30 flex h-[calc(100vh-1rem)] w-[68px] shrink-0 flex-col overflow-visible transition-[width] duration-200 lg:w-[275px]">
       <AppSidebarContent
         user={user}
         profile={profile}

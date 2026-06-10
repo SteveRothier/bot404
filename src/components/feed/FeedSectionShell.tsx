@@ -33,7 +33,9 @@ export function FeedSectionShell({
           <FeedTabs value={tab} onChange={setTab} />
           {activeWorldEvent && <ActiveWorldEventStrip event={activeWorldEvent} />}
           <PostComposerForm user={user} profile={profile} feedTab={tab} />
-          {children}
+          <div id={`feed-panel-${tab}`} role="tabpanel" aria-labelledby={`feed-tab-${tab}`}>
+            {children}
+          </div>
         </div>
       </FeedTabContext.Provider>
     </FeedBridgeProvider>

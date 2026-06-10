@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { ToastHost } from "@/components/ui/toast-host";
 import type { OllamaStatus } from "@/lib/ollama";
 import type { Faction } from "@/lib/supabase/types";
 import {
@@ -77,5 +78,10 @@ export function ClientStoresHydrator({
     return () => stopNotificationsRealtime();
   }, [userId]);
 
-  return children;
+  return (
+    <>
+      {children}
+      <ToastHost />
+    </>
+  );
 }

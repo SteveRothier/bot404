@@ -12,9 +12,10 @@ type Props = {
 export function NarrativeQueuedBanner({
   message,
   onDismiss,
-  autoDismissMs = 8000,
+  autoDismissMs,
 }: Props) {
   useEffect(() => {
+    if (autoDismissMs == null) return;
     const timer = setTimeout(onDismiss, autoDismissMs);
     return () => clearTimeout(timer);
   }, [onDismiss, autoDismissMs]);
