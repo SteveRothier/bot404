@@ -1,49 +1,34 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { toggleMembership } from "@/lib/actions/toggle-membership";
 import { createFollowNotification } from "@/lib/notifications";
+import { requireAuthUser } from "@/lib/queries/auth";
 import { createClient } from "@/lib/supabase/server";
 
 export async function toggleFollow(followingId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const auth = await requireAuthUser("Connectez-vous pour suivre un profil.");
+  if ("error" in auth) return auth;
 
-  if (!user) {
-    return { error: "Connectez-vous pour suivre un profil." };
-  }
-
-  if (user.id === followingId) {
+  if (auth.user.id === followingId) {
     return { error: "Vous ne pouvez pas vous suivre vous-même." };
   }
 
-  const { data: existing } = await supabase
-    .from("follows")
-    .select("following_id")
-    .eq("follower_id", user.id)
-    .eq("following_id", followingId)
-    .maybeSingle();
+  const supabase = await createClient();
+  const result = await toggleMembership(
+    supabase,
+    "follows",
+    { follower_id: auth.user.id, following_id: followingId },
+    { follower_id: auth.user.id, following_id: followingId }
+  );
 
-  if (existing) {
-    const { error } = await supabase
-      .from("follows")
-      .delete()
-      .eq("follower_id", user.id)
-      .eq("following_id", followingId);
+  if ("error" in result) return result;
 
-    if (error) return { error: error.message };
-  } else {
-    const { error } = await supabase.from("follows").insert({
-      follower_id: user.id,
-      following_id: followingId,
-    });
-
-    if (error) return { error: error.message };
-    await createFollowNotification(user.id, followingId);
+  if (result.active) {
+    await createFollowNotification(auth.user.id, followingId);
   }
 
   revalidatePath("/");
   revalidatePath("/profile/[username]", "page");
-  return { success: true, following: !existing };
+  return { success: true, following: result.active };
 }

@@ -7,6 +7,12 @@ export type RequestAuth = {
   profile: Profile | null;
 };
 
+export type AuthError = { error: string };
+
+export type AuthUser = RequestAuth & {
+  user: NonNullable<RequestAuth["user"]>;
+};
+
 async function fetchRequestAuth(): Promise<RequestAuth> {
   const supabase = await createClient();
   const {
@@ -25,3 +31,11 @@ async function fetchRequestAuth(): Promise<RequestAuth> {
 }
 
 export const getRequestAuth = cache(fetchRequestAuth);
+
+export async function requireAuthUser(
+  message = "Connectez-vous pour continuer."
+): Promise<AuthUser | AuthError> {
+  const auth = await getRequestAuth();
+  if (!auth.user) return { error: message };
+  return { user: auth.user, profile: auth.profile };
+}

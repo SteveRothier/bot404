@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 
 const FeedRealtime = dynamic(
   () =>
-    import("@/components/feed/FeedRealtime").then((m) => m.FeedRealtime),
+    import("@/components/feed/FeedRealtime").then((module) => module.FeedRealtime),
   { ssr: false }
 );
 

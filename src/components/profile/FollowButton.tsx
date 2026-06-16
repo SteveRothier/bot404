@@ -47,7 +47,7 @@ export function FollowButton({
       onClick={() => {
         startTransition(async () => {
           const result = await toggleFollow(profileId);
-          if (result.error) {
+          if ("error" in result) {
             toast(result.error);
             return;
           }

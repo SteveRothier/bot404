@@ -5,6 +5,7 @@ import {
   persistAvatarFile,
   persistAvatarUrlIfRemote,
 } from "@/lib/avatar-storage";
+import { requireAuthUser } from "@/lib/queries/auth";
 import { createClient } from "@/lib/supabase/server";
 
 export async function updateProfile(formData: FormData) {
@@ -21,14 +22,11 @@ export async function updateProfile(formData: FormData) {
     return { error: "URL d'avatar invalide." };
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const auth = await requireAuthUser("Connectez-vous pour modifier votre profil.");
+  if ("error" in auth) return auth;
 
-  if (!user) {
-    return { error: "Connectez-vous pour modifier votre profil." };
-  }
+  const supabase = await createClient();
+  const { user } = auth;
 
   let avatar_url: string | null;
 

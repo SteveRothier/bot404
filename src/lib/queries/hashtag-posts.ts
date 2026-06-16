@@ -1,5 +1,5 @@
 import { normalizeHashtag } from "@/lib/hashtags";
-import { attachCommentCountsToPosts } from "@/lib/queries/post-utils";
+import { fetchEnrichedPosts } from "@/lib/queries/post-utils";
 import { createClient } from "@/lib/supabase/server";
 import type { PostWithAuthor } from "@/lib/supabase/types";
 
@@ -15,13 +15,9 @@ export async function getPostsByHashtagPattern(
   userId?: string | null
 ): Promise<PostWithAuthor[]> {
   const supabase = await createClient();
-  const { data: posts, error } = await supabase
-    .from("posts")
-    .select("*, author:profiles!author_id(*)")
-    .ilike("content", pattern)
-    .order("created_at", { ascending: false })
-    .limit(limit);
-
-  if (error || !posts) return [];
-  return attachCommentCountsToPosts(supabase, posts, userId);
+  return fetchEnrichedPosts(
+    supabase,
+    { contentPattern: pattern, limit },
+    userId
+  );
 }

@@ -10,7 +10,6 @@ import type {
 
 type Props = {
   posts: PostWithAuthor[];
-  likedPostIds?: number[];
   bookmarkedPostIds?: number[];
   isLoggedIn?: boolean;
   profile?: Profile | null;
@@ -25,7 +24,6 @@ type Props = {
 
 export function FeedList({
   posts,
-  likedPostIds = [],
   bookmarkedPostIds = [],
   isLoggedIn = false,
   profile = null,
@@ -72,7 +70,6 @@ export function FeedList({
         <PostCard
           key={post.id}
           post={post}
-          likedByUser={likedPostIds.includes(post.id)}
           bookmarkedByUser={bookmarkedPostIds.includes(post.id)}
           userReaction={userReactionsByPostId[post.id] ?? null}
           isLoggedIn={isLoggedIn}

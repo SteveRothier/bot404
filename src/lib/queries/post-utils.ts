@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   PostPoll,
   PostPollOption,
+  PostType,
   PostWithAuthor,
   Profile,
 } from "@/lib/supabase/types";
@@ -11,6 +12,60 @@ export const POST_WITH_AUTHOR =
 
 export const POST_WITH_AUTHOR_BASIC =
   "*, author:profiles!author_id(*)";
+
+export type FetchEnrichedPostsOptions = {
+  limit?: number;
+  offset?: number;
+  postType?: PostType;
+  authorId?: string;
+  authorIds?: string[];
+  contentPattern?: string;
+  postIds?: number[];
+  select?: string;
+};
+
+export async function fetchEnrichedPosts(
+  supabase: SupabaseClient,
+  options: FetchEnrichedPostsOptions = {},
+  userId?: string | null
+): Promise<PostWithAuthor[]> {
+  const {
+    limit = 50,
+    offset = 0,
+    postType,
+    authorId,
+    authorIds,
+    contentPattern,
+    postIds,
+    select = POST_WITH_AUTHOR,
+  } = options;
+
+  if (postIds?.length === 0) return [];
+
+  let query = supabase
+    .from("posts")
+    .select(select)
+    .order("created_at", { ascending: false });
+
+  if (postIds?.length) {
+    query = query.in("id", postIds);
+  } else {
+    if (authorId) query = query.eq("author_id", authorId);
+    if (authorIds?.length) query = query.in("author_id", authorIds);
+    if (postType) query = query.eq("post_type", postType);
+    if (contentPattern) query = query.ilike("content", contentPattern);
+    query = query.range(offset, offset + limit - 1);
+  }
+
+  const { data: posts, error } = await query;
+  if (error || !posts) return [];
+
+  return attachCommentCountsToPosts(
+    supabase,
+    posts as unknown as Array<{ id: number; author: unknown; [key: string]: unknown }>,
+    userId
+  );
+}
 
 export async function attachPollsToPosts(
   supabase: SupabaseClient,

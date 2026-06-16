@@ -43,16 +43,6 @@ function notificationMessage(
         text: "Un événement mondial est actif",
         href: "/trending",
       };
-    case "archive_unlock":
-      return {
-        text: "Événement narratif",
-        href: "/trending",
-      };
-    case "investigation_entry":
-      return {
-        text: `${actor} a interagi sur un fil`,
-        href: n.post_id ? `/post/${n.post_id}` : "/",
-      };
     default:
       return { text: "Nouvelle notification", href: "/" };
   }

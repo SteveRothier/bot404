@@ -19,7 +19,6 @@ export async function HomeFeedLoader({ auth, referenceNowMs }: Props) {
       suggestedNpcs={initial.suggestedNpcs}
       user={auth.user}
       profile={auth.profile}
-      likedPostIds={initial.likedPostIds}
       bookmarkedPostIds={initial.bookmarkedPostIds}
       commentsByPostId={initial.commentsByPostId}
       userReactionsByPostId={initial.userReactionsByPostId}

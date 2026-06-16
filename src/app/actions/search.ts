@@ -1,23 +1,21 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { searchProfilesByUsernamePattern } from "@/lib/queries/profile-search";
 import type { Profile } from "@/lib/supabase/types";
 
 export async function searchProfilesForMention(
   query: string
 ): Promise<Pick<Profile, "id" | "username" | "avatar_url" | "is_npc">[]> {
-  const q = query.trim();
-  if (!q || q.length < 1) return [];
+  const profiles = await searchProfilesByUsernamePattern(query, {
+    limit: 6,
+    fields: "mention",
+    minLength: 1,
+  });
 
-  const supabase = await createClient();
-  const pattern = `%${q.replace(/%/g, "\\%")}%`;
-
-  const { data } = await supabase
-    .from("profiles")
-    .select("id, username, avatar_url, is_npc")
-    .ilike("username", pattern)
-    .order("popularity_score", { ascending: false })
-    .limit(6);
-
-  return data ?? [];
+  return profiles.map(({ id, username, avatar_url, is_npc }) => ({
+    id,
+    username,
+    avatar_url,
+    is_npc,
+  }));
 }

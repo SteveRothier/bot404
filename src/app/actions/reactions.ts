@@ -8,6 +8,7 @@ import { enqueueReactionSignal } from "@/lib/narrative/signals";
 import { createReactionNotification } from "@/lib/notifications";
 import { isReactionKind } from "@/lib/reactions";
 import { maybePromoteRumorToEvent } from "@/lib/rumor-events";
+import { requireAuthUser } from "@/lib/queries/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { ReactionKind } from "@/lib/supabase/types";
@@ -17,15 +18,12 @@ export async function toggleReaction(postId: number, kind: string) {
     return { error: "Réaction invalide." };
   }
 
+  const auth = await requireAuthUser("Connectez-vous pour réagir.");
+  if ("error" in auth) return auth;
+
   const supabase = await createClient();
   const admin = createAdminClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Connectez-vous pour réagir." };
-  }
+  const { user } = auth;
 
   const { data: existing } = await supabase
     .from("post_reactions")

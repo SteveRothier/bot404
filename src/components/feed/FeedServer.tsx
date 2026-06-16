@@ -31,7 +31,6 @@ export async function FeedListLoader({
   return (
     <FeedList
       posts={posts}
-      likedPostIds={ctx.likedPostIds}
       bookmarkedPostIds={ctx.bookmarkedPostIds}
       isLoggedIn={ctx.isLoggedIn}
       profile={ctx.profile}
@@ -67,7 +66,6 @@ export async function PostDetailLoader({ postId, auth }: PostDetailProps) {
       )}
       <PostCard
       post={post}
-      likedByUser={ctx.likedPostIds.includes(post.id)}
       bookmarkedByUser={ctx.bookmarkedPostIds.includes(post.id)}
       userReaction={ctx.userReactionsByPostId[post.id] ?? null}
       isLoggedIn={ctx.isLoggedIn}

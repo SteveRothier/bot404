@@ -21,7 +21,6 @@ type Props = {
   tab: FeedTab;
   posts: PostWithAuthor[];
   loadedCount: number;
-  likedPostIds: number[];
   bookmarkedPostIds: number[];
   isLoggedIn: boolean;
   profile: Profile | null;
@@ -37,7 +36,6 @@ export function FeedInfiniteList({
   tab,
   posts,
   loadedCount,
-  likedPostIds,
   bookmarkedPostIds,
   isLoggedIn,
   profile,
@@ -72,7 +70,6 @@ export function FeedInfiniteList({
     <>
       <FeedList
         posts={posts}
-        likedPostIds={likedPostIds}
         bookmarkedPostIds={bookmarkedPostIds}
         isLoggedIn={isLoggedIn}
         profile={profile}

@@ -93,7 +93,7 @@ export function ProfileEditForm({ profile }: Props) {
         }
         startTransition(async () => {
           const result = await updateProfile(formData);
-          if (result.error) {
+          if ("error" in result) {
             setError(result.error);
             return;
           }

@@ -78,7 +78,7 @@ export function PostComments({
     fd.set("content", content.trim());
     startTransition(async () => {
       const result = await createComment(postId, fd);
-      if (result.error) setError(result.error);
+      if ("error" in result) setError(result.error);
       else {
         setContent("");
         onOpenChange?.(true);

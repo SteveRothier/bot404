@@ -90,7 +90,7 @@ export function PostReactions({
               startTransition(async () => {
                 const prev = active;
                 const result = await toggleReaction(postId, kind);
-                if (!result.success) {
+                if (!("success" in result) || !result.success) {
                   toast("Impossible d'enregistrer la réaction.");
                   return;
                 }

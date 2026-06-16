@@ -78,7 +78,7 @@ export function PostCardMenu({
               onClick={() => {
                 startTransition(async () => {
                   const result = await deletePost(postId);
-                  if (!result.error) {
+                  if ("success" in result && result.success) {
                     setOpen(false);
                     router.refresh();
                   }

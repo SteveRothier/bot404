@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { FeedRealtimeLazy } from "@/components/feed/FeedRealtimeLazy";
-import { FeedSection } from "@/components/feed/FeedSection";
+import { FeedSectionShell } from "@/components/feed/FeedSectionShell";
 import { HomeFeedLoader } from "@/components/feed/HomeFeedLoader";
 import { PostsSuspense } from "@/components/feed/FeedSkeleton";
 import { getRequestAuth } from "@/lib/queries/auth";
@@ -26,7 +26,7 @@ export default async function HomePage({ searchParams }: Props) {
   return (
     <FeedRealtimeLazy>
       <Suspense fallback={null}>
-        <FeedSection
+        <FeedSectionShell
           user={auth.user}
           profile={auth.profile}
           activeWorldEvent={activeWorldEvent}
@@ -35,7 +35,7 @@ export default async function HomePage({ searchParams }: Props) {
           <PostsSuspense>
             <HomeFeedLoader auth={auth} referenceNowMs={referenceNowMs} />
           </PostsSuspense>
-        </FeedSection>
+        </FeedSectionShell>
       </Suspense>
     </FeedRealtimeLazy>
   );

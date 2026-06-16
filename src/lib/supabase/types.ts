@@ -155,9 +155,7 @@ export type NotificationKind =
   | "mention"
   | "reaction"
   | "follow"
-  | "world_event"
-  | "archive_unlock"
-  | "investigation_entry";
+  | "world_event";
 
 export type Notification = {
   id: string;

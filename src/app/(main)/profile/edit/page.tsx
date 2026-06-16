@@ -1,9 +1,9 @@
 import { ProfileEditForm } from "@/components/profile/ProfileEditForm";
-import { getCurrentUserProfile } from "@/lib/queries/feed";
+import { getRequestAuth } from "@/lib/queries/auth";
 import { redirect } from "next/navigation";
 
 export default async function ProfileEditPage() {
-  const profile = await getCurrentUserProfile();
+  const { profile } = await getRequestAuth();
 
   if (!profile) {
     redirect("/login");

@@ -2,22 +2,12 @@
 
 import { getCommentById } from "@/lib/queries/comments";
 import {
-  getFeedPosts,
   getHomeFeedTabBundle,
   getPostById,
   loadMoreHomeFeedTab,
-  markRecentNarrativePosts,
   type HomeFeedTab,
 } from "@/lib/queries/feed";
-import { FEED_PAGE_SIZE } from "@/lib/feed/constants";
 import type { CommentWithAuthor, PostWithAuthor } from "@/lib/supabase/types";
-
-export async function loadMoreFeedPosts(
-  offset: number,
-  limit = FEED_PAGE_SIZE
-): Promise<PostWithAuthor[]> {
-  return markRecentNarrativePosts(await getFeedPosts(limit, offset));
-}
 
 export async function loadHomeFeedTab(tab: HomeFeedTab) {
   return getHomeFeedTabBundle(tab);

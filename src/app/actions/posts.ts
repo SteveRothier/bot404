@@ -14,6 +14,7 @@ import { extractEmbedMediaUrls } from "@/lib/embed-media";
 import { parsePollJson, validatePollDraft } from "@/lib/polls";
 import { insertPostPoll } from "@/lib/queries/poll-insert";
 import { isAllowedGiphyUrl } from "@/lib/npc/gif-search";
+import { requireAuthUser } from "@/lib/queries/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { PostMediaType, PostPoll, PostType } from "@/lib/supabase/types";
@@ -132,14 +133,11 @@ export async function createPost(formData: FormData) {
     return { error: "Post invalide (max 500 caractères)." };
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const auth = await requireAuthUser("Connectez-vous pour poster.");
+  if ("error" in auth) return auth;
 
-  if (!user) {
-    return { error: "Connectez-vous pour poster." };
-  }
+  const supabase = await createClient();
+  const { user } = auth;
 
   let media_url: string | null = null;
   let media_type: PostMediaType | null = null;
@@ -228,57 +226,17 @@ export async function createPost(formData: FormData) {
   return { success: true, postId: post.id, narrativeQueued, poll: createdPoll };
 }
 
-export async function toggleLike(postId: number) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Connectez-vous pour liker." };
-  }
-
-  const { data: existing } = await supabase
-    .from("post_likes")
-    .select("post_id")
-    .eq("user_id", user.id)
-    .eq("post_id", postId)
-    .maybeSingle();
-
-  if (existing) {
-    const { error } = await supabase
-      .from("post_likes")
-      .delete()
-      .eq("user_id", user.id)
-      .eq("post_id", postId);
-    if (error) return { error: error.message };
-  } else {
-    const { error } = await supabase.from("post_likes").insert({
-      user_id: user.id,
-      post_id: postId,
-    });
-    if (error) return { error: error.message };
-  }
-
-  revalidatePath("/");
-  revalidateDataCaches();
-  return { success: true, liked: !existing };
-}
-
 export async function createComment(postId: number, formData: FormData) {
   const content = (formData.get("content") as string)?.trim();
   if (!content || content.length > 300) {
     return { error: "Commentaire invalide (max 300 caractères)." };
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const auth = await requireAuthUser("Connectez-vous pour commenter.");
+  if ("error" in auth) return auth;
 
-  if (!user) {
-    return { error: "Connectez-vous pour commenter." };
-  }
+  const supabase = await createClient();
+  const { user } = auth;
 
   const { data: comment, error } = await supabase
     .from("comments")
@@ -311,20 +269,15 @@ export async function createComment(postId: number, formData: FormData) {
 }
 
 export async function deletePost(postId: number) {
+  const auth = await requireAuthUser("Connectez-vous pour supprimer un post.");
+  if ("error" in auth) return auth;
+
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Connectez-vous pour supprimer un post." };
-  }
-
   const { error } = await supabase
     .from("posts")
     .delete()
     .eq("id", postId)
-    .eq("author_id", user.id);
+    .eq("author_id", auth.user.id);
 
   if (error) {
     return { error: error.message };
@@ -338,20 +291,17 @@ export async function deletePost(postId: number) {
 }
 
 export async function deleteComment(commentId: number, postId: number) {
+  const auth = await requireAuthUser(
+    "Connectez-vous pour supprimer un commentaire."
+  );
+  if ("error" in auth) return auth;
+
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Connectez-vous pour supprimer un commentaire." };
-  }
-
   const { error } = await supabase
     .from("comments")
     .delete()
     .eq("id", commentId)
-    .eq("author_id", user.id);
+    .eq("author_id", auth.user.id);
 
   if (error) {
     return { error: error.message };

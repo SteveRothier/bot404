@@ -28,7 +28,7 @@ export function BookmarkButton({
       onClick={() => {
         startTransition(async () => {
           const result = await toggleBookmark(postId);
-          if (!result.error) {
+          if ("success" in result && result.success) {
             setBookmarked((value) => !value);
           }
         });

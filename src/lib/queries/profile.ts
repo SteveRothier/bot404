@@ -1,4 +1,4 @@
-import { attachCommentCountsToPosts, POST_WITH_AUTHOR } from "@/lib/queries/post-utils";
+import { fetchEnrichedPosts, POST_WITH_AUTHOR } from "@/lib/queries/post-utils";
 import { createClient } from "@/lib/supabase/server";
 import type { PostWithAuthor, Profile } from "@/lib/supabase/types";
 
@@ -26,14 +26,9 @@ export async function getPostsByProfileId(
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: posts, error } = await supabase
-    .from("posts")
-    .select(POST_WITH_AUTHOR)
-    .eq("author_id", profileId)
-    .order("created_at", { ascending: false })
-    .limit(limit);
-
-  if (error || !posts) return [];
-
-  return attachCommentCountsToPosts(supabase, posts, user?.id);
+  return fetchEnrichedPosts(
+    supabase,
+    { authorId: profileId, limit },
+    user?.id
+  );
 }

@@ -36,7 +36,6 @@ type Props = {
   suggestedNpcs: Profile[];
   user: { id: string; email?: string } | null;
   profile: Profile | null;
-  likedPostIds: number[];
   bookmarkedPostIds: number[];
   commentsByPostId: Record<number, CommentWithAuthor[]>;
   userReactionsByPostId: Record<number, ReactionKind>;
@@ -95,7 +94,6 @@ export function HomeFeedClient({
   suggestedNpcs: initialSuggestedNpcs,
   user,
   profile,
-  likedPostIds: initialLikedPostIds,
   bookmarkedPostIds: initialBookmarkedPostIds,
   commentsByPostId: initialCommentsByPostId,
   userReactionsByPostId: initialUserReactionsByPostId,
@@ -116,7 +114,6 @@ export function HomeFeedClient({
   const [rumorPosts, setRumorPosts] = useState(initialRumorPosts);
   const [followingPosts, setFollowingPosts] = useState(initialFollowingPosts);
   const [suggestedNpcs, setSuggestedNpcs] = useState(initialSuggestedNpcs);
-  const [likedPostIds, setLikedPostIds] = useState(initialLikedPostIds);
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState(
     initialBookmarkedPostIds
   );
@@ -143,7 +140,6 @@ export function HomeFeedClient({
       mergePostsPreservePolls(initialFollowingPosts, prev)
     );
     setSuggestedNpcs(initialSuggestedNpcs);
-    setLikedPostIds(initialLikedPostIds);
     setBookmarkedPostIds(initialBookmarkedPostIds);
     setCommentsByPostId(initialCommentsByPostId);
     setUserReactionsByPostId(initialUserReactionsByPostId);
@@ -153,7 +149,6 @@ export function HomeFeedClient({
     initialRumorPosts,
     initialFollowingPosts,
     initialSuggestedNpcs,
-    initialLikedPostIds,
     initialBookmarkedPostIds,
     initialCommentsByPostId,
     initialUserReactionsByPostId,
@@ -222,9 +217,6 @@ export function HomeFeedClient({
             setSuggestedNpcs(payload.suggestedNpcs);
           }
         }
-        setLikedPostIds((prev) => [
-          ...new Set([...prev, ...payload.likedPostIds]),
-        ]);
         setBookmarkedPostIds((prev) => [
           ...new Set([...prev, ...payload.bookmarkedPostIds]),
         ]);
@@ -276,9 +268,6 @@ export function HomeFeedClient({
         ...prev,
         [tab]: (prev[tab] ?? loadedCount) + result.posts.length,
       }));
-      setLikedPostIds((prev) => [
-        ...new Set([...prev, ...result.likedPostIds]),
-      ]);
       setBookmarkedPostIds((prev) => [
         ...new Set([...prev, ...result.bookmarkedPostIds]),
       ]);
@@ -324,7 +313,6 @@ export function HomeFeedClient({
       tab={tab}
       posts={displayPosts}
       loadedCount={loadedCount}
-      likedPostIds={likedPostIds}
       bookmarkedPostIds={bookmarkedPostIds}
       isLoggedIn={isLoggedIn}
       profile={profile}

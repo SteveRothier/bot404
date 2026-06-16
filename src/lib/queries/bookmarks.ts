@@ -1,4 +1,7 @@
-import { attachCommentCountsToPosts, POST_WITH_AUTHOR_BASIC } from "@/lib/queries/post-utils";
+import {
+  fetchEnrichedPosts,
+  POST_WITH_AUTHOR_BASIC,
+} from "@/lib/queries/post-utils";
 import { createClient } from "@/lib/supabase/server";
 import type { PostWithAuthor } from "@/lib/supabase/types";
 
@@ -55,17 +58,14 @@ export async function getBookmarkedPosts(userId?: string): Promise<PostWithAutho
   if (!bookmarks?.length) return [];
 
   const postIds = bookmarks.map((row) => row.post_id);
-  const { data: posts, error } = await supabase
-    .from("posts")
-    .select(POST_WITH_AUTHOR_BASIC)
-    .in("id", postIds);
-
-  if (error || !posts) return [];
-
-  const order = new Map(postIds.map((id, index) => [id, index]));
-  const sorted = [...posts].sort(
-    (a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0)
+  const posts = await fetchEnrichedPosts(
+    supabase,
+    { postIds, select: POST_WITH_AUTHOR_BASIC },
+    id
   );
 
-  return attachCommentCountsToPosts(supabase, sorted, id);
+  const order = new Map(postIds.map((postId, index) => [postId, index]));
+  return [...posts].sort(
+    (a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0)
+  );
 }

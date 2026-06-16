@@ -34,7 +34,6 @@ import type {
 
 type Props = {
   post: PostWithAuthor;
-  likedByUser?: boolean;
   bookmarkedByUser?: boolean;
   userReaction?: ReactionKind | null;
   isLoggedIn?: boolean;
@@ -47,7 +46,6 @@ type Props = {
 
 export function PostCard({
   post,
-  likedByUser = false,
   bookmarkedByUser = false,
   userReaction = null,
   isLoggedIn = false,

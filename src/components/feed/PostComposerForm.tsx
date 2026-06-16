@@ -158,7 +158,7 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
 
     startTransition(async () => {
       const result = await createPost(fd);
-      if (result.error) setError(result.error);
+      if ("error" in result) setError(result.error);
       else {
         setContent("");
         clearMedia();

@@ -29,7 +29,7 @@ export function CommentDeleteButton({
       onClick={() => {
         startTransition(async () => {
           const result = await deleteComment(commentId, postId);
-          if (!result.error) {
+          if ("success" in result && result.success) {
             router.refresh();
           }
         });

@@ -1,14 +1,10 @@
 import { isRecentNarrativeResponse } from "@/lib/narrative/recent-response";
-import { attachCommentCountsToPosts, POST_WITH_AUTHOR } from "@/lib/queries/post-utils";
-import { getCommentsByPostIds } from "@/lib/queries/comments";
-import {
-  getUserBookmarkedPostIdsForPosts,
-} from "@/lib/queries/bookmarks";
+import { attachCommentCountsToPosts, fetchEnrichedPosts } from "@/lib/queries/post-utils";
 import {
   getPostsFromFollowing,
   getSuggestedNpcs,
 } from "@/lib/queries/follows";
-import { getUserReactionsByPostIds } from "@/lib/queries/reactions";
+import { resolvePostInteractions } from "@/lib/queries/feed-context";
 import { countActiveWorldEvents } from "@/lib/queries/world-events";
 import { computeNetworkState } from "@/lib/network-state";
 import { getRequestAuth, type RequestAuth } from "@/lib/queries/auth";
@@ -21,32 +17,10 @@ import type {
   PostType,
   PostWithAuthor,
   Profile,
-  ReactionKind,
   TrendingSnapshot,
 } from "@/lib/supabase/types";
 
-export async function getCurrentUserProfile(): Promise<Profile | null> {
-  const { profile } = await getRequestAuth();
-  return profile;
-}
-
 const HOME_FEED_LIMIT = FEED_PAGE_SIZE;
-
-export async function getUserLikedPostIdsForPosts(
-  userId: string,
-  postIds: number[]
-): Promise<Set<number>> {
-  if (postIds.length === 0) return new Set();
-
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("post_likes")
-    .select("post_id")
-    .eq("user_id", userId)
-    .in("post_id", postIds);
-
-  return new Set(data?.map((r) => r.post_id) ?? []);
-}
 
 export async function getFeedPosts(
   limit = 50,
@@ -58,20 +32,11 @@ export async function getFeedPosts(
     data: { user },
   } = await supabase.auth.getUser();
 
-  let query = supabase
-    .from("posts")
-    .select(POST_WITH_AUTHOR)
-    .order("created_at", { ascending: false });
-
-  if (postType) {
-    query = query.eq("post_type", postType);
-  }
-
-  const { data: posts, error } = await query.range(offset, offset + limit - 1);
-
-  if (error || !posts) return [];
-
-  return attachCommentCountsToPosts(supabase, posts, user?.id);
+  return fetchEnrichedPosts(
+    supabase,
+    { limit, offset, postType },
+    user?.id
+  );
 }
 
 export async function getPostById(id: number): Promise<PostWithAuthor | null> {
@@ -82,7 +47,7 @@ export async function getPostById(id: number): Promise<PostWithAuthor | null> {
 
   const { data: post, error } = await supabase
     .from("posts")
-    .select(POST_WITH_AUTHOR)
+    .select("*, author:profiles!author_id(*, faction:factions(*))")
     .eq("id", id)
     .maybeSingle();
 
@@ -119,32 +84,6 @@ export async function getPostsForHomeFeedTab(
   return getFeedPosts(limit, offset);
 }
 
-async function getFeedInteractionsForPosts(
-  postIds: number[],
-  userId?: string
-) {
-  const [likedPostIds, bookmarkedPostIds, commentsByPostId, userReactionsByPostId] =
-    await Promise.all([
-      userId
-        ? getUserLikedPostIdsForPosts(userId, postIds)
-        : Promise.resolve(new Set<number>()),
-      userId
-        ? getUserBookmarkedPostIdsForPosts(userId, postIds)
-        : Promise.resolve(new Set<number>()),
-      getCommentsByPostIds(postIds),
-      userId
-        ? getUserReactionsByPostIds(postIds, userId)
-        : Promise.resolve({} as Record<number, ReactionKind>),
-    ]);
-
-  return {
-    likedPostIds: [...likedPostIds],
-    bookmarkedPostIds: [...bookmarkedPostIds],
-    commentsByPostId,
-    userReactionsByPostId,
-  };
-}
-
 export async function getHomeFeedTabBundle(
   tab: HomeFeedTab,
   auth?: RequestAuth
@@ -156,7 +95,7 @@ export async function getHomeFeedTabBundle(
   );
   const postIds = posts.map((p) => p.id);
   const [interactions, suggestedNpcs] = await Promise.all([
-    getFeedInteractionsForPosts(postIds, userId),
+    resolvePostInteractions(postIds, userId),
     tab === "following" && user
       ? getSuggestedNpcs(3)
       : Promise.resolve([] as Profile[]),
@@ -175,7 +114,7 @@ export async function loadMoreHomeFeedTab(
     await getPostsForHomeFeedTab(tab, HOME_FEED_LIMIT, !!user, offset)
   );
   const postIds = posts.map((p) => p.id);
-  const interactions = await getFeedInteractionsForPosts(postIds, user?.id);
+  const interactions = await resolvePostInteractions(postIds, user?.id);
   return { posts, ...interactions };
 }
 

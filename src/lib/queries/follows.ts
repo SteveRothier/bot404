@@ -1,4 +1,4 @@
-import { attachCommentCountsToPosts } from "@/lib/queries/post-utils";
+import { fetchEnrichedPosts } from "@/lib/queries/post-utils";
 import { createClient } from "@/lib/supabase/server";
 import type { PostWithAuthor, Profile } from "@/lib/supabase/types";
 
@@ -65,16 +65,11 @@ export async function getPostsFromFollowing(
   const followingIds = await getFollowingIds(user.id);
   if (followingIds.length === 0) return [];
 
-  const { data: posts, error } = await supabase
-    .from("posts")
-    .select("*, author:profiles!author_id(*, faction:factions(*))")
-    .in("author_id", followingIds)
-    .order("created_at", { ascending: false })
-    .range(offset, offset + limit - 1);
-
-  if (error || !posts) return [];
-
-  return attachCommentCountsToPosts(supabase, posts, user.id);
+  return fetchEnrichedPosts(
+    supabase,
+    { authorIds: followingIds, limit, offset },
+    user.id
+  );
 }
 
 export async function getSuggestedNpcs(limit = 3): Promise<Profile[]> {
