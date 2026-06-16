@@ -26,10 +26,19 @@ export function isTooSimilarToSource(
   return false;
 }
 
+export function isTooSimilarToAny(
+  generated: string,
+  sources: string[],
+  threshold = 0.85
+): boolean {
+  return sources.some((s) => isTooSimilarToSource(generated, s, threshold));
+}
+
 export function validateNpcPostContent(
   content: string,
   postType: PostType,
-  sourceText = ""
+  sourceText = "",
+  recentTexts: string[] = []
 ): string | null {
   const trimmed = content.trim();
   if (!trimmed) return null;
@@ -46,6 +55,10 @@ export function validateNpcPostContent(
   }
 
   if (sourceText && isTooSimilarToSource(trimmed, sourceText)) {
+    return null;
+  }
+
+  if (isTooSimilarToAny(trimmed, recentTexts)) {
     return null;
   }
 

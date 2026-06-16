@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Radio } from "lucide-react";
+import { WorldEventCountdown } from "@/components/lore/WorldEventCountdown";
 import {
   formatBoostedTypesLabel,
   getWorldEventEffects,
@@ -28,7 +29,10 @@ export function ActiveWorldEventStrip({ event }: Props) {
         <div className="min-w-0 flex-1 text-sm">
           <p className="font-semibold text-foreground">{event.title}</p>
           <p className="mt-0.5 text-muted-foreground">{impact}</p>
-          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-meta">
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-meta">
+            {event.ends_at && (
+              <WorldEventCountdown endsAt={event.ends_at} />
+            )}
             {boosted && (
               <span className="text-accent">Feed : {boosted} amplifiés</span>
             )}

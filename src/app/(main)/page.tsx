@@ -1,13 +1,21 @@
+import { Suspense } from "react";
 import { FeedRealtimeLazy } from "@/components/feed/FeedRealtimeLazy";
 import { FeedSection } from "@/components/feed/FeedSection";
 import { HomeFeedLoader } from "@/components/feed/HomeFeedLoader";
 import { PostsSuspense } from "@/components/feed/FeedSkeleton";
 import { getRequestAuth } from "@/lib/queries/auth";
 import { getCachedActiveWorldEvents } from "@/lib/queries/cached";
+import { parseFeedTabParam } from "@/lib/feed/feed-tab-params";
 
 export const revalidate = 0;
 
-export default async function HomePage() {
+type Props = {
+  searchParams: Promise<{ tab?: string }>;
+};
+
+export default async function HomePage({ searchParams }: Props) {
+  const { tab: tabParam } = await searchParams;
+  const initialTab = parseFeedTabParam(tabParam);
   const referenceNowMs = Date.now();
   const [auth, activeEvents] = await Promise.all([
     getRequestAuth(),
@@ -17,15 +25,18 @@ export default async function HomePage() {
 
   return (
     <FeedRealtimeLazy>
-      <FeedSection
-        user={auth.user}
-        profile={auth.profile}
-        activeWorldEvent={activeWorldEvent}
-      >
-        <PostsSuspense>
-          <HomeFeedLoader auth={auth} referenceNowMs={referenceNowMs} />
-        </PostsSuspense>
-      </FeedSection>
+      <Suspense fallback={null}>
+        <FeedSection
+          user={auth.user}
+          profile={auth.profile}
+          activeWorldEvent={activeWorldEvent}
+          initialTab={initialTab}
+        >
+          <PostsSuspense>
+            <HomeFeedLoader auth={auth} referenceNowMs={referenceNowMs} />
+          </PostsSuspense>
+        </FeedSection>
+      </Suspense>
     </FeedRealtimeLazy>
   );
 }

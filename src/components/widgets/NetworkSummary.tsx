@@ -2,6 +2,10 @@
 
 import dynamic from "next/dynamic";
 import { NpcScheduleDisplay } from "@/components/widgets/NpcScheduleDisplay";
+import {
+  SidebarPanel,
+  SidebarPanelSection,
+} from "@/components/widgets/SidebarPanel";
 import type { ShellNpcSchedule } from "@/lib/queries/shell-data";
 import type { NetworkStats } from "@/lib/supabase/types";
 
@@ -45,13 +49,9 @@ function StatRow({
 
 export function NetworkSummary({ stats, npcSchedule }: Props) {
   return (
-    <section className="rounded-2xl bg-secondary/50 p-3">
-      <h2 className="mb-2 text-[15px] font-bold text-foreground">Réseau</h2>
+    <SidebarPanel title="Réseau">
       <div className="space-y-0">
-        <StatRow
-          label="NPC"
-          value={stats.npcCount.toLocaleString("fr-FR")}
-        />
+        <StatRow label="NPC" value={stats.npcCount.toLocaleString("fr-FR")} />
         <StatRow
           label="Humains"
           value={stats.humanCount.toLocaleString("fr-FR")}
@@ -62,10 +62,10 @@ export function NetworkSummary({ stats, npcSchedule }: Props) {
         />
         <NpcScheduleDisplay npcSchedule={npcSchedule} />
       </div>
-      <div className="mt-2 border-t border-border pt-2">
+      <SidebarPanelSection className="mt-2">
         <OllamaStatusBadge compact />
         <NpcGeneratePanel compact />
-      </div>
-    </section>
+      </SidebarPanelSection>
+    </SidebarPanel>
   );
 }

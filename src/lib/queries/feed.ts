@@ -14,6 +14,7 @@ import { computeNetworkState } from "@/lib/network-state";
 import { getRequestAuth, type RequestAuth } from "@/lib/queries/auth";
 import { createPublicClient } from "@/lib/supabase/public";
 import { createClient } from "@/lib/supabase/server";
+import { FEED_PAGE_SIZE } from "@/lib/feed/constants";
 
 import type {
   NetworkStats,
@@ -29,7 +30,7 @@ export async function getCurrentUserProfile(): Promise<Profile | null> {
   return profile;
 }
 
-const HOME_FEED_LIMIT = 25;
+const HOME_FEED_LIMIT = FEED_PAGE_SIZE;
 
 export async function getUserLikedPostIdsForPosts(
   userId: string,
@@ -107,14 +108,15 @@ export function markRecentNarrativePosts(posts: PostWithAuthor[]): PostWithAutho
 export async function getPostsForHomeFeedTab(
   tab: HomeFeedTab,
   limit = HOME_FEED_LIMIT,
-  hasUser = false
+  hasUser = false,
+  offset = 0
 ): Promise<PostWithAuthor[]> {
   if (tab === "following") {
-    return hasUser ? getPostsFromFollowing(limit) : [];
+    return hasUser ? getPostsFromFollowing(limit, offset) : [];
   }
-  if (tab === "theory") return getFeedPosts(limit, 0, "theory");
-  if (tab === "rumor") return getFeedPosts(limit, 0, "rumor");
-  return getFeedPosts(limit);
+  if (tab === "theory") return getFeedPosts(limit, offset, "theory");
+  if (tab === "rumor") return getFeedPosts(limit, offset, "rumor");
+  return getFeedPosts(limit, offset);
 }
 
 async function getFeedInteractionsForPosts(
@@ -150,7 +152,7 @@ export async function getHomeFeedTabBundle(
   const { user } = auth ?? (await getRequestAuth());
   const userId = user?.id;
   const posts = markRecentNarrativePosts(
-    await getPostsForHomeFeedTab(tab, HOME_FEED_LIMIT, !!user)
+    await getPostsForHomeFeedTab(tab, HOME_FEED_LIMIT, !!user, 0)
   );
   const postIds = posts.map((p) => p.id);
   const [interactions, suggestedNpcs] = await Promise.all([
@@ -161,6 +163,20 @@ export async function getHomeFeedTabBundle(
   ]);
 
   return { posts, suggestedNpcs, ...interactions };
+}
+
+export async function loadMoreHomeFeedTab(
+  tab: HomeFeedTab,
+  offset: number,
+  auth?: RequestAuth
+) {
+  const { user } = auth ?? (await getRequestAuth());
+  const posts = markRecentNarrativePosts(
+    await getPostsForHomeFeedTab(tab, HOME_FEED_LIMIT, !!user, offset)
+  );
+  const postIds = posts.map((p) => p.id);
+  const interactions = await getFeedInteractionsForPosts(postIds, user?.id);
+  return { posts, ...interactions };
 }
 
 export async function getTrendingSnapshot(): Promise<TrendingSnapshot | null> {

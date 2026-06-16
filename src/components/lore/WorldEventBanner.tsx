@@ -24,10 +24,10 @@ export function WorldEventBanner({ event, variant = "feed" }: Props) {
   return (
     <div
       className={cn(
-        "bg-accent/5",
+        variant === "sidebar" ? "" : "bg-accent/5",
         variant === "sidebar"
-          ? "rounded-2xl border border-accent/30 p-3"
-          : "border-b border-accent/30 px-4 py-3"
+          ? "rounded-lg border border-accent/30 bg-accent/5 p-3"
+          : "border-b border-accent/30 bg-accent/5 px-4 py-3"
       )}
     >
       <div className="flex items-start gap-3">

@@ -13,6 +13,10 @@ import {
   npcPostUserMessage,
 } from "@/lib/npc/prompt";
 import { pickRotatingNpc, factionNameForNpc } from "@/lib/npc/select-npc";
+import {
+  buildNpcHistoryBlock,
+  fetchRecentNpcPostContents,
+} from "@/lib/npc/npc-history";
 import { validateNpcPostContent } from "@/lib/npc/validate-content";
 import { pickRandomNpcPostType } from "@/lib/post-types";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -38,6 +42,8 @@ export async function generateNpcPost(): Promise<GenerateNpcPostResult> {
 
   const loreContext = await getNpcLoreContext();
   const loreBlock = buildNpcLorePromptBlock(loreContext);
+  const historyBlock = await buildNpcHistoryBlock(npc.id);
+  const recentPosts = await fetchRecentNpcPostContents(npc.id);
 
   const eventEffects = loreContext.activeEvent
     ? getWorldEventEffects(loreContext.activeEvent)
@@ -56,13 +62,15 @@ export async function generateNpcPost(): Promise<GenerateNpcPostResult> {
   }
 
   const raw = await ollamaChat(
-    buildNpcPostPrompt(npc, postType, loreBlock, factionNameForNpc(npc)),
+    buildNpcPostPrompt(npc, postType, loreBlock + historyBlock, factionNameForNpc(npc)),
     npcPostUserMessage(postType),
     500,
     ollamaProfileForPostType(postType)
   );
 
-  const content = raw ? validateNpcPostContent(raw, postType) : null;
+  const content = raw
+    ? validateNpcPostContent(raw, postType, "", recentPosts)
+    : null;
 
   if (!content) {
     return {

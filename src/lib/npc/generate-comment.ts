@@ -4,6 +4,8 @@ import {
   getNpcLoreContext,
 } from "@/lib/lore/lore-context";
 import { checkOllamaStatus } from "@/lib/ollama";
+import { buildRichThreadSnippet } from "@/lib/npc/thread-context";
+import { buildNpcHistoryBlock, fetchRecentNpcPostContents } from "@/lib/npc/npc-history";
 import { ollamaChat } from "@/lib/npc/ollama";
 import { npcBase, npcExamplePostsBlock } from "@/lib/npc/prompt";
 import { pickRotatingNpc, factionNameForNpc } from "@/lib/npc/select-npc";
@@ -77,15 +79,25 @@ export async function generateNpcComment(): Promise<GenerateNpcCommentResult> {
     commenters[Math.floor(Math.random() * commenters.length)];
 
   const p = (npc.personality ?? {}) as Personality;
-  const loreBlock = buildNpcLorePromptBlock(await getNpcLoreContext());
+  const [loreBlock, historyBlock, threadBlock, recentPosts] = await Promise.all([
+    getNpcLoreContext().then(buildNpcLorePromptBlock),
+    buildNpcHistoryBlock(npc.id),
+    buildRichThreadSnippet(post.id),
+    fetchRecentNpcPostContents(npc.id),
+  ]);
 
-  const system = `${npcBase(npc, factionNameForNpc(npc))}${npcExamplePostsBlock(npc)}${loreBlock}
+  const system = `${npcBase(npc, factionNameForNpc(npc))}${npcExamplePostsBlock(npc)}${loreBlock}${historyBlock}
 
-Réponds en commentaire (max 200 caractères), ton: ${p.personality ?? "sarcastique"}. Français.`;
-  const user = `Post original: "${post.content}"\nÉcris une réponse courte.`;
+Fil de discussion :
+${threadBlock}
+
+Réponds en commentaire (max 200 caractères), ton: ${p.personality ?? "sarcastique"}. Apporte un angle différent des commentaires existants. Français.`;
+  const user = `Post original: "${post.content}"\nÉcris une réponse courte et originale.`;
 
   const raw = await ollamaChat(system, user, 300, "comment");
-  const content = raw ? validateNpcPostContent(raw, "message") : null;
+  const content = raw
+    ? validateNpcPostContent(raw, "message", post.content, recentPosts)
+    : null;
 
   if (!content) {
     return {

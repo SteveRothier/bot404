@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { HashtagList } from "@/components/widgets/HashtagList";
+import { SidebarPanel } from "@/components/widgets/SidebarPanel";
 import type { TrendingHashtag } from "@/lib/supabase/types";
 
 type Props = {
   hashtags: TrendingHashtag[];
   title?: string;
-  /** Moins haut — sidebar */
   compact?: boolean;
 };
 
@@ -15,26 +15,11 @@ export function TrendingList({
   compact = false,
 }: Props) {
   return (
-    <section
-      className={compact ? "rounded-2xl bg-secondary/50 p-3" : "rounded-2xl bg-secondary/50 p-4"}
-    >
-      <div
-        className={
-          compact
-            ? "mb-2 flex items-center justify-between gap-2"
-            : "mb-3 flex items-center justify-between gap-2"
-        }
-      >
-        <h2
-          className={
-            compact
-              ? "text-[15px] font-bold text-foreground"
-              : "text-xl font-bold text-foreground"
-          }
-        >
-          {title}
-        </h2>
-        {hashtags.length > 0 && (
+    <SidebarPanel
+      title={title}
+      bodyClassName={compact ? undefined : "p-4"}
+      action={
+        hashtags.length > 0 ? (
           <Link
             href="/trending"
             className={
@@ -45,13 +30,10 @@ export function TrendingList({
           >
             Voir tout
           </Link>
-        )}
-      </div>
-      <HashtagList
-        hashtags={hashtags}
-        limit={5}
-        compact={compact}
-      />
-    </section>
+        ) : undefined
+      }
+    >
+      <HashtagList hashtags={hashtags} limit={5} compact={compact} />
+    </SidebarPanel>
   );
 }

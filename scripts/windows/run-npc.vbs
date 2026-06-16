@@ -44,6 +44,12 @@ Select Case mode
           "npm run npc:tick >> """ & logFile & """ 2>&1"
     shell.Run cmd, 0, False
     WScript.Quit 0
+  Case "daily-theme"
+    logFile = logDir & "\daily-theme.log"
+    cmd = "cmd /c echo [" & Now & "] START daily-theme>> """ & logFile & """ && " & _
+          "npm run npc:daily-theme >> """ & logFile & """ 2>&1"
+    shell.Run cmd, 0, False
+    WScript.Quit 0
   Case Else
     logFile = logDir & "\npc-generate.log"
     args = "scripts\npc-generate-local.mjs"

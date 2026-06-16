@@ -17,6 +17,7 @@
     "npc:ops:check": "tsx scripts/narrative-ops-check.ts",
     "npc:beat:retry": "tsx scripts/narrative-beat-retry.ts",
     "npc:play:session": "tsx scripts/narrative-play-session.ts",
+    "npc:daily-theme": "tsx scripts/daily-theme.ts",
     "test": "node --import tsx --test \"src/lib/**/*.test.ts\"",
     "npc:schedule:install": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/windows/register-scheduler.ps1",
     "npc:schedule:tick": "wscript.exe scripts/windows/run-npc.vbs tick",

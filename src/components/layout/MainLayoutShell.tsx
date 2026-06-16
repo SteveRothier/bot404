@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { FactionsHydratorLoader } from "@/components/layout/FactionsHydratorLoader";
 import { LeftSidebar } from "@/components/layout/LeftSidebar";
 import { RightSidebarLoader } from "@/components/layout/RightSidebarLoader";
 import { ClientStoresHydrator } from "@/components/providers/ClientStoresHydrator";
@@ -16,9 +17,12 @@ function RightSidebarSkeleton() {
       className="sidebar-sticky hidden w-80 shrink-0 flex-col gap-4 xl:flex"
       aria-hidden
     >
-      <div className="h-32 animate-pulse rounded-2xl bg-secondary/50" />
-      <div className="h-40 animate-pulse rounded-2xl bg-secondary/50" />
-      <div className="h-48 animate-pulse rounded-2xl bg-secondary/50" />
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          className="h-32 animate-pulse rounded-lg border border-border bg-background/80"
+        />
+      ))}
     </aside>
   );
 }
@@ -38,12 +42,17 @@ export async function MainLayoutShell({ children }: Props) {
       initialUnreadCount={initialUnreadCount}
     >
       <div className="min-h-screen bg-background">
+        <Suspense fallback={null}>
+          <FactionsHydratorLoader />
+        </Suspense>
         <div className="mx-auto flex max-w-[1280px] items-start gap-2 px-2 sm:gap-4 sm:px-3 lg:gap-6 lg:px-4">
           <LeftSidebar sidebarAuth={sidebarAuth} />
 
-          <main className="min-w-0 flex-1 border-l border-border py-0">
-            {children}
-          </main>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <main className="min-w-0 flex-1 border-l border-border py-0">
+              {children}
+            </main>
+          </div>
 
           <Suspense fallback={<RightSidebarSkeleton />}>
             <RightSidebarLoader />

@@ -1,5 +1,6 @@
 "use client";
 
+import { SidebarPanel } from "@/components/widgets/SidebarPanel";
 import { useFactionsStore } from "@/stores/factions-store";
 
 export function FactionControlLive() {
@@ -8,9 +9,8 @@ export function FactionControlLive() {
   if (factions.length === 0) return null;
 
   return (
-    <section className="rounded-2xl bg-secondary/50 p-3">
-      <h2 className="mb-2 text-[15px] font-bold text-foreground">Contrôle</h2>
-      <div className="space-y-2">
+    <SidebarPanel title="Contrôle">
+      <div className="space-y-2.5">
         {factions.map((f) => (
           <div key={f.id}>
             <div className="mb-0.5 flex justify-between text-meta">
@@ -31,6 +31,6 @@ export function FactionControlLive() {
           </div>
         ))}
       </div>
-    </section>
+    </SidebarPanel>
   );
 }

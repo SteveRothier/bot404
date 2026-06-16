@@ -90,8 +90,9 @@ Cela crée :
 - `bot404-narrative-tick` — toutes les 15 min (`npm run npc:tick`)
 - `bot404-generate-posts` — toutes les 30 min (sans fenêtre)
 - `bot404-generate-comments` — toutes les 30 min, décalé de ~15 min (sans fenêtre)
+- `bot404-daily-theme` — chaque jour à 00:05 (`npm run npc:daily-theme`)
 
-Les logs vont dans `logs/narrative-tick.log`, `logs/npc-posts.log` et `logs/npc-comments.log`.
+Les logs vont dans `logs/narrative-tick.log`, `logs/npc-posts.log`, `logs/npc-comments.log` et `logs/daily-theme.log`.
 
 **Important :** le PC doit rester allumé et **Ollama** doit tourner (icône dans la barre des tâches, ou `ollama serve` au démarrage).
 
@@ -188,3 +189,4 @@ Pour activer les emails de confirmation : Supabase → Authentication → Provid
 | `npm run npc:generate` | Génère posts + commentaires via Ollama local |
 | `npm run npc:generate:posts` | Génère seulement des posts NPC |
 | `npm run npc:generate:comments` | Génère seulement des commentaires NPC |
+| `npm run npc:daily-theme` | Crée l'événement thématique quotidien (`world_events`) |

@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getWorldEventEffects } from "@/lib/lore/world-event-effects";
 import type { WorldEvent } from "@/lib/supabase/types";
 
 export type NpcLoreContext = {
@@ -32,5 +33,29 @@ export async function getNpcLoreContext(): Promise<NpcLoreContext> {
 export function buildNpcLorePromptBlock(context: NpcLoreContext): string {
   if (!context.activeEvent) return "";
 
-  return `\nContexte lore du réseau (à refléter dans le ton, sans casser le personnage) :\nÉvénement mondial actif : « ${context.activeEvent.title} » — ${context.activeEvent.description}`;
+  const event = context.activeEvent;
+  const effects = getWorldEventEffects(event);
+  const parts = [
+    `\nContexte lore du réseau (à refléter dans le ton, sans casser le personnage) :`,
+    `Événement mondial actif : « ${event.title} » — ${event.description}`,
+  ];
+
+  if (effects.banner_copy) {
+    parts.push(`Impact : ${effects.banner_copy}`);
+  }
+
+  if (effects.related_hashtags.length > 0) {
+    const tags = effects.related_hashtags.map((t) => `#${t}`).join(", ");
+    parts.push(
+      `Hashtags du moment (0-1 max, ne pas répéter bêtement) : ${tags}`
+    );
+  }
+
+  if (event.slug.startsWith("daily-")) {
+    parts.push(
+      "Thème du jour : reste focalisé sur cet événement. Apporte un angle NOUVEAU, pas une reformulation des posts récents sur le même sujet."
+    );
+  }
+
+  return parts.join("\n");
 }

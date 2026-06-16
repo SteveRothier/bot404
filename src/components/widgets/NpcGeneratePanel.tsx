@@ -94,13 +94,13 @@ export function NpcGeneratePanel({ compact = false }: Props) {
         btnBase,
         "w-full font-bold",
         !disabled
-          ? "bg-foreground text-background hover:bg-foreground/90"
+          ? "border-transparent bg-accent text-accent-foreground hover:bg-accent/90"
           : "cursor-not-allowed bg-secondary text-muted-foreground"
       )
     : cn(
-        "flex w-full items-center justify-center gap-2 rounded-full border border-border px-4 py-2.5 text-[15px] font-bold transition-colors",
+        "flex w-full items-center justify-center gap-2 rounded-full border border-transparent px-4 py-2.5 text-[15px] font-bold transition-colors",
         !disabled
-          ? "bg-foreground text-background hover:bg-foreground/90"
+          ? "bg-accent text-accent-foreground hover:bg-accent/90"
           : "cursor-not-allowed bg-secondary text-muted-foreground"
       );
 
@@ -109,7 +109,7 @@ export function NpcGeneratePanel({ compact = false }: Props) {
         btnBase,
         "w-full",
         !disabled
-          ? "bg-secondary text-foreground hover:bg-secondary/80"
+          ? "border-border bg-transparent text-foreground hover:bg-secondary/80"
           : "cursor-not-allowed bg-secondary/50 text-muted-foreground"
       )
     : cn(

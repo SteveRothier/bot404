@@ -12,6 +12,7 @@ import {
 } from "@/components/feed/FeedTabs";
 import { ComposerTextarea } from "@/components/feed/ComposerTextarea";
 import { ComposerToolbar } from "@/components/feed/ComposerToolbar";
+import { useFeedFollowing } from "@/components/feed/FeedFollowingContext";
 import { EmbeddedMedia } from "@/components/feed/EmbeddedMedia";
 import {
   createDefaultPollDraft,
@@ -41,6 +42,7 @@ type Props = {
 export function PostComposerForm({ user, profile, feedTab }: Props) {
   const router = useRouter();
   const feedBridge = useFeedBridge();
+  const { followingHasPosts } = useFeedFollowing();
   const [content, setContent] = useState("");
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [remoteGifUrl, setRemoteGifUrl] = useState<string | null>(null);
@@ -205,9 +207,27 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
               <Link href="/login" className="font-bold text-accent hover:underline">
                 Connectez-vous
               </Link>{" "}
-              pour publier un signal, une théorie ou un sondage.
+              {feedTab === "following"
+                ? "pour suivre des profils et remplir ce fil."
+                : "pour publier un signal, une théorie ou un sondage."}
             </p>
           </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (feedTab === "following" && !followingHasPosts) {
+    return (
+      <section className="border-b border-border px-4 py-4">
+        <div className="rounded-xl border border-dashed border-border bg-secondary/30 px-4 py-3 text-center">
+          <p className="text-[15px] text-muted-foreground">
+            Suivez des profils depuis le fil ou{" "}
+            <Link href="/factions" className="font-bold text-accent hover:underline">
+              les factions
+            </Link>{" "}
+            pour publier ici.
+          </p>
         </div>
       </section>
     );

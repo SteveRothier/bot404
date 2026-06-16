@@ -27,14 +27,14 @@ export function OllamaStatusBadge({ compact = false }: Props) {
         <span
           className={cn(
             "flex shrink-0 items-center gap-1 font-medium",
-            online ? "text-emerald-500" : "text-muted-foreground"
+            online ? "text-accent" : "text-muted-foreground"
           )}
         >
           <span
             aria-hidden
             className={cn(
               "size-1.5 rounded-full",
-              online ? "bg-emerald-500" : "bg-muted-foreground"
+              online ? "bg-accent" : "bg-muted-foreground"
             )}
           />
           {online ? "Actif" : "Inactif"}
@@ -52,14 +52,14 @@ export function OllamaStatusBadge({ compact = false }: Props) {
       <span
         className={cn(
           "flex shrink-0 items-center gap-1.5 text-[13px] font-medium",
-          online ? "text-emerald-500" : "text-muted-foreground"
+          online ? "text-accent" : "text-muted-foreground"
         )}
       >
         <span
           aria-hidden
           className={cn(
             "size-2 rounded-full",
-            online ? "bg-emerald-500" : "bg-muted-foreground"
+            online ? "bg-accent" : "bg-muted-foreground"
           )}
         />
         {online ? "Actif" : "Inactif"}

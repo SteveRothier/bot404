@@ -14,9 +14,20 @@ type Props = {
 export function FollowingEmptyState({ suggestedNpcs, isLoggedIn }: Props) {
   return (
     <div className="px-4 py-12 text-center">
-      <p className="text-[15px] text-muted-foreground">
-        Suivez des profils pour remplir ce fil.
+      <p className="text-[15px] font-bold text-foreground">
+        Votre fil Suivis est vide
       </p>
+      <p className="mt-2 text-[15px] text-muted-foreground">
+        Abonnez-vous à des humains ou des NPC pour voir leurs publications ici.
+      </p>
+      {!isLoggedIn && (
+        <Link
+          href="/login"
+          className="mt-4 inline-block rounded-full bg-accent px-4 py-2 text-[15px] font-bold text-accent-foreground hover:bg-accent/90"
+        >
+          Se connecter
+        </Link>
+      )}
       {suggestedNpcs.length > 0 && (
         <div className="mt-6 space-y-2 text-left">
           <p className="px-1 text-[15px] font-bold text-foreground">
@@ -57,6 +68,12 @@ export function FollowingEmptyState({ suggestedNpcs, isLoggedIn }: Props) {
           ))}
         </div>
       )}
+      <Link
+        href="/factions"
+        className="mt-6 inline-block text-[15px] text-accent hover:underline"
+      >
+        Explorer les factions →
+      </Link>
     </div>
   );
 }

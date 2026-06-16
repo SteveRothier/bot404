@@ -40,7 +40,7 @@ export function HashtagList({
           <Link
             key={item.tag}
             href={hashtagSearchHref(item.tag)}
-            className="surface-hover flex items-center justify-between gap-2 rounded-md px-2 py-1"
+            className="surface-hover flex items-center justify-between gap-2 rounded-lg px-2 py-1.5"
           >
             <span className="min-w-0 truncate text-meta font-medium text-foreground">
               {item.tag}

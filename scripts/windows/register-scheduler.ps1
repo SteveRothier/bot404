@@ -39,9 +39,17 @@ function Register-Bot404Task {
         -RepetitionInterval (New-TimeSpan -Minutes 30) `
         -RepetitionDuration (New-TimeSpan -Days 3650)
     }
+    "daily" {
+      New-ScheduledTaskTrigger -Daily -At "00:05"
+    }
     "15min" {
       New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(3) `
         -RepetitionInterval (New-TimeSpan -Minutes 15) `
+        -RepetitionDuration (New-TimeSpan -Days 3650)
+    }
+    "60min" {
+      New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(10) `
+        -RepetitionInterval (New-TimeSpan -Minutes 60) `
         -RepetitionDuration (New-TimeSpan -Days 3650)
     }
     default { throw "Schedule inconnu: $Schedule" }
@@ -71,12 +79,14 @@ function Register-Bot404Task {
 Register-Bot404Task -Name "bot404-narrative-tick" -Mode "tick" -Schedule "15min"
 Register-Bot404Task -Name "bot404-generate-posts" -Mode "posts" -Schedule "30min"
 Register-Bot404Task -Name "bot404-generate-comments" -Mode "comments" -Schedule "30min-offset"
+Register-Bot404Task -Name "bot404-daily-theme" -Mode "daily-theme" -Schedule "daily"
 
 Write-Host ""
 Write-Host "Taches installees. Aucune fenetre ne s ouvrira."
 Write-Host "Logs: $projectRoot\logs\"
 Write-Host ""
 Write-Host "Priorite narrative: bot404-narrative-tick (15 min) appelle npm run npc:tick."
+Write-Host "bot404-daily-theme (00:05) appelle npm run npc:daily-theme."
 Write-Host "Les taches posts/comments appellent npc-generate-local (tick narratif en premier)."
 Write-Host ""
 Write-Host "Tester:"

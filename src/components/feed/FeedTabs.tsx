@@ -14,6 +14,7 @@ export function postTypeForFeedTab(tab: FeedTab): "message" | "theory" | "rumor"
 export function composerPlaceholderForFeedTab(tab: FeedTab): string {
   if (tab === "theory") return "Formuler une théorie…";
   if (tab === "rumor") return "Diffusez une rumeur…";
+  if (tab === "following") return "Publier pour vos abonnés…";
   return "Émettre un signal…";
 }
 

@@ -12,20 +12,21 @@ import {
   useRegisterFeedBridge,
   type FeedBridgeApi,
 } from "@/components/feed/FeedBridgeContext";
+import { useFeedFollowing } from "@/components/feed/FeedFollowingContext";
 import { FeedTabContext } from "@/components/feed/FeedSectionShell";
-import { FeedLoadMore } from "@/components/feed/FeedLoadMore";
-import { FeedList } from "@/components/feed/FeedList";
+import { FeedInfiniteList } from "@/components/feed/FeedInfiniteList";
 import { FollowingEmptyState } from "@/components/feed/FollowingEmptyState";
 import { PostsSkeleton } from "@/components/feed/FeedSkeleton";
 import type { FeedTab } from "@/components/feed/FeedTabs";
+import { getFeedEmptyConfig } from "@/lib/feed/feed-empty";
+import { FEED_PAGE_SIZE } from "@/lib/feed/constants";
+import type { FeedLoadMoreResult } from "@/hooks/useFeedInfiniteScroll";
 import type {
   CommentWithAuthor,
   PostWithAuthor,
   Profile,
   ReactionKind,
 } from "@/lib/supabase/types";
-
-const PAGE_SIZE = 20;
 
 type Props = {
   recentPosts: PostWithAuthor[];
@@ -72,6 +73,20 @@ function mergePostsPreservePolls(
   }));
 }
 
+function mergeAppended(
+  tab: FeedTab,
+  result: FeedLoadMoreResult,
+  appendedByTab: Partial<Record<FeedTab, PostWithAuthor[]>>,
+  basePosts: PostWithAuthor[]
+): PostWithAuthor[] {
+  const existingIds = new Set([
+    ...basePosts.map((p) => p.id),
+    ...(appendedByTab[tab] ?? []).map((p) => p.id),
+  ]);
+  const fresh = result.posts.filter((p) => !existingIds.has(p.id));
+  return [...(appendedByTab[tab] ?? []), ...fresh];
+}
+
 export function HomeFeedClient({
   recentPosts: initialRecentPosts,
   theoryPosts: initialTheoryPosts,
@@ -87,6 +102,7 @@ export function HomeFeedClient({
   referenceNowMs,
 }: Props) {
   const tab = useContext(FeedTabContext);
+  const { setFollowingHasPosts } = useFeedFollowing();
   const registerBridge = useRegisterFeedBridge();
   const isLoggedIn = !!user;
 
@@ -110,6 +126,14 @@ export function HomeFeedClient({
   const [userReactionsByPostId, setUserReactionsByPostId] = useState(
     initialUserReactionsByPostId
   );
+  const [appendedByTab, setAppendedByTab] = useState<
+    Partial<Record<FeedTab, PostWithAuthor[]>>
+  >({});
+  const [loadedCountByTab, setLoadedCountByTab] = useState<
+    Partial<Record<FeedTab, number>>
+  >({
+    "for-you": initialRecentPosts.length,
+  });
 
   useEffect(() => {
     setRecentPosts((prev) => mergePostsPreservePolls(initialRecentPosts, prev));
@@ -134,6 +158,10 @@ export function HomeFeedClient({
     initialCommentsByPostId,
     initialUserReactionsByPostId,
   ]);
+
+  useEffect(() => {
+    setFollowingHasPosts(followingPosts.length > 0);
+  }, [followingPosts.length, setFollowingHasPosts]);
 
   const prependPost = useCallback(
     (post: PostWithAuthor, activeTab: FeedTab) => {
@@ -182,6 +210,10 @@ export function HomeFeedClient({
       .then((payload) => {
         if (cancelled) return;
         setTabCache((prev) => new Set(prev).add(tab));
+        setLoadedCountByTab((prev) => ({
+          ...prev,
+          [tab]: payload.posts.length,
+        }));
         if (tab === "theory") setTheoryPosts(payload.posts);
         if (tab === "rumor") setRumorPosts(payload.posts);
         if (tab === "following") {
@@ -218,21 +250,51 @@ export function HomeFeedClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- merge once per tab fetch
   }, [tab, tabCache]);
 
-  const posts = useMemo(
+  const basePosts = useMemo(
     () =>
       postsForTab(tab, recentPosts, theoryPosts, rumorPosts, followingPosts),
     [tab, recentPosts, theoryPosts, rumorPosts, followingPosts]
   );
 
-  const emptyMessage =
-    tab === "following"
-      ? "Aucun profil suivi pour l'instant."
-      : tab === "theory"
-        ? "Aucune théorie pour l'instant."
-        : tab === "rumor"
-          ? "Aucune rumeur pour l'instant."
-          : "Aucun post pour l'instant.";
-  const showLoadMore = tab === "for-you";
+  const displayPosts = useMemo(() => {
+    const appended = appendedByTab[tab] ?? [];
+    const ids = new Set(basePosts.map((p) => p.id));
+    return [...basePosts, ...appended.filter((p) => !ids.has(p.id))];
+  }, [tab, basePosts, appendedByTab]);
+
+  const loadedCount =
+    loadedCountByTab[tab] ??
+    (tab === "for-you" ? initialRecentPosts.length : FEED_PAGE_SIZE);
+
+  const handleLoadMoreResult = useCallback(
+    (result: FeedLoadMoreResult) => {
+      setAppendedByTab((prev) => ({
+        ...prev,
+        [tab]: mergeAppended(tab, result, prev, basePosts),
+      }));
+      setLoadedCountByTab((prev) => ({
+        ...prev,
+        [tab]: (prev[tab] ?? loadedCount) + result.posts.length,
+      }));
+      setLikedPostIds((prev) => [
+        ...new Set([...prev, ...result.likedPostIds]),
+      ]);
+      setBookmarkedPostIds((prev) => [
+        ...new Set([...prev, ...result.bookmarkedPostIds]),
+      ]);
+      setCommentsByPostId((prev) => ({
+        ...prev,
+        ...result.commentsByPostId,
+      }));
+      setUserReactionsByPostId((prev) => ({
+        ...prev,
+        ...result.userReactionsByPostId,
+      }));
+    },
+    [tab, basePosts, loadedCount]
+  );
+
+  const emptyConfig = getFeedEmptyConfig(tab, isLoggedIn);
 
   if (loadingTab === tab) {
     return <PostsSkeleton count={3} />;
@@ -248,7 +310,7 @@ export function HomeFeedClient({
     );
   }
 
-  if (tab === "following" && posts.length === 0) {
+  if (tab === "following" && displayPosts.length === 0) {
     return (
       <FollowingEmptyState
         suggestedNpcs={suggestedNpcs}
@@ -257,26 +319,11 @@ export function HomeFeedClient({
     );
   }
 
-  if (showLoadMore && posts.length > 0) {
-    return (
-      <FeedLoadMore
-        initialPosts={posts.slice(0, PAGE_SIZE)}
-        initialOffset={PAGE_SIZE}
-        likedPostIds={likedPostIds}
-        bookmarkedPostIds={bookmarkedPostIds}
-        isLoggedIn={isLoggedIn}
-        profile={profile}
-        userId={user?.id}
-        commentsByPostId={commentsByPostId}
-        userReactionsByPostId={userReactionsByPostId}
-        referenceNowMs={referenceNowMs}
-      />
-    );
-  }
-
   return (
-    <FeedList
-      posts={posts}
+    <FeedInfiniteList
+      tab={tab}
+      posts={displayPosts}
+      loadedCount={loadedCount}
       likedPostIds={likedPostIds}
       bookmarkedPostIds={bookmarkedPostIds}
       isLoggedIn={isLoggedIn}
@@ -285,7 +332,8 @@ export function HomeFeedClient({
       commentsByPostId={commentsByPostId}
       userReactionsByPostId={userReactionsByPostId}
       referenceNowMs={referenceNowMs}
-      emptyMessage={emptyMessage}
+      emptyConfig={emptyConfig}
+      onLoadMoreResult={handleLoadMoreResult}
     />
   );
 }
