@@ -9,7 +9,10 @@ import {
   AuthBackLink,
   AuthShell,
 } from "@/components/auth/AuthShell";
-import { clearAuthHash, isRecoveryHash } from "@/lib/auth/recovery-hash";
+import {
+  establishRecoverySession,
+  isRecoveryHash,
+} from "@/lib/auth/recovery-hash";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -40,7 +43,7 @@ function ResetPasswordForm() {
     const supabase = createClient();
     let settled = false;
 
-    function applySession(session: Session | null) {
+    function finish(session: Session | null, errorMessage?: string) {
       if (settled) return;
       settled = true;
       setSessionReady(!!session);
@@ -48,7 +51,8 @@ function ResetPasswordForm() {
       if (!session) {
         setMessageIsError(true);
         setMessage(
-          "Session invalide. Utilisez le lien reçu par email ou demandez-en un nouveau."
+          errorMessage ??
+            "Session invalide. Utilisez le lien reçu par email ou demandez-en un nouveau."
         );
       }
       setCheckingSession(false);
@@ -58,31 +62,32 @@ function ResetPasswordForm() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session) => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
-        clearAuthHash();
-        applySession(session);
+        finish(session);
       }
     });
 
-    if (isRecoveryHash(window.location.hash)) {
-      void supabase.auth.getSession();
-    } else {
-      void supabase.auth.getSession().then(({ data: { session } }) => {
-        applySession(session);
-      });
+    async function resolveSession() {
+      if (isRecoveryHash(window.location.hash)) {
+        const { session, error } = await establishRecoverySession(supabase);
+        if (session) {
+          finish(session);
+          return;
+        }
+        finish(
+          null,
+          error?.message ??
+            "Lien invalide ou expiré. Demandez un nouveau lien."
+        );
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      finish(session);
     }
 
-    const timeout = window.setTimeout(() => {
-      if (!settled) {
-        void supabase.auth.getSession().then(({ data: { session } }) => {
-          applySession(session);
-        });
-      }
-    }, 3000);
+    void resolveSession();
 
-    return () => {
-      subscription.unsubscribe();
-      window.clearTimeout(timeout);
-    };
+    return () => subscription.unsubscribe();
   }, [expiredFromUrl]);
 
   async function handleSubmit(e: React.FormEvent) {
