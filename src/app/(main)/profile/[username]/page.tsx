@@ -17,7 +17,7 @@ import {
 } from "@/lib/queries/profile";
 import type { Personality } from "@/lib/supabase/types";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ username: string }>;
@@ -42,7 +42,10 @@ async function ProfilePosts({
 }
 
 export default async function ProfilePage({ params }: Props) {
-  const { username } = await params;
+  const { username: rawUsername } = await params;
+  const username = decodeURIComponent(rawUsername ?? "").trim();
+  if (!username) notFound();
+
   const auth = await getRequestAuth();
   const { user, profile: currentProfile } = auth;
 

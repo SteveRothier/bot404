@@ -1,16 +1,20 @@
-import { fetchEnrichedPosts, POST_WITH_AUTHOR } from "@/lib/queries/post-utils";
+import { fetchEnrichedPosts } from "@/lib/queries/post-utils";
 import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import type { PostWithAuthor, Profile } from "@/lib/supabase/types";
 
 export async function getProfileByUsername(
   username: string
 ): Promise<Profile | null> {
-  const supabase = await createClient();
+  const normalized = decodeURIComponent(username).trim();
+  if (!normalized) return null;
+
+  const supabase = createPublicClient();
 
   const { data, error } = await supabase
     .from("profiles")
     .select("*, faction:factions(*)")
-    .eq("username", username)
+    .ilike("username", normalized)
     .maybeSingle();
 
   if (error || !data) return null;
