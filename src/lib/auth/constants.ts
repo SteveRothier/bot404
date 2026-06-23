@@ -28,6 +28,9 @@ export const AUTH_MESSAGES = {
   signupSuccess: "Compte créé. Vous pouvez vous connecter.",
   passwordUpdated:
     "Mot de passe mis à jour. Connectez-vous avec votre nouveau mot de passe…",
+  currentPasswordRequired: "Saisissez votre mot de passe actuel.",
+  currentPasswordInvalid: "Mot de passe actuel incorrect.",
+  passwordChanged: "Mot de passe mis à jour.",
 } as const;
 
 export function validateEmail(value: string): string | null {

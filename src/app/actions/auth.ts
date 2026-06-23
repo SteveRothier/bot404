@@ -5,6 +5,7 @@ import {
   EMAIL_PATTERN,
   passwordResetCooldownMessage,
   RESET_PASSWORD_PATH,
+  validatePassword,
 } from "@/lib/auth/constants";
 import {
   checkPasswordResetCooldown,
@@ -12,7 +13,9 @@ import {
   setPasswordResetCooldown,
 } from "@/lib/auth/password-reset-cooldown";
 import { getSiteOrigin } from "@/lib/auth/site-url";
+import { requireAuthUser } from "@/lib/queries/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 type PasswordResetFailure = {
   ok: false;
@@ -115,5 +118,75 @@ export async function requestPasswordReset(
   }
 
   await setPasswordResetCooldown(normalized);
+  return { ok: true };
+}
+
+export type ChangePasswordResult =
+  | { ok: true }
+  | {
+      ok: false;
+      message: string;
+      field?: "current" | "new" | "confirm";
+    };
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<ChangePasswordResult> {
+  if (!currentPassword) {
+    return {
+      ok: false,
+      message: AUTH_MESSAGES.currentPasswordRequired,
+      field: "current",
+    };
+  }
+
+  const passwordError = validatePassword(newPassword);
+  if (passwordError) {
+    return { ok: false, message: passwordError, field: "new" };
+  }
+
+  const auth = await requireAuthUser(
+    "Connectez-vous pour modifier votre mot de passe."
+  );
+  if ("error" in auth) {
+    return { ok: false, message: auth.error };
+  }
+
+  const email = auth.user.email;
+  if (!email) {
+    return { ok: false, message: AUTH_MESSAGES.genericError };
+  }
+
+  const supabase = await createClient();
+
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email,
+    password: currentPassword,
+  });
+
+  if (signInError) {
+    return {
+      ok: false,
+      message: AUTH_MESSAGES.currentPasswordInvalid,
+      field: "current",
+    };
+  }
+
+  const { error: updateError } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (updateError) {
+    return {
+      ok: false,
+      message:
+        updateError.code === "same_password"
+          ? AUTH_MESSAGES.samePassword
+          : AUTH_MESSAGES.genericError,
+      field: "new",
+    };
+  }
+
   return { ok: true };
 }
