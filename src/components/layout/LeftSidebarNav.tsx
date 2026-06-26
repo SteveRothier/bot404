@@ -6,9 +6,7 @@ import {
   Bell,
   Bookmark,
   Compass,
-  HelpCircle,
   Home,
-  LayoutDashboard,
   User,
 } from "lucide-react";
 import { SidebarNavItem } from "@/components/layout/SidebarNavItem";
@@ -27,11 +25,9 @@ type Props = {
 
 function buildNavItems(profileUsername?: string | null): NavItem[] {
   return [
-    { href: "/", label: "Signaux", icon: Home },
+    { href: "/", label: "Accueil", icon: Home },
     { href: "/notifications", label: "Notifications", icon: Bell },
     { href: "/trending", label: "Explorer", icon: Compass },
-    { href: "/comment-jouer", label: "Comment jouer", icon: HelpCircle },
-    { href: "/dashboard", label: "Tableau", icon: LayoutDashboard },
     profileUsername
       ? { href: `/profile/${profileUsername}`, label: "Profil", icon: User }
       : { href: "/login", label: "Profil", icon: User },
@@ -43,8 +39,7 @@ function buildNavItems(profileUsername?: string | null): NavItem[] {
 
 function isNavActive(pathname: string, href: string): boolean {
   if (href === pathname) return true;
-  if (href === "/comment-jouer" && pathname.startsWith("/comment-jouer"))
-    return true;
+  if (href === "/" && pathname === "/") return true;
   if (href === "/notifications" && pathname.startsWith("/notifications"))
     return true;
   if (

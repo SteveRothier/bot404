@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import {
   AUTH_MESSAGES,
@@ -13,7 +13,7 @@ import {
   setPasswordResetCooldown,
 } from "@/lib/auth/password-reset-cooldown";
 import { getSiteOrigin } from "@/lib/auth/site-url";
-import { requireAuthUser } from "@/lib/queries/auth";
+import { requireAuthUser } from "@/lib/queries/shell";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 

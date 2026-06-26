@@ -1,9 +1,9 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { HashtagList } from "@/components/widgets/HashtagList";
 import {
   getCachedPopularHashtags,
   getCachedTrendingSnapshot,
-} from "@/lib/queries/cached";
+} from "@/lib/queries/shell";
 
 export async function TrendingHashtagsSection() {
   const [hashtags, snapshot] = await Promise.all([

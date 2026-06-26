@@ -1,11 +1,11 @@
-import { notFound } from "next/navigation";
+﻿import { notFound } from "next/navigation";
 import { FeedList } from "@/components/feed/FeedList";
 import { PostCard } from "@/components/feed/PostCard";
-import { NarrativeEmergentPostBanner } from "@/components/lore/NarrativeEmergentPostBanner";
+import { EmergentPostBanner } from "@/components/feed/EmergentPostBanner";
 import { getPostById } from "@/lib/queries/feed";
-import { getFeedInteractionContext } from "@/lib/queries/feed-context";
-import { getEmergentPostContext } from "@/lib/queries/narrative-ui";
-import type { RequestAuth } from "@/lib/queries/auth";
+import { getFeedInteractionContext } from "@/lib/queries/feed";
+import { getEmergentPostContext } from "@/lib/queries/posts/emergent-context";
+import type { RequestAuth } from "@/lib/queries/shell";
 import type { PostWithAuthor } from "@/lib/supabase/types";
 
 type FeedListProps = {
@@ -62,7 +62,7 @@ export async function PostDetailLoader({ postId, auth }: PostDetailProps) {
   return (
     <>
       {emergentContext && (
-        <NarrativeEmergentPostBanner context={emergentContext} />
+        <EmergentPostBanner context={emergentContext} />
       )}
       <PostCard
       post={post}

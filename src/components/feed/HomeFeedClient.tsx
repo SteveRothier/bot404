@@ -30,8 +30,6 @@ import type {
 
 type Props = {
   recentPosts: PostWithAuthor[];
-  theoryPosts: PostWithAuthor[];
-  rumorPosts: PostWithAuthor[];
   followingPosts: PostWithAuthor[];
   suggestedNpcs: Profile[];
   user: { id: string; email?: string } | null;
@@ -45,13 +43,9 @@ type Props = {
 function postsForTab(
   tab: FeedTab,
   recentPosts: PostWithAuthor[],
-  theoryPosts: PostWithAuthor[],
-  rumorPosts: PostWithAuthor[],
   followingPosts: PostWithAuthor[]
 ) {
   if (tab === "following") return followingPosts;
-  if (tab === "theory") return theoryPosts;
-  if (tab === "rumor") return rumorPosts;
   return recentPosts;
 }
 
@@ -90,8 +84,6 @@ function mergeAppended(
 
 export function HomeFeedClient({
   recentPosts: initialRecentPosts,
-  theoryPosts: initialTheoryPosts,
-  rumorPosts: initialRumorPosts,
   followingPosts: initialFollowingPosts,
   suggestedNpcs: initialSuggestedNpcs,
   user,
@@ -107,13 +99,11 @@ export function HomeFeedClient({
   const isLoggedIn = !!user;
 
   const [tabCache, setTabCache] = useState<Set<FeedTab>>(
-    () => new Set(["for-you", "theory", "rumor", "following"])
+    () => new Set(["for-you", "following"])
   );
   const [loadingTab, setLoadingTab] = useState<FeedTab | null>(null);
   const [tabLoadError, setTabLoadError] = useState<string | null>(null);
   const [recentPosts, setRecentPosts] = useState(initialRecentPosts);
-  const [theoryPosts, setTheoryPosts] = useState(initialTheoryPosts);
-  const [rumorPosts, setRumorPosts] = useState(initialRumorPosts);
   const [followingPosts, setFollowingPosts] = useState(initialFollowingPosts);
   const [suggestedNpcs, setSuggestedNpcs] = useState(initialSuggestedNpcs);
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState(
@@ -132,15 +122,11 @@ export function HomeFeedClient({
     Partial<Record<FeedTab, number>>
   >({
     "for-you": initialRecentPosts.length,
-    theory: initialTheoryPosts.length,
-    rumor: initialRumorPosts.length,
     following: initialFollowingPosts.length,
   });
 
   useEffect(() => {
     setRecentPosts((prev) => mergePostsPreservePolls(initialRecentPosts, prev));
-    setTheoryPosts((prev) => mergePostsPreservePolls(initialTheoryPosts, prev));
-    setRumorPosts((prev) => mergePostsPreservePolls(initialRumorPosts, prev));
     setFollowingPosts((prev) =>
       mergePostsPreservePolls(initialFollowingPosts, prev)
     );
@@ -150,8 +136,6 @@ export function HomeFeedClient({
     setUserReactionsByPostId(initialUserReactionsByPostId);
   }, [
     initialRecentPosts,
-    initialTheoryPosts,
-    initialRumorPosts,
     initialFollowingPosts,
     initialSuggestedNpcs,
     initialBookmarkedPostIds,
@@ -166,12 +150,6 @@ export function HomeFeedClient({
   const prependPost = useCallback(
     (post: PostWithAuthor, activeTab: FeedTab) => {
       setRecentPosts((prev) => prependUnique(post, prev));
-      if (post.post_type === "theory") {
-        setTheoryPosts((prev) => prependUnique(post, prev));
-      }
-      if (post.post_type === "rumor") {
-        setRumorPosts((prev) => prependUnique(post, prev));
-      }
       if (user?.id === post.author_id) {
         setFollowingPosts((prev) => prependUnique(post, prev));
       }
@@ -214,8 +192,6 @@ export function HomeFeedClient({
           ...prev,
           [tab]: payload.posts.length,
         }));
-        if (tab === "theory") setTheoryPosts(payload.posts);
-        if (tab === "rumor") setRumorPosts(payload.posts);
         if (tab === "following") {
           setFollowingPosts(payload.posts);
           if (payload.suggestedNpcs.length > 0) {
@@ -248,9 +224,8 @@ export function HomeFeedClient({
   }, [tab, tabCache]);
 
   const basePosts = useMemo(
-    () =>
-      postsForTab(tab, recentPosts, theoryPosts, rumorPosts, followingPosts),
-    [tab, recentPosts, theoryPosts, rumorPosts, followingPosts]
+    () => postsForTab(tab, recentPosts, followingPosts),
+    [tab, recentPosts, followingPosts]
   );
 
   const displayPosts = useMemo(() => {

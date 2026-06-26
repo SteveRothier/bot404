@@ -1,7 +1,7 @@
-import { NotificationsList } from "@/components/notifications/NotificationsList";
-import { getNotifications } from "@/lib/queries/notifications";
+﻿import { NotificationsList } from "@/components/notifications/NotificationsList";
+import { getNotifications } from "@/lib/queries/social";
 import { redirect } from "next/navigation";
-import { getRequestAuth } from "@/lib/queries/auth";
+import { getRequestAuth } from "@/lib/queries/shell";
 
 export const revalidate = 0;
 

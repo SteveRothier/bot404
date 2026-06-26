@@ -1,9 +1,9 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
 import { toggleMembership } from "@/lib/actions/toggle-membership";
 import { createFollowNotification } from "@/lib/notifications";
-import { requireAuthUser } from "@/lib/queries/auth";
+import { requireAuthUser } from "@/lib/queries/shell";
 import { createClient } from "@/lib/supabase/server";
 
 export async function toggleFollow(followingId: string) {

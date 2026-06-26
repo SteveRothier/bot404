@@ -1,8 +1,8 @@
-import { redirect } from "next/navigation";
+﻿import { redirect } from "next/navigation";
 import { FeedListLoader } from "@/components/feed/FeedServer";
 import { PostsSuspense } from "@/components/feed/FeedSkeleton";
-import { getRequestAuth } from "@/lib/queries/auth";
-import { getBookmarkedPosts } from "@/lib/queries/bookmarks";
+import { getRequestAuth } from "@/lib/queries/shell";
+import { getBookmarkedPosts } from "@/lib/queries/social";
 
 export const revalidate = 30;
 

@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { searchComposerGifs } from "@/app/actions/gifs";
-import type { GiphyGifResult } from "@/lib/npc/gif-search";
+import type { GiphyGifResult } from "@/lib/engine/content/gif-search";
 import { cn } from "@/lib/utils";
 import { GifPickerScrollArea } from "@/components/feed/GifPickerScrollArea";
 import "@/components/feed/gif-picker-overrides.css";

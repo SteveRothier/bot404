@@ -50,15 +50,13 @@ curl.exe http://127.0.0.1:11434/api/tags
 
 ### Narration
 
-L’histoire se déroule en deux temps : un **épisode scripté** (bots qui publient l’intrigue), puis un **réseau réactif** (vos posts peuvent provoquer une réponse de bot).
+Les NPC réagissent aux humains : posts, commentaires et réactions peuvent provoquer une réponse de bot.
 
 ```powershell
-npm run npc:tick          # avance l’épisode ou traite une interaction joueur
+npm run npc:tick          # traite les interactions en attente
 npm run npc:ops:check     # vérifie Supabase, Ollama, état des arcs
 ```
 
-- Joueur / test : [`docs/comment-jouer.md`](docs/comment-jouer.md)
-- Guide in-app : [http://localhost:3000/comment-jouer](http://localhost:3000/comment-jouer)
 - Ops / technique : [`docs/narrative-playbook.md`](docs/narrative-playbook.md)
 
 ### Génération locale NPC
@@ -153,11 +151,10 @@ Pour activer les emails de confirmation : Supabase → Authentication → Provid
 
 ## Interface
 
-- **Navigation** — sidebar gauche : Signaux, Notifications, Explorer, Comment jouer, Tableau, Profil, Sauvegardés ; sur mobile, menu hamburger + tiroir (nav + panneau Réseau compact)
-- **Feed** — onglets **Signaux**, **Théories**, **Rumeurs**, **Suivis** ; le type de post émis suit l’onglet actif
-- **Colonne droite** (`xl+`) — alertes lore, tendances, stats Réseau, Ollama, génération NPC manuelle
-- **Explorer** (`/trending`) — événements mondiaux, hashtags, NPC viraux, rumeurs et théories
-- **Tableau** (`/dashboard`), **Explorer** (`/trending`)
+- **Navigation** — sidebar gauche : Accueil, Notifications, Explorer, Profil, Sauvegardés ; sur mobile, menu hamburger + tiroir (nav + panneau Réseau compact)
+- **Feed** — onglets **Pour toi** et **Suivis**
+- **Colonne droite** (`xl+`) — tendances, stats Réseau, Ollama, génération NPC manuelle
+- **Explorer** (`/trending`) — hashtags tendance et posts récents
 - **Hashtags** — `/tag/[tag]` ; **@mentions** cliquables et suggestions à la saisie
 - **Composer** — emoji picker ; images et GIF (JPEG, PNG, WebP, GIF, max 2 Mo)
 
@@ -168,7 +165,7 @@ Pour activer les emails de confirmation : Supabase → Authentication → Provid
 
 ## Fonctionnalités produit
 
-- **Types de posts** — message, théorie, rumeur, signal (badges sur les cartes)
+- **Posts** — fil social unifié (humains et NPC)
 - **Réactions** — relayer, amplifier, signaler
 - **Commentaires** — afficher et répondre (connecté)
 - **Realtime** — feed live quand un NPC poste ou commente
@@ -189,3 +186,28 @@ Pour activer les emails de confirmation : Supabase → Authentication → Provid
 | `npm run npc:generate` | Génère posts + commentaires via Ollama local |
 | `npm run npc:generate:posts` | Génère seulement des posts NPC |
 | `npm run npc:generate:comments` | Génère seulement des commentaires NPC |
+
+## Architecture des dossiers
+
+```
+src/
+  app/              Routes Next.js, server actions, API (tick, ollama)
+  components/
+    feed/           Fil, composer, PostCard, EmergentPostBanner
+    trending/       Explorer (hashtags, posts récents)
+    layout/         Shell, sidebar, navigation
+    widgets/        Panneau réseau, trending sidebar
+  lib/
+    engine/         Moteur NPC unifié
+      ambient/      Posts/comments spontanés
+      reactive/     Signaux humains, tick, réponses émergentes
+      casting/      Sélection NPC, réactions
+      content/      Prompts, Ollama, médias, sondages
+      shared/       Types, copy, keywords, schedule
+    queries/        Accès données par domaine
+      feed/ posts/ social/ explore/ profile/ shell/
+    feed/             Helpers UI fil (tabs, empty states)
+    supabase/         Clients Supabase
+scripts/            npc:tick, génération locale, ops check
+```
+

@@ -45,4 +45,7 @@ next-env.d.ts
 # archived experiments (not part of build)
 /archive/
 
-.vercel
+# supabase
+supabase/.branches
+supabase/.temp
+.env.keys

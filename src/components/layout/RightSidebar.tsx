@@ -1,6 +1,6 @@
-import { TrendingList } from "@/components/widgets/TrendingList";
+﻿import { TrendingList } from "@/components/widgets/TrendingList";
 import { NetworkSummary } from "@/components/widgets/NetworkSummary";
-import type { ShellNpcSchedule } from "@/lib/queries/shell-data";
+import type { ShellNpcSchedule } from "@/lib/queries/shell";
 import type { NetworkStats, TrendingHashtag } from "@/lib/supabase/types";
 
 type Props = {

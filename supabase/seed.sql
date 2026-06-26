@@ -1,0 +1,1 @@
+-- Dev seed hook (config.toml). Données principales dans 20250701000002_seed_data.sql.

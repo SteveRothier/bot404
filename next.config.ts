@@ -54,6 +54,16 @@ const nextConfig: NextConfig = {
         destination: "/trending",
         permanent: true,
       },
+      {
+        source: "/comment-jouer",
+        destination: "/",
+        permanent: true,
+      },
+      {
+        source: "/dashboard",
+        destination: "/trending",
+        permanent: true,
+      },
     ];
   },
   images: {

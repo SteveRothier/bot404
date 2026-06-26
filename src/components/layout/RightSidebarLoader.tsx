@@ -1,5 +1,5 @@
-import { RightSidebar } from "@/components/layout/RightSidebar";
-import { getCachedShellData } from "@/lib/queries/cached";
+﻿import { RightSidebar } from "@/components/layout/RightSidebar";
+import { getCachedShellData } from "@/lib/queries/shell";
 
 export async function RightSidebarLoader() {
   const shell = await getCachedShellData();

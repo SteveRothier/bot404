@@ -1,6 +1,6 @@
-"use server";
+﻿"use server";
 
-import { getCommentById } from "@/lib/queries/comments";
+import { getCommentById } from "@/lib/queries/posts";
 import {
   getHomeFeedTabBundle,
   getPostById,

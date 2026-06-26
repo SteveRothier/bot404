@@ -1,8 +1,8 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { FeedListLoader } from "@/components/feed/FeedServer";
 import { PostsSuspense } from "@/components/feed/FeedSkeleton";
 import { normalizeHashtag } from "@/lib/hashtags";
-import { getPostsByHashtag } from "@/lib/queries/hashtags";
+import { getPostsByHashtag } from "@/lib/queries/explore";
 
 export const revalidate = 60;
 

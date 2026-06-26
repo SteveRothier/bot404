@@ -16,20 +16,17 @@ import {
 } from "@/lib/content-parse";
 import { mentionProfileHref } from "@/lib/mentions";
 import { cn } from "@/lib/utils";
-import type { PostType } from "@/lib/supabase/types";
 
 type Props = {
   content: string;
-  postType?: PostType;
   className?: string;
   mediaUrl?: string | null;
 };
 
-export function PostContent({ content, postType, className, mediaUrl }: Props) {
+export function PostContent({ content, className, mediaUrl }: Props) {
   const embedSourceUrl = extractEmbedMediaUrls(content)[0];
   const displayContent = stripEmbedUrlsForDisplay(content);
   const parts = splitContentTokens(displayContent);
-  const isSignal = postType === "signal";
   const showEmbed =
     embedSourceUrl &&
     !embedUrlDuplicatesMedia(embedSourceUrl, mediaUrl ?? null);
@@ -40,16 +37,8 @@ export function PostContent({ content, postType, className, mediaUrl }: Props) {
 
   return (
     <>
-      {(displayContent || isSignal) && (
-        <p
-          className={cn(
-            className,
-            isSignal && "font-mono text-[14px] tracking-tight"
-          )}
-        >
-          {isSignal && (
-            <span className="mr-2 text-meta text-accent">[SIGNAL]</span>
-          )}
+      {displayContent && (
+        <p className={cn(className)}>
           {parts.map((part, i) => {
             if (isHashtagToken(part)) {
               return (

@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { runNarrativeTick } from "@/lib/narrative/tick";
+﻿import { NextResponse } from "next/server";
+import { runNarrativeTick } from "@/lib/engine/reactive/tick";
 
 function tickSecret(): string | undefined {
   return process.env.NARRATIVE_CRON_SECRET ?? process.env.CRON_SECRET;

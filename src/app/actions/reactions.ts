@@ -1,13 +1,13 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
-import { revalidateDataCaches } from "@/lib/queries/cache-tags";
-import { enqueueReactionSignal } from "@/lib/narrative/signals";
-import { triggerNarrativeTickAfterAction } from "@/lib/narrative/trigger-tick";
+import { revalidateDataCaches } from "@/lib/queries/shell";
+import { enqueueReactionSignal } from "@/lib/engine/reactive/signals";
+import { triggerNarrativeTickAfterAction } from "@/lib/engine/reactive/trigger-tick";
 import { createReactionNotification } from "@/lib/notifications";
-import { maybeNpcReactionsOnPost } from "@/lib/npc/npc-reaction";
+import { maybeNpcReactionsOnPost } from "@/lib/engine/casting/npc-reaction";
 import { isReactionKind } from "@/lib/reactions";
-import { requireAuthUser } from "@/lib/queries/auth";
+import { requireAuthUser } from "@/lib/queries/shell";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { PostType, ReactionKind } from "@/lib/supabase/types";

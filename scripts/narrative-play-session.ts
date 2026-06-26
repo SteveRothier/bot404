@@ -1,13 +1,12 @@
-import { readFileSync, existsSync } from "node:fs";
+﻿import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { checkOllamaStatus } from "@/lib/ollama";
-import { runNarrativeTick } from "@/lib/narrative/tick";
-import { enqueueHumanPostSignal } from "@/lib/narrative/signals";
+import { runNarrativeTick } from "@/lib/engine/reactive/tick";
+import { enqueueHumanPostSignal } from "@/lib/engine/reactive/signals";
 import {
   getActiveEmergentArc,
   getNarrativeStateForUi,
-} from "@/lib/narrative/queries";
-import { getRecentNarrativeInteractions } from "@/lib/queries/narrative-ui";
+} from "@/lib/engine/shared/queries";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 function loadDotEnv(filePath: string) {
@@ -31,8 +30,26 @@ function loadDotEnv(filePath: string) {
 
 loadDotEnv(resolve(process.cwd(), ".env.local"));
 
-const SESSION_THEORY =
-  "[Session test] Les logs du fil montrent des signatures humaines déguisées en NPC. Qui contrôle le filtre du réseau ?";
+const SESSION_POST =
+  "[Session test] Les NPC du réseau réagissent-ils encore aux humains ?";
+
+async function countRecentNpcResponses(): Promise<number> {
+  const supabase = createAdminClient();
+  const since = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  const [{ count: posts }, { count: comments }] = await Promise.all([
+    supabase
+      .from("posts")
+      .select("*", { count: "exact", head: true })
+      .not("narrative_signal_id", "is", null)
+      .gte("created_at", since),
+    supabase
+      .from("comments")
+      .select("*", { count: "exact", head: true })
+      .not("narrative_signal_id", "is", null)
+      .gte("created_at", since),
+  ]);
+  return (posts ?? 0) + (comments ?? 0);
+}
 
 async function main() {
   const report: Record<string, unknown> = {
@@ -94,15 +111,15 @@ async function main() {
     .from("posts")
     .insert({
       author_id: human.id,
-      content: SESSION_THEORY,
-      post_type: "theory",
+      content: SESSION_POST,
+      post_type: "message",
     })
     .select("id")
     .single();
 
   if (postError || !post) {
     steps.push({
-      name: "theory_post",
+      name: "human_post",
       ok: false,
       detail: postError?.message ?? "insert failed",
     });
@@ -110,9 +127,9 @@ async function main() {
     process.exit(1);
   }
 
-  await enqueueHumanPostSignal(human.id, post.id, SESSION_THEORY, "theory");
+  await enqueueHumanPostSignal(human.id, post.id, SESSION_POST, "message");
   steps.push({
-    name: "theory_post",
+    name: "human_post",
     ok: true,
     detail: `post_id=${post.id}`,
   });
@@ -132,21 +149,20 @@ async function main() {
     detail: JSON.stringify(tick),
   });
 
-  const interactions = await getRecentNarrativeInteractions(3);
+  const recentResponses = await countRecentNpcResponses();
   steps.push({
-    name: "trending_data",
-    ok: interactions.length > 0,
+    name: "recent_responses",
+    ok: recentResponses > 0,
     detail:
-      interactions.length > 0
-        ? `${interactions.length} réponse(s) récente(s) — @${interactions[0].npc_username}`
-        : "aucune réponse narrative en base (post émergent possible, pas dans Trending commentaires)",
+      recentResponses > 0
+        ? `${recentResponses} réponse(s) NPC récente(s) en base`
+        : "aucune réponse narrative récente",
   });
 
   report.ok = steps.every((s) => s.ok) || tickOk;
-  report.hint =
-    tickOk
-      ? "Session technique OK. Vérifiez le fil sur http://localhost:3000 et /trending"
-      : "Corrigez les étapes en échec puis rejouez en UI (Scénario A).";
+  report.hint = tickOk
+    ? "Session technique OK. Vérifiez le fil sur http://localhost:3000"
+    : "Corrigez les étapes en échec puis rejouez.";
 
   console.log(JSON.stringify(report, null, 2));
   process.exit(tickOk ? 0 : 1);

@@ -1,11 +1,6 @@
 import type { FeedTab } from "@/components/feed/FeedTabs";
 
-const VALID_TABS = new Set<FeedTab>([
-  "for-you",
-  "theory",
-  "rumor",
-  "following",
-]);
+const VALID_TABS = new Set<FeedTab>(["for-you", "following"]);
 
 export function parseFeedTabParam(
   value: string | string[] | undefined | null

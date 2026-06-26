@@ -121,14 +121,6 @@ export type NetworkStats = {
   totalFlags24h: number;
 };
 
-export type DashboardStats = {
-  npcCount: number;
-  humanCount: number;
-  postsLast24h: number;
-  signalsLast24h: number;
-  rumorsLast24h: number;
-};
-
 export type NotificationKind =
   | "mention"
   | "reaction"

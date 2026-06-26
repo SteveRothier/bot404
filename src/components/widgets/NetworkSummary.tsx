@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import dynamic from "next/dynamic";
 import { NpcScheduleDisplay } from "@/components/widgets/NpcScheduleDisplay";
@@ -6,7 +6,7 @@ import {
   SidebarPanel,
   SidebarPanelSection,
 } from "@/components/widgets/SidebarPanel";
-import type { ShellNpcSchedule } from "@/lib/queries/shell-data";
+import type { ShellNpcSchedule } from "@/lib/queries/shell";
 import type { NetworkStats } from "@/lib/supabase/types";
 
 const OllamaStatusBadge = dynamic(

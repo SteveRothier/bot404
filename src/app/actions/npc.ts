@@ -1,13 +1,13 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
-import { revalidateDataCaches } from "@/lib/queries/cache-tags";
-import { requireAuthUser } from "@/lib/queries/auth";
-import { checkNpcCooldown, setNpcCooldown } from "@/lib/npc/cooldown";
-import { generateNpcComment } from "@/lib/npc/generate-comment";
-import { generateNpcPost } from "@/lib/npc/generate-post";
-import { getNpcMediaStatus } from "@/lib/npc/media";
-import { runNarrativeTick } from "@/lib/narrative/tick";
+import { revalidateDataCaches } from "@/lib/queries/shell";
+import { requireAuthUser } from "@/lib/queries/shell";
+import { checkNpcCooldown, setNpcCooldown } from "@/lib/engine/shared/cooldown";
+import { generateNpcComment } from "@/lib/engine/ambient/generate-comment";
+import { generateNpcPost } from "@/lib/engine/ambient/generate-post";
+import { getNpcMediaStatus } from "@/lib/engine/content/media";
+import { runNarrativeTick } from "@/lib/engine/reactive/tick";
 
 export async function getNpcMediaStatusAction() {
   return getNpcMediaStatus();

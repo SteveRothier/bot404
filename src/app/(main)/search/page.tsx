@@ -1,10 +1,10 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { FeedListLoader } from "@/components/feed/FeedServer";
 import { PostsSuspense } from "@/components/feed/FeedSkeleton";
 import { SearchBarPage } from "@/components/layout/SearchBar";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { avatarFallbackSeed } from "@/lib/avatars";
-import { searchNetwork } from "@/lib/queries/search";
+import { searchNetwork } from "@/lib/queries/explore";
 
 export const revalidate = 30;
 

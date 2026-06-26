@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BarChart2, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { BookmarkButton } from "@/components/feed/BookmarkButton";
 import { PostReactions } from "@/components/feed/PostReactions";
-import { PostViewTracker } from "@/components/feed/PostViewTracker";
 import { HoverTooltip } from "@/components/ui/hover-tooltip";
 import { PostCardMenu } from "@/components/feed/PostCardMenu";
 import { PostContent } from "@/components/feed/PostContent";
@@ -24,7 +23,6 @@ const PostComments = dynamic(
 import { avatarFallbackSeed } from "@/lib/avatars";
 import { formatCount, formatRelativeTimeShort } from "@/lib/format";
 import { isPollExpired } from "@/lib/polls";
-import { POST_TYPE_LABELS } from "@/lib/post-types";
 import { cn } from "@/lib/utils";
 import type {
   CommentWithAuthor,
@@ -58,14 +56,8 @@ export function PostCard({
 }: Props) {
   const router = useRouter();
   const { author } = post;
-  const typeLabel = POST_TYPE_LABELS[post.post_type ?? "message"];
   const handle = `@${author.username.toLowerCase()}`;
   const [commentsOpen, setCommentsOpen] = useState(defaultCommentsOpen);
-  const [viewCount, setViewCount] = useState(post.view_count ?? 0);
-
-  useEffect(() => {
-    setViewCount(post.view_count ?? 0);
-  }, [post.view_count]);
   const canDelete = isLoggedIn && userId === post.author_id;
   const canClosePoll =
     canDelete &&
@@ -86,12 +78,6 @@ export function PostCard({
           "ring-2 ring-violet-500/30 ring-offset-0"
       )}
     >
-      <PostViewTracker
-        postId={post.id}
-        mode={defaultCommentsOpen ? "detail" : "feed"}
-        trackViews={!author.is_npc}
-        onRecorded={setViewCount}
-      />
       <div className="flex items-start gap-3">
         <Link
           href={`/profile/${author.username}`}
@@ -125,14 +111,6 @@ export function PostCard({
                   <span className="text-meta text-muted-foreground">npc</span>
                 </>
               )}
-              {typeLabel && (
-                <>
-                  <span className="text-muted-foreground">·</span>
-                  <span className="text-meta text-muted-foreground">
-                    {typeLabel}
-                  </span>
-                </>
-              )}
               <span className="text-muted-foreground">·</span>
               <Link
                 href={`/post/${post.id}`}
@@ -151,7 +129,6 @@ export function PostCard({
           {defaultCommentsOpen ? (
             <PostContent
               content={post.content}
-              postType={post.post_type}
               mediaUrl={post.media_url}
               className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed text-foreground"
             />
@@ -174,7 +151,6 @@ export function PostCard({
             >
               <PostContent
                 content={post.content}
-                postType={post.post_type}
                 mediaUrl={post.media_url}
                 className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground"
               />
@@ -219,15 +195,6 @@ export function PostCard({
               isLoggedIn={isLoggedIn}
             />
             <div className="flex items-center gap-3">
-              {viewCount > 0 && (
-                <span
-                  className="flex items-center gap-1.5 text-sm"
-                  aria-label={`${viewCount} vues`}
-                >
-                  <BarChart2 className="size-[18px]" strokeWidth={1.75} />
-                  <span>{formatCount(viewCount)}</span>
-                </span>
-              )}
               <BookmarkButton
                 postId={post.id}
                 bookmarkedByUser={bookmarkedByUser}

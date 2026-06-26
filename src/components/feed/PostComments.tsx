@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { fetchFeedCommentById } from "@/app/actions/feed";
 import { createComment } from "@/app/actions/posts";
 import { useFeedBridge } from "@/components/feed/FeedBridgeContext";
-import { NarrativeQueuedBanner } from "@/components/lore/NarrativeQueuedBanner";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { CommentDeleteButton } from "@/components/feed/CommentDeleteButton";
 import { ComposerTextarea } from "@/components/feed/ComposerTextarea";
@@ -17,7 +16,6 @@ import { extractEmbedMediaUrls } from "@/lib/embed-media";
 import { formatRelativeTimeShort } from "@/lib/format";
 import { composerSubmitClassName } from "@/components/feed/composer-styles";
 import { avatarFallbackSeed } from "@/lib/avatars";
-import { NARRATIVE_COPY } from "@/lib/narrative/copy";
 import { markFeedLiveRefresh } from "@/lib/feed/live-refresh";
 import { cn } from "@/lib/utils";
 import type { CommentWithAuthor, Profile } from "@/lib/supabase/types";
@@ -48,10 +46,8 @@ export function PostComments({
   const router = useRouter();
   const feedBridge = useFeedBridge();
   const [error, setError] = useState<string | null>(null);
-  const [queuedMessage, setQueuedMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [content, setContent] = useState("");
-  const dismissQueued = useCallback(() => setQueuedMessage(null), []);
 
   const replyHandle = `@${replyToUsername.toLowerCase()}`;
   const embedSourceUrl = extractEmbedMediaUrls(content)[0];
@@ -85,7 +81,6 @@ export function PostComments({
         onOpenChange?.(true);
         if (result.narrativeQueued) {
           markFeedLiveRefresh();
-          setQueuedMessage(NARRATIVE_COPY.queuedComment);
         }
         if (result.commentId) {
           const comment = await fetchFeedCommentById(result.commentId);
@@ -144,13 +139,6 @@ export function PostComments({
 
                 {error && (
                   <p className="mt-1 px-1 text-sm text-destructive">{error}</p>
-                )}
-
-                {queuedMessage && (
-                  <NarrativeQueuedBanner
-                    message={queuedMessage}
-                    onDismiss={dismissQueued}
-                  />
                 )}
 
                 <div className="mt-1 flex items-center justify-between gap-3 px-1 pb-0.5">

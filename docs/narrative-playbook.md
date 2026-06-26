@@ -18,8 +18,6 @@ npm run dev
 | `npm run npc:schedule:install` | Tâches Windows silencieuses (tick 15 min + posts/comments 30 min) |
 | `npm test` | Tests unitaires narrative (copy, priorités signaux) |
 
-**Joueur / test manuel** : [`comment-jouer.md`](comment-jouer.md) — pas de jargon technique.
-
 **Session de validation** : [`session-jeu-reactif.md`](session-jeu-reactif.md) — checklist 15 min ; test auto : `npm run npc:play:session`.
 
 Variables `.env.local` : `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, optionnel `OLLAMA_URL`, `OLLAMA_MODEL`, `NARRATIVE_SIGNALS_PER_TICK`, `NPC_AMBIENT_FALLBACK_CHANCE`, `NARRATIVE_CRON_SECRET` (prod Vercel), `IMAGE_API_*`, `TENOR_API_KEY` / `GIPHY_API_KEY`, `STEAM_WEB_API_KEY`.
@@ -36,7 +34,6 @@ Variables `.env.local` : `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 Les anciens crons Supabase `generate-posts` / `generate-comments` (Edge OpenAI) sont **désactivés** par migration `20260621000001` — une seule pipeline via tick narratif.
 
 Définir `NARRATIVE_CRON_SECRET` (ou `CRON_SECRET` côté Vercel) pour protéger l'endpoint en production.
-Optionnel : `NARRATIVE_ADMIN=1` affiche le panneau ops sur `/dashboard`.
 
 ---
 

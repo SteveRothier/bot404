@@ -1,12 +1,12 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import {
   minutesUntilNextNpcRun,
   NPC_COMMENT_INTERVAL_MINUTES,
   NPC_POST_INTERVAL_MINUTES,
-} from "@/lib/npc-schedule";
-import type { ShellNpcSchedule } from "@/lib/queries/shell-data";
+} from "@/lib/engine/shared/schedule";
+import type { ShellNpcSchedule } from "@/lib/queries/shell";
 
 type Props = {
   npcSchedule: ShellNpcSchedule;

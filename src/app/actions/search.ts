@@ -1,6 +1,6 @@
-"use server";
+﻿"use server";
 
-import { searchProfilesByUsernamePattern } from "@/lib/queries/profile-search";
+import { searchProfilesByUsernamePattern } from "@/lib/queries/explore";
 import type { Profile } from "@/lib/supabase/types";
 
 export async function searchProfilesForMention(

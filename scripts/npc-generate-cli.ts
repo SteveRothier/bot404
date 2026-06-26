@@ -1,7 +1,7 @@
-import { readFileSync, existsSync } from "node:fs";
+﻿import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { generateNpcComment } from "@/lib/npc/generate-comment";
-import { generateNpcPost } from "@/lib/npc/generate-post";
+import { generateNpcComment } from "@/lib/engine/ambient/generate-comment";
+import { generateNpcPost } from "@/lib/engine/ambient/generate-post";
 
 function loadDotEnv(filePath: string) {
   if (!existsSync(filePath)) return;

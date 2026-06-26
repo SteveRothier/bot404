@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from "node:fs";
+﻿import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 
 function loadDotEnv(filePath: string) {
@@ -175,7 +175,7 @@ async function checkSteamApi() {
   const key = process.env.STEAM_WEB_API_KEY?.trim();
   if (!key) return;
 
-  const { verifySteamWebApiKey } = await import("@/lib/npc/steam-media");
+  const { verifySteamWebApiKey } = await import("@/lib/engine/content/steam-media");
   const ok = await verifySteamWebApiKey();
   const idx = checks.findIndex((c) => c.name === "Médias NPC (Steam)");
   if (idx >= 0) {

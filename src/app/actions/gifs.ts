@@ -1,10 +1,10 @@
-"use server";
+﻿"use server";
 
 import {
   fetchGiphyTrending,
   searchGiphyGifs,
   type GiphyGifResult,
-} from "@/lib/npc/gif-search";
+} from "@/lib/engine/content/gif-search";
 import { createClient } from "@/lib/supabase/server";
 
 const COMPOSER_GIF_LIMIT = 50;

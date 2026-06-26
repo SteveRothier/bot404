@@ -3,25 +3,12 @@
 import { useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 
-export type FeedTab = "for-you" | "theory" | "rumor" | "following";
+export type FeedTab = "for-you" | "following";
 
-export function postTypeForFeedTab(tab: FeedTab): "message" | "theory" | "rumor" {
-  if (tab === "theory") return "theory";
-  if (tab === "rumor") return "rumor";
-  return "message";
-}
-
-export function composerPlaceholderForFeedTab(tab: FeedTab): string {
-  if (tab === "theory") return "Formuler une théorie…";
-  if (tab === "rumor") return "Diffusez une rumeur…";
-  if (tab === "following") return "Publier pour vos abonnés…";
-  return "Émettre un signal…";
-}
+export const COMPOSER_PLACEHOLDER = "Quoi de neuf ?";
 
 const tabs: { value: FeedTab; label: string }[] = [
-  { value: "for-you", label: "Signaux" },
-  { value: "theory", label: "Théories" },
-  { value: "rumor", label: "Rumeurs" },
+  { value: "for-you", label: "Pour toi" },
   { value: "following", label: "Suivis" },
 ];
 

@@ -1,5 +1,5 @@
-import { ProfileEditForm } from "@/components/profile/ProfileEditForm";
-import { getRequestAuth } from "@/lib/queries/auth";
+﻿import { ProfileEditForm } from "@/components/profile/ProfileEditForm";
+import { getRequestAuth } from "@/lib/queries/shell";
 import { redirect } from "next/navigation";
 
 export default async function ProfileEditPage() {

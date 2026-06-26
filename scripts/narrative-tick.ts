@@ -1,6 +1,6 @@
-import { readFileSync, existsSync } from "node:fs";
+﻿import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { runNarrativeTick } from "@/lib/narrative/tick";
+import { runNarrativeTick } from "@/lib/engine/reactive/tick";
 
 function loadDotEnv(filePath: string) {
   if (!existsSync(filePath)) return;

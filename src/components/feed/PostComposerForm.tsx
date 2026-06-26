@@ -1,13 +1,11 @@
 "use client";
 
-import { useRef, useState, useTransition, useCallback } from "react";
+import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { NarrativeQueuedBanner } from "@/components/lore/NarrativeQueuedBanner";
 import {
-  composerPlaceholderForFeedTab,
-  postTypeForFeedTab,
+  COMPOSER_PLACEHOLDER,
   type FeedTab,
 } from "@/components/feed/FeedTabs";
 import { ComposerTextarea } from "@/components/feed/ComposerTextarea";
@@ -28,7 +26,6 @@ import {
   POLL_MIN_OPTIONS,
   validatePollDraft,
 } from "@/lib/polls";
-import { NARRATIVE_COPY, queuedMessageForPostType } from "@/lib/narrative/copy";
 import { markFeedLiveRefresh } from "@/lib/feed/live-refresh";
 import type { Profile } from "@/lib/supabase/types";
 
@@ -50,11 +47,9 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewIsBlob, setPreviewIsBlob] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [queuedMessage, setQueuedMessage] = useState<string | null>(null);
   const [pollDraft, setPollDraft] = useState<PollDraftState | null>(null);
   const [pending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const dismissQueued = useCallback(() => setQueuedMessage(null), []);
 
   const embedSourceUrl = extractEmbedMediaUrls(content)[0];
   const hasAttachedMedia = !!(previewUrl || mediaFile || remoteGifUrl);
@@ -79,9 +74,7 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
       (!pollDraft &&
         (content.trim().length > 0 || !!mediaFile || !!remoteGifUrl)));
   const disabled = pending || !user;
-  const placeholder = user
-    ? composerPlaceholderForFeedTab(feedTab)
-    : "Connectez-vous pour publier…";
+  const placeholder = user ? COMPOSER_PLACEHOLDER : "Connectez-vous pour publier…";
   const submitHint = pollDraft
     ? pollValidationError ??
       (content.trim().length === 0
@@ -144,7 +137,7 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
     setError(null);
     const fd = new FormData();
     fd.set("content", content);
-    fd.set("post_type", postTypeForFeedTab(feedTab));
+    fd.set("post_type", "message");
     if (mediaFile) fd.set("media", mediaFile);
     else if (remoteGifUrl) fd.set("media_remote_url", remoteGifUrl);
     if (pollDraft) {
@@ -166,9 +159,6 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
         setPollDraft(null);
         if (result.narrativeQueued) {
           markFeedLiveRefresh();
-          setQueuedMessage(
-            queuedMessageForPostType(postTypeForFeedTab(feedTab))
-          );
         }
         if (result.postId) {
           const fetched = await fetchFeedPostById(result.postId);
@@ -179,7 +169,7 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
           if (post) {
             const matchesTab =
               feedTab === "for-you" ||
-              post.post_type === postTypeForFeedTab(feedTab);
+              (feedTab === "following" && post.author_id === user.id);
             if (matchesTab) {
               feedBridge.prependPost(post, feedTab);
             }
@@ -295,13 +285,6 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
 
           {pollDraft && submitHint && (
             <p className="mt-1 px-1 text-sm text-muted-foreground">{submitHint}</p>
-          )}
-
-          {queuedMessage && (
-            <NarrativeQueuedBanner
-              message={queuedMessage}
-              onDismiss={dismissQueued}
-            />
           )}
 
           <div className="mt-1 flex items-center justify-between gap-3 px-1 pb-0.5">

@@ -1,10 +1,10 @@
-import { Suspense } from "react";
+﻿import { Suspense } from "react";
 import { LeftSidebar } from "@/components/layout/LeftSidebar";
 import { RightSidebarLoader } from "@/components/layout/RightSidebarLoader";
 import { ClientStoresHydrator } from "@/components/providers/ClientStoresHydrator";
-import { getCachedSidebarAuth } from "@/lib/queries/cached";
+import { getCachedSidebarAuth } from "@/lib/queries/shell";
 import { getDefaultOllamaStatus } from "@/lib/ollama";
-import { getUnreadNotificationCount } from "@/lib/queries/notifications";
+import { getUnreadNotificationCount } from "@/lib/queries/social";
 
 type Props = {
   children: React.ReactNode;

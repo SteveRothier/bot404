@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FeedListLoader } from "@/components/feed/FeedServer";
 import { PostsSuspense } from "@/components/feed/FeedSkeleton";
@@ -9,8 +9,8 @@ import {
   getFollowerCount,
   getFollowingCount,
   isFollowing,
-} from "@/lib/queries/follows";
-import { getRequestAuth } from "@/lib/queries/auth";
+} from "@/lib/queries/social";
+import { getRequestAuth } from "@/lib/queries/shell";
 import {
   getProfileByUsername,
   getPostsByProfileId,

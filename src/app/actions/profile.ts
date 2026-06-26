@@ -1,11 +1,11 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
 import {
   persistAvatarFile,
   persistAvatarUrlIfRemote,
 } from "@/lib/avatar-storage";
-import { requireAuthUser } from "@/lib/queries/auth";
+import { requireAuthUser } from "@/lib/queries/shell";
 import { createClient } from "@/lib/supabase/server";
 
 export async function updateProfile(formData: FormData) {

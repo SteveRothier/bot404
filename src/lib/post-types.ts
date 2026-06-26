@@ -1,24 +1,13 @@
 import type { PostType } from "@/lib/supabase/types";
 
-export const POST_TYPES: PostType[] = ["message", "theory", "signal", "rumor"];
-
-/** Libellé affiché sur PostCard (null = pas de badge). */
-export const POST_TYPE_LABELS: Record<PostType, string | null> = {
-  message: null,
-  theory: "théorie",
-  signal: "signal",
-  rumor: "rumeur",
-};
+/** Types acceptés à la création côté produit. */
+export const POST_TYPES: PostType[] = ["message"];
 
 export function isValidPostType(value: string): value is PostType {
-  return POST_TYPES.includes(value as PostType);
+  return value === "message";
 }
 
-/** Tirage pondéré pour la génération NPC. */
+/** Tirage pour la génération NPC — toujours message. */
 export function pickRandomNpcPostType(): PostType {
-  const r = Math.random();
-  if (r < 0.5) return "message";
-  if (r < 0.7) return "theory";
-  if (r < 0.85) return "signal";
-  return "rumor";
+  return "message";
 }

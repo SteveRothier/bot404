@@ -1,7 +1,7 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
-import { revalidateDataCaches } from "@/lib/queries/cache-tags";
+import { revalidateDataCaches } from "@/lib/queries/shell";
 import { createClient } from "@/lib/supabase/server";
 
 export async function votePoll(postId: number, optionId: number) {

@@ -1,20 +1,20 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
-import { revalidateDataCaches } from "@/lib/queries/cache-tags";
+import { revalidateDataCaches } from "@/lib/queries/shell";
 import {
   enqueueHumanCommentSignal,
   enqueueHumanPostSignal,
-} from "@/lib/narrative/signals";
-import { triggerNarrativeTickAfterAction } from "@/lib/narrative/trigger-tick";
-import { isEmergentModeActive } from "@/lib/narrative/queries";
+} from "@/lib/engine/reactive/signals";
+import { triggerNarrativeTickAfterAction } from "@/lib/engine/reactive/trigger-tick";
+import { isEmergentModeActive } from "@/lib/engine/shared/queries";
 import { createMentionNotifications } from "@/lib/notifications";
 import { isValidPostType } from "@/lib/post-types";
 import { extractEmbedMediaUrls } from "@/lib/embed-media";
 import { parsePollJson, validatePollDraft } from "@/lib/polls";
-import { insertPostPoll } from "@/lib/queries/poll-insert";
-import { isAllowedGiphyUrl } from "@/lib/npc/gif-search";
-import { requireAuthUser } from "@/lib/queries/auth";
+import { insertPostPoll } from "@/lib/queries/posts";
+import { isAllowedGiphyUrl } from "@/lib/engine/content/gif-search";
+import { requireAuthUser } from "@/lib/queries/shell";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { PostMediaType, PostPoll, PostType } from "@/lib/supabase/types";
