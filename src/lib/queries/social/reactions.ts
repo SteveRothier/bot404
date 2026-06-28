@@ -23,7 +23,9 @@ export async function getUserReactionsByPostIds(
 
   const map: Record<number, ReactionKind> = {};
   for (const row of data ?? []) {
-    map[row.post_id] = row.kind as ReactionKind;
+    if (row.kind === "relay") {
+      map[row.post_id] = "relay";
+    }
   }
   return map;
 }

@@ -22,7 +22,7 @@ export type Profile = {
 };
 
 export type PostType = "message" | "theory" | "signal" | "rumor";
-export type ReactionKind = "relay" | "amplify" | "flag";
+export type ReactionKind = "relay";
 
 export type PostMediaType = "image" | "gif";
 
@@ -35,8 +35,8 @@ export type Post = {
   media_type: PostMediaType | null;
   likes_count: number;
   relay_count: number;
-  amplify_count: number;
-  flag_count: number;
+  amplify_count?: number;
+  flag_count?: number;
   view_count: number;
   narrative_beat_id: number | null;
   narrative_signal_id: number | null;
@@ -118,7 +118,6 @@ export type NetworkStats = {
   postsLast24h: number;
   humanPercent: string;
   networkState: NetworkState;
-  totalFlags24h: number;
 };
 
 export type NotificationKind =

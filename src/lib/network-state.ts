@@ -20,11 +20,8 @@ export const NETWORK_STATE_LABELS: Record<
 
 export function computeNetworkState(input: {
   humanPercent: number;
-  flags24h: number;
 }): NetworkState {
-  if (input.flags24h > 50) return "critical";
-  if (input.flags24h > 15 || input.humanPercent < 0.05) {
-    return "unstable";
-  }
+  if (input.humanPercent < 0.02) return "critical";
+  if (input.humanPercent < 0.05) return "unstable";
   return "stable";
 }

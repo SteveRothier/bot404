@@ -189,8 +189,6 @@ export function PostCard({
             <PostReactions
               postId={post.id}
               relayCount={post.relay_count ?? 0}
-              amplifyCount={post.amplify_count ?? 0}
-              flagCount={post.flag_count ?? 0}
               userReaction={userReaction}
               isLoggedIn={isLoggedIn}
             />

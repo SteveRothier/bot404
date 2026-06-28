@@ -33,7 +33,7 @@ async function fetchPostsForAmbientReactions(
   const { data: posts } = await supabase
     .from("posts")
     .select(
-      "id, author_id, post_type, content, relay_count, amplify_count, flag_count, created_at"
+      "id, author_id, post_type, content, relay_count, created_at"
     )
     .gte("created_at", since)
     .order("created_at", { ascending: false })
@@ -46,8 +46,7 @@ async function fetchPostsForAmbientReactions(
     author_id: p.author_id,
     post_type: (p.post_type ?? "message") as PostType,
     content: p.content,
-    reactionScore:
-      (p.relay_count ?? 0) + (p.amplify_count ?? 0) + (p.flag_count ?? 0),
+    reactionScore: p.relay_count ?? 0,
   }));
 }
 

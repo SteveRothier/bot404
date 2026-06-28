@@ -1,11 +1,5 @@
 import type { PostType, ReactionKind } from "@/lib/supabase/types";
 
-const REACTION_VERB: Record<ReactionKind, string> = {
-  relay: "aimé",
-  amplify: "amplifié",
-  flag: "signalé",
-};
-
 function postTypeLabel(postType: PostType | null | undefined): string {
   if (postType === "rumor") return "rumeur";
   if (postType === "theory") return "théorie";
@@ -14,26 +8,15 @@ function postTypeLabel(postType: PostType | null | undefined): string {
 }
 
 export function reactionActionLabel(
-  reactionKind: ReactionKind,
+  _reactionKind: ReactionKind,
   postType: PostType | null | undefined
 ): string {
-  const verb = REACTION_VERB[reactionKind];
-  return `${verb} un ${postTypeLabel(postType)}`;
+  return `aimé un ${postTypeLabel(postType)}`;
 }
 
 export function reactionPromptBlock(
-  reactionKind: ReactionKind | null | undefined,
-  postType: PostType | null | undefined
+  _reactionKind: ReactionKind | null | undefined,
+  _postType: PostType | null | undefined
 ): string {
-  if (!reactionKind || reactionKind === "relay") return "";
-
-  const typeLabel = postTypeLabel(postType);
-
-  if (reactionKind === "amplify") {
-    return `\nContexte : un humain a amplifié une ${typeLabel} sur le feed.`;
-  }
-  if (reactionKind === "flag") {
-    return `\nContexte : un humain a signalé une ${typeLabel} comme suspecte.`;
-  }
   return "";
 }

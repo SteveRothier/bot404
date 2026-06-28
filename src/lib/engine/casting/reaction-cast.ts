@@ -49,43 +49,10 @@ function syntheticHumanPostSignal(content: string): NarrativeSignal {
 }
 
 export function pickReactionKindForNpc(
-  npc: Profile,
-  postType: PostType,
-  content: string,
-  random = Math.random
+  _npc?: Profile,
+  _postType?: PostType,
+  _content?: string
 ): ReactionKind {
-  const isHuntNpc = HUNT_ARCHETYPES.includes(npc.username);
-  const isMemeNpc = MEME_ARCHETYPES.includes(npc.username);
-  const huntContent = contentHasHuntKeywords(content);
-
-  if (isHuntNpc) {
-    if (
-      postType === "theory" &&
-      (huntContent || random() < 0.08)
-    ) {
-      return "flag";
-    }
-    return "relay";
-  }
-
-  if (isMemeNpc) {
-    if (random() < 0.4) return "amplify";
-    if (random() < 0.08) return "flag";
-    return "relay";
-  }
-
-  if (postType === "rumor" && random() < 0.35) {
-    return "amplify";
-  }
-  if (postType === "theory" && random() < 0.12) {
-    return "flag";
-  }
-  if (postType === "message" && random() < 0.22) {
-    return "amplify";
-  }
-  if (postType === "message" && random() < 0.06) {
-    return "flag";
-  }
   return "relay";
 }
 

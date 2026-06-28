@@ -10,7 +10,7 @@ import { isReactionKind } from "@/lib/reactions";
 import { requireAuthUser } from "@/lib/queries/shell";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import type { PostType, ReactionKind } from "@/lib/supabase/types";
+import type { PostType } from "@/lib/supabase/types";
 
 async function mirrorNpcReactionsOnRelay(postId: number) {
   if (Math.random() > 0.6) return;
@@ -33,24 +33,10 @@ async function mirrorNpcReactionsOnRelay(postId: number) {
   });
 }
 
-async function applyNarrativeReactionEffects(
-  postId: number,
-  userId: string,
-  kind: ReactionKind
-) {
-  if (kind === "relay") {
-    await createReactionNotification(postId, userId, "relay");
-    await enqueueReactionSignal(userId, postId, kind);
-    await mirrorNpcReactionsOnRelay(postId);
-    triggerNarrativeTickAfterAction();
-    return;
-  }
-
-  if (kind === "amplify") {
-    await createReactionNotification(postId, userId, "amplify");
-  }
-
-  await enqueueReactionSignal(userId, postId, kind);
+async function applyNarrativeReactionEffects(postId: number, userId: string) {
+  await createReactionNotification(postId, userId);
+  await enqueueReactionSignal(userId, postId, "relay");
+  await mirrorNpcReactionsOnRelay(postId);
   triggerNarrativeTickAfterAction();
 }
 
@@ -64,7 +50,6 @@ export async function toggleReaction(postId: number, kind: string) {
 
   const supabase = await createClient();
   const { user } = auth;
-  const reactionKind = kind as ReactionKind;
 
   const { data: existing } = await supabase
     .from("post_reactions")
@@ -88,24 +73,24 @@ export async function toggleReaction(postId: number, kind: string) {
   if (existing) {
     const { error } = await supabase
       .from("post_reactions")
-      .update({ kind })
+      .update({ kind: "relay" })
       .eq("user_id", user.id)
       .eq("post_id", postId);
     if (error) return { error: error.message };
-    await applyNarrativeReactionEffects(postId, user.id, reactionKind);
+    await applyNarrativeReactionEffects(postId, user.id);
   } else {
     const { error } = await supabase.from("post_reactions").insert({
       user_id: user.id,
       post_id: postId,
-      kind,
+      kind: "relay",
     });
     if (error) return { error: error.message };
 
-    await applyNarrativeReactionEffects(postId, user.id, reactionKind);
+    await applyNarrativeReactionEffects(postId, user.id);
   }
 
   revalidatePath("/");
   revalidatePath(`/post/${postId}`);
   revalidateDataCaches();
-  return { success: true, kind };
+  return { success: true, kind: "relay" };
 }

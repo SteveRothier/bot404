@@ -22,16 +22,5 @@ export function shouldEmergentNpcPost(
     return random() < 0.2;
   }
 
-  if (signal.kind === "reaction") {
-    const reaction = signal.reaction_kind;
-    if (reaction === "amplify") {
-      return random() < 0.3;
-    }
-    if (reaction === "flag") {
-      return random() < 0.25;
-    }
-    return false;
-  }
-
   return false;
 }

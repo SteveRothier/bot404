@@ -5,12 +5,10 @@ export const REACTION_LABELS: Record<
   { label: string; verb: string }
 > = {
   relay: { label: "J'aime", verb: "aimer" },
-  amplify: { label: "Amplifier", verb: "amplifier" },
-  flag: { label: "Signaler", verb: "signaler" },
 };
 
 export function isReactionKind(value: string): value is ReactionKind {
-  return value === "relay" || value === "amplify" || value === "flag";
+  return value === "relay";
 }
 
 export type ReactionCounts = Record<ReactionKind, number>;
@@ -23,12 +21,11 @@ export function applyReactionToggle(
   if (prevActive === kind) {
     return {
       active: null,
-      counts: { ...counts, [kind]: Math.max(0, counts[kind] - 1) },
+      counts: { relay: Math.max(0, counts.relay - 1) },
     };
   }
-  const next = { ...counts, [kind]: counts[kind] + 1 };
-  if (prevActive) {
-    next[prevActive] = Math.max(0, next[prevActive] - 1);
-  }
-  return { active: kind, counts: next };
+  return {
+    active: kind,
+    counts: { relay: counts.relay + 1 },
+  };
 }

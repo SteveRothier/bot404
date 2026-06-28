@@ -18,20 +18,14 @@ describe("priorityForPost", () => {
 });
 
 describe("priorityForReaction", () => {
-  it("priorise amplify et relay", () => {
-    assert.ok(priorityForReaction("amplify") > priorityForReaction("relay"));
-    assert.ok(priorityForReaction("relay") > priorityForReaction("flag"));
+  it("retourne une priorité uniforme pour relay", () => {
+    assert.equal(priorityForReaction("relay"), 22);
   });
 });
 
 describe("priorityForReactionSignal", () => {
-  it("priorise relay faiblement", () => {
+  it("priorise relay", () => {
     assert.equal(priorityForReactionSignal("relay", "message"), 18);
-  });
-
-  it("priorise amplify et flag", () => {
-    assert.equal(priorityForReactionSignal("amplify", "message"), 30);
-    assert.equal(priorityForReactionSignal("flag", "message"), 28);
   });
 });
 
@@ -100,14 +94,13 @@ describe("shouldEmergentNpcPost", () => {
     assert.equal(shouldEmergentNpcPost(signal, () => 0.25), false);
   });
 
-  it("peut poster après amplify", () => {
+  it("ne poste pas en réponse à une réaction", () => {
     const signal = {
       kind: "reaction",
-      reaction_kind: "amplify",
+      reaction_kind: "relay",
       priority: 34,
       payload: { post_type: "message" },
     } as unknown as NarrativeSignal;
-    assert.equal(shouldEmergentNpcPost(signal, () => 0.1), true);
-    assert.equal(shouldEmergentNpcPost(signal, () => 0.9), false);
+    assert.equal(shouldEmergentNpcPost(signal, () => 0), false);
   });
 });

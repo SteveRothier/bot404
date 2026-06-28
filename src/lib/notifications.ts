@@ -61,8 +61,7 @@ export async function createMentionNotifications(
 
 export async function createReactionNotification(
   postId: number,
-  actorId: string,
-  kind: "relay" | "amplify"
+  actorId: string
 ) {
   const admin = createAdminClient();
   const { data: post } = await admin

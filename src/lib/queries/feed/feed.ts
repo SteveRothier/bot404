@@ -137,7 +137,6 @@ export async function getNetworkStats(): Promise<NetworkStats> {
     { count: npcCount },
     { count: humanCount },
     { count: postsCount },
-    { data: flagsSum },
   ] = await Promise.all([
     supabase
       .from("profiles")
@@ -151,17 +150,14 @@ export async function getNetworkStats(): Promise<NetworkStats> {
       .from("posts")
       .select("*", { count: "exact", head: true })
       .gte("created_at", since24h),
-    supabase.rpc("total_flags_last_24h"),
   ]);
 
   const total = (npcCount ?? 0) + (humanCount ?? 0);
   const humanPct = total > 0 ? (humanCount ?? 0) / total : 0.0003;
   const humanPercent = (humanPct * 100).toFixed(2);
-  const totalFlags24h = Number(flagsSum ?? 0);
 
   const networkState = computeNetworkState({
     humanPercent: humanPct,
-    flags24h: totalFlags24h,
   });
 
   return {
@@ -170,6 +166,5 @@ export async function getNetworkStats(): Promise<NetworkStats> {
     postsLast24h: postsCount ?? 0,
     humanPercent,
     networkState,
-    totalFlags24h,
   };
 }

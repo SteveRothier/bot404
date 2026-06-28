@@ -4,21 +4,15 @@ export function priorityForPost(_postType: PostType): number {
   return 22;
 }
 
-export function priorityForReaction(kind: ReactionKind): number {
-  if (kind === "amplify") return 30;
-  if (kind === "relay") return 22;
-  return 10;
+export function priorityForReaction(_kind: ReactionKind): number {
+  return 22;
 }
 
-/** Priorité narrative pour amplify / flag / relay. */
 export function priorityForReactionSignal(
-  kind: ReactionKind,
+  _kind: ReactionKind,
   _postType: PostType | null | undefined
 ): number {
-  if (kind === "relay") return 18;
-  if (kind === "amplify") return 30;
-  if (kind === "flag") return 28;
-  return priorityForReaction(kind);
+  return 18;
 }
 
 export function isStrongEmergentSignal(input: {
