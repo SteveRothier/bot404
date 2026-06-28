@@ -21,7 +21,7 @@ import {
   buildNpcHistoryBlock,
   fetchRecentNpcPostContents,
 } from "@/lib/engine/ambient/npc-history";
-import { validateNpcPostContent } from "@/lib/engine/content/validate-content";
+import { validateNpcAmbientPostContent } from "@/lib/engine/content/validate-content";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PostType } from "@/lib/supabase/types";
 
@@ -61,21 +61,24 @@ export async function generateNpcPost(): Promise<GenerateNpcPostResult> {
     ? trendingPromptBlock(trends, Math.random() < 0.55)
     : "";
 
-  const raw = await ollamaChat(
-    buildNpcPostPrompt(npc, historyBlock + welcomeBlock + trendBlock),
-    npcPostUserMessage(useTrend),
-    500,
-    ollamaProfileForPostType(postType)
-  );
+  const system = buildNpcPostPrompt(npc, historyBlock + welcomeBlock + trendBlock);
+  const user = npcPostUserMessage(useTrend);
+  const ollamaProfile = ollamaProfileForPostType(postType);
 
-  const content = raw
-    ? validateNpcPostContent(raw, postType, "", recentPosts)
-    : null;
+  let content: string | null = null;
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const raw = await ollamaChat(system, user, 500, ollamaProfile);
+    content = raw
+      ? validateNpcAmbientPostContent(raw, postType as PostType, recentPosts)
+      : null;
+    if (content) break;
+  }
 
   if (!content) {
     return {
       ok: false,
-      error: "Échec de la génération (Ollama ou contenu filtré).",
+      error: "Échec après 3 tentatives (Ollama ou contenu filtré).",
     };
   }
 

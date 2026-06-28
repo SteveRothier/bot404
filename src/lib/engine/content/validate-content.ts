@@ -65,6 +65,34 @@ export function validateNpcPostContent(
   return trimmed;
 }
 
+/** Validation ambient pour nouveaux posts (évite faux positifs vs historique NPC). */
+export function validateNpcAmbientPostContent(
+  content: string,
+  postType: PostType,
+  recentTexts: string[] = []
+): string | null {
+  const trimmed = content.trim();
+  if (!trimmed) return null;
+
+  if (postType === "rumor") {
+    const lower = trimmed.toLowerCase();
+    if (
+      !lower.startsWith("on dit") &&
+      !lower.includes("on dit que") &&
+      !lower.startsWith("rumeur")
+    ) {
+      return `On dit que ${trimmed}`.slice(0, 500);
+    }
+  }
+
+  const normalized = normalize(trimmed);
+  if (recentTexts.some((s) => normalize(s) === normalized)) {
+    return null;
+  }
+
+  return trimmed;
+}
+
 /** Validation assouplie pour commentaires (évite les faux positifs de style NPC). */
 export function validateNpcCommentContent(
   content: string,
