@@ -42,6 +42,26 @@ type CountPickerProps = {
   onChange: (value: number) => void;
 };
 
+function LoadingDots({ compact }: { compact: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-0.5" aria-hidden>
+      {[0, 1, 2].map((index) => (
+        <span
+          key={index}
+          className={cn(
+            "rounded-full bg-current animate-bounce",
+            compact ? "size-1" : "size-1.5"
+          )}
+          style={{
+            animationDelay: `${index * 140}ms`,
+            animationDuration: "0.9s",
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
 function NpcBatchCountPicker({
   value,
   min,
@@ -205,7 +225,10 @@ export function NpcGeneratePanel({ compact = false }: Props) {
   const [success, setSuccess] = useState<SuccessState | null>(null);
   const [postCount, setPostCount] = useState(1);
   const [commentCount, setCommentCount] = useState(1);
-  const [pending, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
+  const [pendingKind, setPendingKind] = useState<"post" | "comment" | null>(
+    null
+  );
   const [mediaStatus, setMediaStatus] = useState<{
     enabled: boolean;
     gif: boolean;
@@ -240,33 +263,40 @@ export function NpcGeneratePanel({ compact = false }: Props) {
   ) {
     setError(null);
     setSuccess(null);
+    setPendingKind(kind);
     startTransition(async () => {
-      const isOnline = online || (await refresh());
-      if (!isOnline) {
-        setError("Ollama est hors ligne.");
-        return;
-      }
+      try {
+        const isOnline = online || (await refresh());
+        if (!isOnline) {
+          setError("Ollama est hors ligne.");
+          return;
+        }
 
-      const result = await action(count);
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
+        const result = await action(count);
+        if (result.error) {
+          setError(result.error);
+          return;
+        }
 
-      if (result.success && result.author && result.postId) {
-        setSuccess({
-          type: kind,
-          generated: result.generated ?? 1,
-          author: result.author,
-          postId: result.postId,
-          pollVotes: result.pollVotes,
-        });
-        router.refresh();
+        if (result.success && result.author && result.postId) {
+          setSuccess({
+            type: kind,
+            generated: result.generated ?? 1,
+            author: result.author,
+            postId: result.postId,
+            pollVotes: result.pollVotes,
+          });
+          router.refresh();
+        }
+      } finally {
+        setPendingKind(null);
       }
     });
   }
 
-  const disabled = pending || !online;
+  const disabled = isPending || !online;
+  const isPostLoading = pendingKind === "post";
+  const isCommentLoading = pendingKind === "comment";
 
   const btnBase = compact
     ? "flex flex-1 items-center justify-center gap-1.5 rounded-full border border-border px-2 py-1.5 text-meta font-medium transition-colors"
@@ -276,12 +306,14 @@ export function NpcGeneratePanel({ compact = false }: Props) {
     ? cn(
         btnBase,
         "font-bold",
+        isPostLoading && "relative overflow-hidden",
         !disabled
           ? "border-transparent bg-accent text-accent-foreground hover:bg-accent/90"
           : "cursor-not-allowed bg-secondary text-muted-foreground"
       )
     : cn(
         btnBase,
+        isPostLoading && "relative overflow-hidden",
         !disabled
           ? "border-transparent bg-accent text-accent-foreground hover:bg-accent/90"
           : "cursor-not-allowed bg-secondary text-muted-foreground"
@@ -290,12 +322,14 @@ export function NpcGeneratePanel({ compact = false }: Props) {
   const btnSecondary = compact
     ? cn(
         btnBase,
+        isCommentLoading && "relative overflow-hidden",
         !disabled
           ? "border-border bg-transparent text-foreground hover:bg-secondary/80"
           : "cursor-not-allowed bg-secondary/50 text-muted-foreground"
       )
     : cn(
         btnBase,
+        isCommentLoading && "relative overflow-hidden",
         !disabled
           ? "bg-secondary text-foreground hover:bg-secondary/80"
           : "cursor-not-allowed bg-secondary/50 text-muted-foreground"
@@ -324,10 +358,28 @@ export function NpcGeneratePanel({ compact = false }: Props) {
           type="button"
           onClick={() => run(generateNpcPostAction, "post", postCount)}
           disabled={disabled}
+          aria-busy={isPostLoading}
           className={btnPrimary}
         >
-          <Sparkles className={iconSize} strokeWidth={1.75} />
-          {pending ? "…" : compact ? "Post" : "Générer un post"}
+          {isPostLoading && (
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 rounded-full skeleton-shimmer opacity-35"
+            />
+          )}
+          <Sparkles
+            className={cn(iconSize, "relative z-[1]", isPostLoading && "animate-pulse")}
+            strokeWidth={1.75}
+          />
+          <span className="relative z-[1]">
+            {isPostLoading ? (
+              <LoadingDots compact={compact} />
+            ) : compact ? (
+              "Post"
+            ) : (
+              "Générer un post"
+            )}
+          </span>
         </button>
         <NpcBatchCountPicker
           label="Nombre de posts à générer"
@@ -345,10 +397,32 @@ export function NpcGeneratePanel({ compact = false }: Props) {
           type="button"
           onClick={() => run(generateNpcCommentAction, "comment", commentCount)}
           disabled={disabled}
+          aria-busy={isCommentLoading}
           className={btnSecondary}
         >
-          <MessageCircle className={iconSize} strokeWidth={1.75} />
-          {pending ? "…" : compact ? "Commentaire" : "Générer un commentaire"}
+          {isCommentLoading && (
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 rounded-full skeleton-shimmer opacity-40"
+            />
+          )}
+          <MessageCircle
+            className={cn(
+              iconSize,
+              "relative z-[1]",
+              isCommentLoading && "animate-pulse"
+            )}
+            strokeWidth={1.75}
+          />
+          <span className="relative z-[1]">
+            {isCommentLoading ? (
+              <LoadingDots compact={compact} />
+            ) : compact ? (
+              "Commentaire"
+            ) : (
+              "Générer un commentaire"
+            )}
+          </span>
         </button>
         <NpcBatchCountPicker
           label="Nombre de commentaires à générer"
