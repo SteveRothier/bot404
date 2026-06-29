@@ -9,7 +9,6 @@ import {
   type CSSProperties,
 } from "react";
 import { createPortal } from "react-dom";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronDown, MessageCircle, Sparkles } from "lucide-react";
 import {
@@ -22,14 +21,6 @@ import { useOllamaStore } from "@/stores/ollama-store";
 
 type Props = {
   compact?: boolean;
-};
-
-type SuccessState = {
-  type: "post" | "comment";
-  generated: number;
-  author: string;
-  postId: number;
-  pollVotes?: number;
 };
 
 type CountPickerProps = {
@@ -222,7 +213,6 @@ export function NpcGeneratePanel({ compact = false }: Props) {
   const online = useOllamaStore((s) => s.online);
   const refresh = useOllamaStore((s) => s.refresh);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<SuccessState | null>(null);
   const [postCount, setPostCount] = useState(1);
   const [commentCount, setCommentCount] = useState(1);
   const [isPending, startTransition] = useTransition();
@@ -250,19 +240,10 @@ export function NpcGeneratePanel({ compact = false }: Props) {
   })();
 
   function run(
-    action: (count: number) => Promise<{
-      error?: string;
-      success?: boolean;
-      generated?: number;
-      author?: string;
-      postId?: number;
-      pollVotes?: number;
-    }>,
-    kind: "post" | "comment",
+    action: (count: number) => Promise<{ error?: string; success?: boolean }>,
     count: number
   ) {
     setError(null);
-    setSuccess(null);
     setPendingKind(kind);
     startTransition(async () => {
       try {
@@ -278,14 +259,7 @@ export function NpcGeneratePanel({ compact = false }: Props) {
           return;
         }
 
-        if (result.success && result.author && result.postId) {
-          setSuccess({
-            type: kind,
-            generated: result.generated ?? 1,
-            author: result.author,
-            postId: result.postId,
-            pollVotes: result.pollVotes,
-          });
+        if (result.success) {
           router.refresh();
         }
       } finally {
@@ -356,7 +330,7 @@ export function NpcGeneratePanel({ compact = false }: Props) {
       <div className={rowClass}>
         <button
           type="button"
-          onClick={() => run(generateNpcPostAction, "post", postCount)}
+          onClick={() => run(generateNpcPostAction, postCount)}
           disabled={disabled}
           aria-busy={isPostLoading}
           className={btnPrimary}
@@ -395,7 +369,7 @@ export function NpcGeneratePanel({ compact = false }: Props) {
       <div className={rowClass}>
         <button
           type="button"
-          onClick={() => run(generateNpcCommentAction, "comment", commentCount)}
+          onClick={() => run(generateNpcCommentAction, commentCount)}
           disabled={disabled}
           aria-busy={isCommentLoading}
           className={btnSecondary}
@@ -443,32 +417,6 @@ export function NpcGeneratePanel({ compact = false }: Props) {
           )}
         >
           {error}
-        </p>
-      )}
-
-      {success && (
-        <p
-          className={cn(
-            "text-center text-foreground",
-            compact ? "text-meta" : "text-xs"
-          )}
-        >
-          {success.generated > 1
-            ? `${success.generated} ${success.type === "post" ? "posts" : "commentaires"}`
-            : success.type === "post"
-              ? "Post"
-              : "Commentaire"}{" "}
-          par @{success.author}
-          {success.type === "comment" && (success.pollVotes ?? 0) > 0
-            ? ` · ${success.pollVotes} vote${success.pollVotes === 1 ? "" : "s"} sondage`
-            : ""}
-          .{" "}
-          <Link
-            href={`/post/${success.postId}`}
-            className="text-accent hover:underline"
-          >
-            Voir
-          </Link>
         </p>
       )}
     </div>
