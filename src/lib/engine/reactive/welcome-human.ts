@@ -1,6 +1,10 @@
 ﻿import type { NarrativeSignal } from "@/lib/engine/shared/types";
 import { resolveNpcPostMedia, shouldAttachMediaToNpcPost } from "@/lib/engine/content/media";
-import { ollamaChat, ollamaProfileForPostType } from "@/lib/engine/content/ollama";
+import {
+  createServerOllamaProvider,
+  ollamaProfileForPostType,
+} from "@/lib/engine/content/ollama";
+import type { OllamaProvider } from "@/lib/ollama-bridge";
 import {
   npcBase,
   npcExamplePostsBlock,
@@ -141,7 +145,8 @@ export type WelcomePostResult =
   | { ok: false; error: string };
 
 export async function processHumanJoinedSignal(
-  signal: NarrativeSignal
+  signal: NarrativeSignal,
+  provider: OllamaProvider = createServerOllamaProvider()
 ): Promise<WelcomePostResult> {
   const supabase = createAdminClient();
   const beat = welcomeBeatFromPayload(signal.payload);
@@ -154,7 +159,12 @@ export async function processHumanJoinedSignal(
 
   const { system, user } = buildWelcomePostPrompt(npc, username, beat);
 
-  const raw = await ollamaChat(system, user, 400, ollamaProfileForPostType(postType));
+  const raw = await provider.chat(
+    system,
+    user,
+    400,
+    ollamaProfileForPostType(postType)
+  );
 
   const content = raw ? validateNpcPostContent(raw, postType, "") : null;
   if (!content) return { ok: false, error: "Échec génération Ollama." };

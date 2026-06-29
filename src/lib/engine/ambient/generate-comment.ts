@@ -8,7 +8,10 @@ import {
   getWelcomeFocusHuman,
   welcomeAmbientPromptBlock,
 } from "@/lib/engine/reactive/welcome-human";
-import { checkOllamaStatus } from "@/lib/ollama";
+import { resolveOllamaActionContext } from "@/lib/ollama-server";
+import type { OllamaProvider } from "@/lib/ollama-bridge";
+import { signBridgePayload, verifyBridgePayload } from "@/lib/ollama-bridge-token";
+import type { OllamaOverride } from "@/lib/ollama-config";
 import { pickNpcForSignal } from "@/lib/engine/casting/cast";
 import { maybeNpcReactionsOnPost } from "@/lib/engine/casting/npc-reaction";
 import { maybeNpcLikesOnPostComments } from "@/lib/engine/casting/npc-comment-engagement";
@@ -18,7 +21,7 @@ import {
   buildNpcHistoryBlock,
   fetchRecentNpcPostContents,
 } from "@/lib/engine/ambient/npc-history";
-import { ollamaChat } from "@/lib/engine/content/ollama";
+import { createServerOllamaProvider } from "@/lib/engine/content/ollama";
 import { npcBase, npcExamplePostsBlock } from "@/lib/engine/content/prompt";
 import { validateNpcCommentContent } from "@/lib/engine/content/validate-content";
 import {
@@ -33,15 +36,34 @@ import {
   isNpcGenerationEnabled,
 } from "@/lib/engine/shared/generation-gate";
 import { withReplyMention } from "@/lib/mentions";
-import {
-  createCommentReplyNotifications,
-} from "@/lib/notifications";
+import { createCommentReplyNotifications } from "@/lib/notifications";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PostType, Profile } from "@/lib/supabase/types";
 
 export type GenerateNpcCommentResult =
   | { ok: true; author: string; postId: number; commentId: number; pollVote?: string }
   | { ok: false; error: string };
+
+export type NpcCommentPrepareResult =
+  | {
+      ok: true;
+      prepareToken: string;
+      system: string;
+      user: string;
+    }
+  | { ok: false; error: string };
+
+type PreparedNpcCommentPayload = {
+  v: 1;
+  npcId: string;
+  postId: number;
+  postType: PostType;
+  postContent: string;
+  postAuthorId: string;
+  isReply: boolean;
+  replyUsername?: string;
+  recentContents: string[];
+};
 
 export function clampNpcCommentBatchCount(count: number): number {
   const n = Number.isFinite(count) ? Math.floor(count) : 1;
@@ -194,12 +216,20 @@ async function pickPostToComment(
     : null;
 }
 
-async function tryGenerateCommentForPost(
+async function buildCommentPromptForPost(
   post: CommentTarget,
-  excludePostIds: Set<number>,
   usedNpcIds: Set<string> = new Set()
 ): Promise<
-  | { ok: true; npc: Profile; content: string; isReply: boolean }
+  | {
+      ok: true;
+      npc: Profile;
+      post: CommentTarget;
+      system: string;
+      user: string;
+      isReply: boolean;
+      replyUsername?: string;
+      recentPosts: string[];
+    }
   | { ok: false; error: string; retryPost?: boolean }
 > {
   const supabase = createAdminClient();
@@ -281,22 +311,125 @@ Réponds en commentaire (max 200 caractères). Ton conversationnel — une phras
     ? `Commentaire de @${replyTarget.username}: « ${replyTarget.content} »\nRéponds-lui directement (commence par @${replyTarget.username.toLowerCase()}).`
     : `Post original: "${post.content}"\nÉcris une réponse courte et originale.`;
 
+  return {
+    ok: true,
+    npc,
+    post,
+    system,
+    user,
+    isReply: !!replyTarget,
+    replyUsername: replyTarget?.username,
+    recentPosts,
+  };
+}
+
+async function persistNpcComment(
+  npc: Profile,
+  post: CommentTarget,
+  content: string,
+  isReply: boolean,
+  usedNpcIds: Set<string>,
+  provider: OllamaProvider
+): Promise<GenerateNpcCommentResult & { npcId?: string }> {
+  const supabase = createAdminClient();
+
+  const { data: comment, error: insertError } = await supabase
+    .from("comments")
+    .insert({
+      post_id: post.id,
+      author_id: npc.id,
+      content,
+    })
+    .select("id")
+    .single();
+
+  if (insertError || !comment) {
+    return {
+      ok: false,
+      error: insertError?.message ?? "Impossible d'enregistrer le commentaire.",
+    };
+  }
+
+  await supabase
+    .from("profiles")
+    .update({ popularity_score: (npc.popularity_score ?? 0) + 1 })
+    .eq("id", npc.id);
+
+  if (rollChance(getPostReactionAfterCommentChance())) {
+    const reactionBounds = getNpcPostReactionBounds();
+    await maybeNpcReactionsOnPost(post.id, {
+      humanAuthorId: post.author_id,
+      postType: post.post_type,
+      postContent: post.content,
+      minCount: reactionBounds.min,
+      maxCount: reactionBounds.max,
+      excludeNpcIds: usedNpcIds,
+    });
+  }
+
+  if (rollChance(getCommentLikeChance())) {
+    await maybeNpcLikesOnPostComments(post.id, {
+      minLikes: 1,
+      maxLikes: 4,
+      excludeNpcIds: new Set([npc.id, ...usedNpcIds]),
+    });
+  }
+
+  if (isReply) {
+    await createCommentReplyNotifications(
+      content,
+      npc.id,
+      post.id,
+      comment.id
+    );
+  }
+
+  let pollVote: string | undefined;
+  const vote = await maybeNpcVoteOnPoll(post.id, npc, post.content, provider);
+  if (vote.ok) pollVote = vote.label;
+
+  return {
+    ok: true,
+    author: npc.username,
+    postId: post.id,
+    commentId: comment.id,
+    pollVote,
+    npcId: npc.id,
+  };
+}
+
+async function tryGenerateCommentForPost(
+  post: CommentTarget,
+  excludePostIds: Set<number>,
+  usedNpcIds: Set<string> = new Set(),
+  provider: OllamaProvider = createServerOllamaProvider()
+): Promise<
+  | { ok: true; npc: Profile; content: string; isReply: boolean; post: CommentTarget }
+  | { ok: false; error: string; retryPost?: boolean }
+> {
+  const draft = await buildCommentPromptForPost(post, usedNpcIds);
+  if (!draft.ok) return draft;
+
+  const { npc, system, user, isReply, replyUsername, recentPosts } = draft;
+
   for (let attempt = 0; attempt < 3; attempt++) {
-    const raw = await ollamaChat(system, user, 300, "comment");
+    const raw = await provider.chat(system, user, 300, "comment");
     const validated = raw
-      ? validateNpcCommentContent(
-          raw,
-          replyTarget?.content ?? post.content,
-          recentPosts
-        )
+      ? validateNpcCommentContent(raw, post.content, recentPosts)
       : null;
     if (!validated) continue;
 
-    const content = replyTarget
-      ? withReplyMention(validated, replyTarget.username)
+    const content = isReply && replyUsername
+      ? withReplyMention(validated, replyUsername)
       : validated;
 
-    return { ok: true, npc, content, isReply: !!replyTarget };
+    return {
+      ok: true,
+      npc,
+      content,
+      isReply,
+      post: draft.post,
+    };
   }
 
   excludePostIds.add(post.id);
@@ -307,19 +440,13 @@ Réponds en commentaire (max 200 caractères). Ton conversationnel — une phras
   };
 }
 
-async function generateSingleNpcComment(
-  excludePostIds: Set<number>,
+export async function prepareNpcCommentGeneration(
+  excludePostIds: Set<number> = new Set(),
   usedNpcIds: Set<string> = new Set()
-): Promise<GenerateNpcCommentResult & { npcId?: string }> {
-  const ollama = await checkOllamaStatus();
-  if (!ollama.online) {
-    return {
-      ok: false,
-      error: "Ollama est hors ligne. Lancez ollama serve et réessayez.",
-    };
+): Promise<NpcCommentPrepareResult> {
+  if (!isNpcGenerationEnabled()) {
+    return { ok: false, error: NPC_GENERATION_DISABLED_ERROR };
   }
-
-  const supabase = createAdminClient();
 
   for (let postAttempt = 0; postAttempt < 3; postAttempt++) {
     const post = await pickPostToComment(excludePostIds);
@@ -327,77 +454,140 @@ async function generateSingleNpcComment(
       return { ok: false, error: "Aucun post récent pour commenter." };
     }
 
-    const draft = await tryGenerateCommentForPost(post, excludePostIds, usedNpcIds);
+    const draft = await buildCommentPromptForPost(post, usedNpcIds);
+    if (!draft.ok) {
+      if (draft.error.includes("Aucun NPC")) return draft;
+      excludePostIds.add(post.id);
+      continue;
+    }
+
+    const prepareToken = signBridgePayload<PreparedNpcCommentPayload>({
+      v: 1,
+      npcId: draft.npc.id,
+      postId: post.id,
+      postType: post.post_type,
+      postContent: post.content,
+      postAuthorId: post.author_id,
+      isReply: draft.isReply,
+      replyUsername: draft.replyUsername,
+      recentContents: draft.recentPosts,
+    });
+
+    return {
+      ok: true,
+      prepareToken,
+      system: draft.system,
+      user: draft.user,
+    };
+  }
+
+  return {
+    ok: false,
+    error: "Aucun post adapté pour commenter.",
+  };
+}
+
+export async function commitNpcCommentGeneration(
+  prepareToken: string,
+  rawContent: string
+): Promise<GenerateNpcCommentResult> {
+  if (!isNpcGenerationEnabled()) {
+    return { ok: false, error: NPC_GENERATION_DISABLED_ERROR };
+  }
+
+  const payload = verifyBridgePayload<PreparedNpcCommentPayload>(prepareToken);
+  if (!payload || payload.v !== 1) {
+    return { ok: false, error: "Session de génération expirée ou invalide." };
+  }
+
+  const supabase = createAdminClient();
+  const { data: npc } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", payload.npcId)
+    .maybeSingle();
+
+  if (!npc) {
+    return { ok: false, error: "NPC introuvable." };
+  }
+
+  const validated = validateNpcCommentContent(
+    rawContent,
+    payload.postContent,
+    payload.recentContents
+  );
+
+  if (!validated) {
+    return { ok: false, error: "Contenu filtré ou invalide." };
+  }
+
+  const content =
+    payload.isReply && payload.replyUsername
+      ? withReplyMention(validated, payload.replyUsername)
+      : validated;
+
+  const post: CommentTarget = {
+    id: payload.postId,
+    content: payload.postContent,
+    author_id: payload.postAuthorId,
+    post_type: payload.postType,
+    comment_count: 0,
+  };
+
+  return persistNpcComment(
+    npc,
+    post,
+    content,
+    payload.isReply,
+    new Set(),
+    createServerOllamaProvider()
+  );
+}
+
+async function ensureCommentProvider(
+  ollama?: OllamaOverride
+): Promise<
+  | { ok: true; provider: OllamaProvider }
+  | { ok: false; error: string; clientBridge?: true }
+> {
+  const ctx = await resolveOllamaActionContext(ollama);
+  if (!ctx.ok) return ctx;
+  if (ctx.clientBridge) {
+    return { ok: false, error: "CLIENT_BRIDGE", clientBridge: true };
+  }
+  return { ok: true, provider: ctx.provider };
+}
+
+async function generateSingleNpcComment(
+  excludePostIds: Set<number>,
+  usedNpcIds: Set<string> = new Set(),
+  provider: OllamaProvider = createServerOllamaProvider()
+): Promise<GenerateNpcCommentResult & { npcId?: string }> {
+  for (let postAttempt = 0; postAttempt < 3; postAttempt++) {
+    const post = await pickPostToComment(excludePostIds);
+    if (!post) {
+      return { ok: false, error: "Aucun post récent pour commenter." };
+    }
+
+    const draft = await tryGenerateCommentForPost(
+      post,
+      excludePostIds,
+      usedNpcIds,
+      provider
+    );
     if (!draft.ok) {
       if (draft.retryPost) continue;
       return { ok: false, error: draft.error };
     }
 
-    const { npc, content } = draft;
-
-    const { data: comment, error: insertError } = await supabase
-      .from("comments")
-      .insert({
-        post_id: post.id,
-        author_id: npc.id,
-        content,
-      })
-      .select("id")
-      .single();
-
-    if (insertError || !comment) {
-      return {
-        ok: false,
-        error: insertError?.message ?? "Impossible d'enregistrer le commentaire.",
-      };
-    }
-
-    await supabase
-      .from("profiles")
-      .update({ popularity_score: (npc.popularity_score ?? 0) + 1 })
-      .eq("id", npc.id);
-
-    if (rollChance(getPostReactionAfterCommentChance())) {
-      const reactionBounds = getNpcPostReactionBounds();
-      await maybeNpcReactionsOnPost(post.id, {
-        humanAuthorId: post.author_id,
-        postType: post.post_type,
-        postContent: post.content,
-        minCount: reactionBounds.min,
-        maxCount: reactionBounds.max,
-        excludeNpcIds: usedNpcIds,
-      });
-    }
-
-    if (rollChance(getCommentLikeChance())) {
-      await maybeNpcLikesOnPostComments(post.id, {
-        minLikes: 1,
-        maxLikes: 4,
-        excludeNpcIds: new Set([npc.id, ...usedNpcIds]),
-      });
-    }
-
-    if (draft.isReply) {
-      await createCommentReplyNotifications(
-        content,
-        npc.id,
-        post.id,
-        comment.id
-      );
-    }
-
-    let pollVote: string | undefined;
-    const vote = await maybeNpcVoteOnPoll(post.id, npc, post.content);
-    if (vote.ok) pollVote = vote.label;
-
-    return {
-      ok: true,
-      author: npc.username,
-      postId: post.id,
-      commentId: comment.id,
-      pollVote,
-      npcId: npc.id,
-    };
+    return persistNpcComment(
+      draft.npc,
+      draft.post,
+      draft.content,
+      draft.isReply,
+      usedNpcIds,
+      provider
+    );
   }
 
   return {
@@ -406,18 +596,48 @@ async function generateSingleNpcComment(
   };
 }
 
-export async function generateNpcComment(): Promise<GenerateNpcCommentResult> {
+export async function generateNpcComment(
+  ollama?: OllamaOverride,
+  provider?: OllamaProvider
+): Promise<GenerateNpcCommentResult> {
   if (!isNpcGenerationEnabled()) {
     return { ok: false, error: NPC_GENERATION_DISABLED_ERROR };
   }
-  return generateSingleNpcComment(new Set());
+
+  if (provider) {
+    return generateSingleNpcComment(new Set(), new Set(), provider);
+  }
+
+  const resolved = await ensureCommentProvider(ollama);
+  if (!resolved.ok) {
+    if (resolved.clientBridge) {
+      return { ok: false, error: "CLIENT_BRIDGE" };
+    }
+    return { ok: false, error: resolved.error };
+  }
+
+  return generateSingleNpcComment(new Set(), new Set(), resolved.provider);
 }
 
 export async function generateNpcCommentsBatch(
-  count = 2
+  count = 2,
+  ollama?: OllamaOverride,
+  provider?: OllamaProvider
 ): Promise<GenerateNpcCommentResult[]> {
   if (!isNpcGenerationEnabled()) {
     return [{ ok: false, error: NPC_GENERATION_DISABLED_ERROR }];
+  }
+
+  let activeProvider = provider;
+  if (!activeProvider) {
+    const resolved = await ensureCommentProvider(ollama);
+    if (!resolved.ok) {
+      if (resolved.clientBridge) {
+        return [{ ok: false, error: "CLIENT_BRIDGE" }];
+      }
+      return [{ ok: false, error: resolved.error }];
+    }
+    activeProvider = resolved.provider;
   }
 
   const batchSize = clampNpcCommentBatchCount(count);
@@ -426,7 +646,11 @@ export async function generateNpcCommentsBatch(
   const usedNpcIds = new Set<string>();
 
   for (let i = 0; i < batchSize; i++) {
-    const result = await generateSingleNpcComment(usedPosts, usedNpcIds);
+    const result = await generateSingleNpcComment(
+      usedPosts,
+      usedNpcIds,
+      activeProvider
+    );
     if (result.ok) {
       if (result.npcId) usedNpcIds.add(result.npcId);
       usedPosts.add(result.postId);

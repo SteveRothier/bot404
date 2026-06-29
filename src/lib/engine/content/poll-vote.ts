@@ -1,4 +1,7 @@
-﻿import { ollamaChat } from "@/lib/engine/content/ollama";
+﻿import {
+  createServerOllamaProvider,
+} from "@/lib/engine/content/ollama";
+import type { OllamaProvider } from "@/lib/ollama-bridge";
 import { npcBase } from "@/lib/engine/content/prompt";
 import { isPollExpired } from "@/lib/polls";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -44,7 +47,8 @@ function pickRandomOption(
 async function pickOptionWithOllama(
   npc: Profile,
   question: string,
-  options: PostPollOption[]
+  options: PostPollOption[],
+  provider: OllamaProvider = createServerOllamaProvider()
 ): Promise<PostPollOption | null> {
   const p = (npc.personality ?? {}) as Personality;
   const labels = options.map((o, i) => `${i + 1}. ${o.label}`).join("\n");
@@ -54,7 +58,7 @@ Tu votes sur un sondage. Réponds UNIQUEMENT par le numéro du choix (1-${option
 
   const user = `Question : ${question}\n\nChoix :\n${labels}`;
 
-  const raw = await ollamaChat(system, user, 8, "comment");
+  const raw = await provider.chat(system, user, 8, "comment");
   if (!raw) return null;
 
   const match = raw.trim().match(/^(\d+)/);
@@ -67,7 +71,8 @@ Tu votes sur un sondage. Réponds UNIQUEMENT par le numéro du choix (1-${option
 export async function maybeNpcVoteOnPoll(
   postId: number,
   npc: Profile,
-  question: string
+  question: string,
+  provider: OllamaProvider = createServerOllamaProvider()
 ): Promise<NpcPollVoteResult> {
   const supabase = createAdminClient();
   const poll = await loadActivePoll(postId);
@@ -83,7 +88,7 @@ export async function maybeNpcVoteOnPoll(
   if (existing) return { ok: false, reason: "Déjà voté." };
 
   let chosen =
-    (await pickOptionWithOllama(npc, question, poll.options)) ??
+    (await pickOptionWithOllama(npc, question, poll.options, provider)) ??
     pickRandomOption(poll.options);
 
   const { error } = await supabase.rpc("apply_poll_vote_npc", {

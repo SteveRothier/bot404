@@ -1,4 +1,6 @@
-﻿import { checkOllamaStatus } from "@/lib/ollama";
+﻿import type { OllamaProvider } from "@/lib/ollama-bridge";
+import type { OllamaOverride } from "@/lib/ollama-config";
+import { resolveOllamaActionContext } from "@/lib/ollama-server";
 import { generateEmergentNpcResponseBatch } from "@/lib/engine/reactive/generate-emergent";
 import {
   getAmbientFallbackChance,
@@ -24,6 +26,9 @@ import { persistLastTickResult } from "@/lib/engine/reactive/tick-metrics";
 export type RunNarrativeTickOptions = {
   /** Surcharge le nombre de signaux émergents traités (défaut: NARRATIVE_SIGNALS_PER_TICK). */
   maxSignals?: number;
+  provider?: OllamaProvider;
+  ollama?: OllamaOverride;
+  skipOllamaCheck?: boolean;
 };
 
 function buildMetrics(
@@ -77,19 +82,38 @@ export async function runNarrativeTick(
     );
   }
 
-  const ollama = await checkOllamaStatus();
-  if (!ollama.online) {
-    return finishTick(
-      startedAt,
-      { handled: false, mode: "none", detail: { error: "Ollama offline" } },
-      { errors: ["Ollama offline"] }
-    );
+  let provider = options.provider;
+  if (!provider) {
+    const ctx = await resolveOllamaActionContext(options.ollama);
+    if (!ctx.ok) {
+      return finishTick(
+        startedAt,
+        {
+          handled: false,
+          mode: "none",
+          detail: { error: ctx.error },
+        },
+        { errors: [ctx.error] }
+      );
+    }
+    if (ctx.clientBridge) {
+      return finishTick(
+        startedAt,
+        {
+          handled: false,
+          mode: "none",
+          detail: { error: "CLIENT_BRIDGE" },
+        },
+        { errors: ["CLIENT_BRIDGE"] }
+      );
+    }
+    provider = ctx.provider;
   }
 
   await expireOldSignals();
 
   const maxSignals = options.maxSignals ?? getSignalsPerTick();
-  const batch = await generateEmergentNpcResponseBatch(maxSignals);
+  const batch = await generateEmergentNpcResponseBatch(maxSignals, provider);
   const errors: string[] = [];
   if (batch.lastError) errors.push(batch.lastError);
 
@@ -131,9 +155,12 @@ export async function runNarrativeTick(
 
     const ambient =
       Math.random() < 0.88
-        ? (await generateNpcCommentsBatch(2 + Math.floor(Math.random() * 2)))[0] ??
-          { ok: false as const, error: "Aucun commentaire généré." }
-        : await generateNpcPost();
+        ? (await generateNpcCommentsBatch(
+            2 + Math.floor(Math.random() * 2),
+            options.ollama,
+            provider
+          ))[0] ?? { ok: false as const, error: "Aucun commentaire généré." }
+        : await generateNpcPost(options.ollama, provider);
 
     if (ambient.ok) {
       const isComment = "commentId" in ambient;

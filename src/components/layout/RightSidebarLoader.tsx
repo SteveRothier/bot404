@@ -10,7 +10,7 @@ export async function RightSidebarLoader() {
       stats={shell.stats}
       npcSchedule={shell.npcSchedule}
       npcGeneration={shell.npcGeneration}
-      npcOps={shell.npcOps}
+      ollamaDisplay={shell.ollamaDisplay}
     />
   );
 }

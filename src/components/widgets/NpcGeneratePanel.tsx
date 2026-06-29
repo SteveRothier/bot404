@@ -12,10 +12,21 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { ChevronDown, MessageCircle, Sparkles } from "lucide-react";
 import {
+  commitNpcCommentAction,
+  commitNpcPostAction,
   generateNpcCommentAction,
   generateNpcPostAction,
-  getNpcMediaStatusAction,
+  prepareNpcCommentAction,
+  prepareNpcPostAction,
 } from "@/app/actions/npc";
+import { ollamaInputFromStore } from "@/lib/ollama-action-input";
+import {
+  needsClientOllamaBridge,
+  effectiveOllamaEndpoint,
+  ollamaChatClient,
+  toOllamaRuntime,
+} from "@/lib/ollama-client";
+import type { OllamaChatProfile } from "@/lib/engine/content/ollama";
 import { cn } from "@/lib/utils";
 import { useOllamaStore } from "@/stores/ollama-store";
 
@@ -211,6 +222,8 @@ function NpcBatchCountPicker({
 export function NpcGeneratePanel({ compact = false }: Props) {
   const router = useRouter();
   const online = useOllamaStore((s) => s.online);
+  const endpointUrl = useOllamaStore((s) => s.endpointUrl);
+  const model = useOllamaStore((s) => s.model);
   const refresh = useOllamaStore((s) => s.refresh);
   const [error, setError] = useState<string | null>(null);
   const [postCount, setPostCount] = useState(1);
@@ -224,29 +237,7 @@ export function NpcGeneratePanel({ compact = false }: Props) {
   const [pendingKind, setPendingKind] = useState<"post" | "comment" | null>(
     null
   );
-  const [mediaStatus, setMediaStatus] = useState<{
-    enabled: boolean;
-    gif: boolean;
-    ai: boolean;
-  } | null>(null);
-
-  useEffect(() => {
-    getNpcMediaStatusAction().then(setMediaStatus);
-  }, []);
-
-  const mediaLabel = (() => {
-    if (!mediaStatus?.enabled) return null;
-    const parts: string[] = [];
-    if (mediaStatus.gif) parts.push("GIF");
-    if (mediaStatus.ai) parts.push("Image IA");
-    return parts.length > 0 ? parts.join(" · ") : "Médias";
-  })();
-
-  function run(
-    action: (count: number) => Promise<{ error?: string; success?: boolean }>,
-    kind: "post" | "comment",
-    count: number
-  ) {
+  function run(kind: "post" | "comment", count: number) {
     setError(null);
     setPendingKind(kind);
     setBatchProgress({ kind, current: 0, total: count });
@@ -258,19 +249,148 @@ export function NpcGeneratePanel({ compact = false }: Props) {
           return;
         }
 
-        let hadSuccess = false;
-        for (let i = 0; i < count; i++) {
-          setBatchProgress({ kind, current: i + 1, total: count });
-          const result = await action(1);
-          if (result.error) {
+        const ollama = ollamaInputFromStore(
+          effectiveOllamaEndpoint(endpointUrl),
+          model
+        );
+        const useBridge = needsClientOllamaBridge(endpointUrl, isOnline);
+        const runtime = toOllamaRuntime({
+          endpointUrl: effectiveOllamaEndpoint(endpointUrl),
+          model: model || "qwen3.5:4b",
+        });
+
+        const runBridgePost = async (): Promise<boolean> => {
+          for (let attempt = 0; attempt < 3; attempt++) {
+            const prep = await prepareNpcPostAction();
+            if ("error" in prep && prep.error) {
+              setError(prep.error);
+              return false;
+            }
+            if (
+              !("prepareToken" in prep) ||
+              !prep.system ||
+              !prep.user ||
+              !prep.prepareToken
+            ) {
+              setError("Préparation du post impossible.");
+              return false;
+            }
+
+            for (let ollamaAttempt = 0; ollamaAttempt < 3; ollamaAttempt++) {
+              const raw = await ollamaChatClient(
+                runtime,
+                prep.system,
+                prep.user,
+                500,
+                prep.profile as OllamaChatProfile
+              );
+              if (!raw) continue;
+
+              const result = await commitNpcPostAction(prep.prepareToken, raw);
+              if ("success" in result && result.success) return true;
+              if ("error" in result && result.error) {
+                if (!result.error.includes("filtré")) {
+                  setError(result.error);
+                  return false;
+                }
+              }
+            }
+          }
+          setError(
+            "Échec après plusieurs tentatives (Ollama ou contenu filtré)."
+          );
+          return false;
+        };
+
+        const runBridgeComment = async (): Promise<boolean> => {
+          for (let attempt = 0; attempt < 3; attempt++) {
+            const prep = await prepareNpcCommentAction();
+            if ("error" in prep && prep.error) {
+              setError(prep.error);
+              return false;
+            }
+            if (
+              !("prepareToken" in prep) ||
+              !prep.system ||
+              !prep.user ||
+              !prep.prepareToken
+            ) {
+              setError("Préparation du commentaire impossible.");
+              return false;
+            }
+
+            for (let ollamaAttempt = 0; ollamaAttempt < 3; ollamaAttempt++) {
+              const raw = await ollamaChatClient(
+                runtime,
+                prep.system,
+                prep.user,
+                300,
+                "comment"
+              );
+              if (!raw) continue;
+
+              const result = await commitNpcCommentAction(
+                prep.prepareToken,
+                raw
+              );
+              if ("success" in result && result.success) return true;
+              if ("error" in result && result.error) {
+                if (!result.error.includes("filtré")) {
+                  setError(result.error);
+                  return false;
+                }
+              }
+            }
+          }
+          setError(
+            "Échec après plusieurs tentatives (Ollama ou contenu filtré)."
+          );
+          return false;
+        };
+
+        const runBridgeBatch = async (): Promise<number> => {
+          let generated = 0;
+          for (let i = 0; i < count; i++) {
+            setBatchProgress({ kind, current: i + 1, total: count });
+            const ok =
+              kind === "post"
+                ? await runBridgePost()
+                : await runBridgeComment();
+            if (!ok) return generated;
+            generated += 1;
+          }
+          return generated;
+        };
+
+        let generated = 0;
+
+        if (useBridge) {
+          generated = await runBridgeBatch();
+        } else {
+          const action =
+            kind === "post" ? generateNpcPostAction : generateNpcCommentAction;
+          let result = await action(count, ollama);
+
+          if ("error" in result && result.error === "CLIENT_BRIDGE") {
+            generated = await runBridgeBatch();
+          } else if ("error" in result && result.error) {
             setError(result.error);
             return;
+          } else if ("success" in result && result.success) {
+            generated = result.generated ?? count;
+            setBatchProgress({ kind, current: generated, total: count });
           }
-          if (result.success) hadSuccess = true;
         }
 
-        if (hadSuccess) {
+        if (generated > 0) {
           router.refresh();
+          if (generated < count) {
+            setError(
+              `${generated}/${count} ${kind === "post" ? "posts" : "commentaires"} générés.`
+            );
+          }
+        } else {
+          setError("Aucun contenu généré.");
         }
       } finally {
         setPendingKind(null);
@@ -327,21 +447,10 @@ export function NpcGeneratePanel({ compact = false }: Props) {
 
   return (
     <div className={compact ? "mt-2 grid gap-1.5" : "mt-3 space-y-2"}>
-      {mediaLabel && (
-        <p
-          className={cn(
-            "text-center text-muted-foreground",
-            compact ? "text-meta" : "text-xs"
-          )}
-        >
-          Médias NPC : {mediaLabel}
-        </p>
-      )}
-
       <div className={rowClass}>
         <button
           type="button"
-          onClick={() => run(generateNpcPostAction, "post", postCount)}
+          onClick={() => run("post", postCount)}
           disabled={disabled}
           aria-busy={isPostLoading}
           className={btnPrimary}
@@ -380,7 +489,7 @@ export function NpcGeneratePanel({ compact = false }: Props) {
       <div className={rowClass}>
         <button
           type="button"
-          onClick={() => run(generateNpcCommentAction, "comment", commentCount)}
+          onClick={() => run("comment", commentCount)}
           disabled={disabled}
           aria-busy={isCommentLoading}
           className={btnSecondary}

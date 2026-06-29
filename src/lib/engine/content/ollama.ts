@@ -1,11 +1,13 @@
-import { getOllamaConfig } from "@/lib/ollama-config";
+import { getOllamaConfig, type OllamaRuntime } from "@/lib/ollama-config";
+import type { OllamaProvider } from "@/lib/ollama-bridge";
+import { createStaticOllamaProvider } from "@/lib/ollama-bridge";
 import type { PostType } from "@/lib/supabase/types";
 
 const FORBIDDEN = /\b(kill|suicide|nazi)\b/i;
 
 export type OllamaChatProfile = "default" | "signal" | "meme" | "comment";
 
-const PROFILE_OPTIONS: Record<
+export const OLLAMA_PROFILE_OPTIONS: Record<
   OllamaChatProfile,
   { temperature: number; top_p: number }
 > = {
@@ -31,21 +33,25 @@ export function getOllamaCallCount(): number {
   return ollamaCallsThisTick;
 }
 
-export async function ollamaChat(
+export function incrementOllamaCallCount(): void {
+  ollamaCallsThisTick += 1;
+}
+
+export async function fetchOllamaChat(
+  runtime: OllamaRuntime,
   system: string,
   user: string,
   maxChars = 500,
   profile: OllamaChatProfile = "default"
 ): Promise<string | null> {
-  const { baseUrl, model } = getOllamaConfig();
-  const opts = PROFILE_OPTIONS[profile];
-  ollamaCallsThisTick += 1;
+  const opts = OLLAMA_PROFILE_OPTIONS[profile];
+  const baseUrl = runtime.baseUrl.replace(/\/$/, "");
 
   const response = await fetch(`${baseUrl}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model,
+      model: runtime.model,
       stream: false,
       think: false,
       options: {
@@ -68,4 +74,25 @@ export async function ollamaChat(
   const text = data?.message?.content?.trim();
   if (!text || FORBIDDEN.test(text)) return null;
   return text.slice(0, maxChars);
+}
+
+export function createServerOllamaProvider(
+  runtime: OllamaRuntime = getOllamaConfig()
+): OllamaProvider {
+  return createStaticOllamaProvider(
+    runtime,
+    async (rt, system, user, maxChars, profile) =>
+      fetchOllamaChat(rt, system, user, maxChars, profile),
+    incrementOllamaCallCount
+  );
+}
+
+export async function ollamaChat(
+  system: string,
+  user: string,
+  maxChars = 500,
+  profile: OllamaChatProfile = "default",
+  provider: OllamaProvider = createServerOllamaProvider()
+): Promise<string | null> {
+  return provider.chat(system, user, maxChars, profile);
 }

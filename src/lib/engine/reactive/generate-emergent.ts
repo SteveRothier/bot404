@@ -14,7 +14,8 @@ import { recordSignalFailure } from "@/lib/engine/reactive/signals";
 import { maybeNpcVoteOnPoll } from "@/lib/engine/content/poll-vote";
 import { maybeAttachNpcPoll } from "@/lib/engine/content/poll-create";
 import { resolveNpcPostMedia, shouldAttachMediaToNpcPost } from "@/lib/engine/content/media";
-import { ollamaChat } from "@/lib/engine/content/ollama";
+import { createServerOllamaProvider } from "@/lib/engine/content/ollama";
+import type { OllamaProvider } from "@/lib/ollama-bridge";
 import { getRecentNpcAuthorIdsOnPost } from "@/lib/engine/casting/recent-repliers";
 import { loadAllNpcs } from "@/lib/engine/casting/select-npc";
 import { buildRichThreadSnippet } from "@/lib/engine/casting/thread-context";
@@ -202,7 +203,8 @@ async function applyNpcReactionsAfterEmergent(targetPostId: number) {
 }
 
 export async function processEmergentSignal(
-  typedSignal: NarrativeSignal
+  typedSignal: NarrativeSignal,
+  provider: OllamaProvider = createServerOllamaProvider()
 ): Promise<EmergentResponseResult> {
   const supabase = createAdminClient();
 
@@ -212,7 +214,7 @@ export async function processEmergentSignal(
   }
 
   if (typedSignal.kind === "human_joined") {
-    const welcome = await processHumanJoinedSignal(typedSignal);
+    const welcome = await processHumanJoinedSignal(typedSignal, provider);
     if (!welcome.ok) return fail(welcome.error);
     return {
       ok: true,
@@ -264,7 +266,7 @@ export async function processEmergentSignal(
       emergentSynopsis: synopsis,
     });
 
-    const raw = await ollamaChat(system, user, 400, "default");
+    const raw = await provider.chat(system, user, 400, "default");
     const content = raw
       ? validateNpcPostContent(raw, postType, ctx.content)
       : null;
@@ -322,6 +324,7 @@ export async function processEmergentSignal(
       postType,
       hasMedia: !!media,
       context: "emergent",
+      provider,
     });
 
     await applyNpcReactionsAfterEmergent(targetPostId);
@@ -360,7 +363,7 @@ export async function processEmergentSignal(
     postAuthorIsNpc,
   });
 
-  const rawComment = await ollamaChat(system, user, 300, "comment");
+  const rawComment = await provider.chat(system, user, 300, "comment");
   const validatedComment = rawComment
     ? validateNpcCommentContent(rawComment, ctx.content)
     : null;
@@ -445,7 +448,8 @@ async function fetchTopPendingSignal() {
 }
 
 export async function generateEmergentNpcResponseBatch(
-  maxCount: number
+  maxCount: number,
+  provider: OllamaProvider = createServerOllamaProvider()
 ): Promise<{
   handled: number;
   results: EmergentResponseSuccess[];
@@ -467,7 +471,7 @@ export async function generateEmergentNpcResponseBatch(
       break;
     }
 
-    const outcome = await processEmergentSignal(signal as NarrativeSignal);
+    const outcome = await processEmergentSignal(signal as NarrativeSignal, provider);
     if (!outcome.ok) {
       lastError = outcome.error;
       if (

@@ -1,7 +1,14 @@
-﻿import { checkOllamaStatus } from "@/lib/ollama";
+﻿import { resolveOllamaActionContext } from "@/lib/ollama-server";
+import type { OllamaProvider } from "@/lib/ollama-bridge";
+import { signBridgePayload, verifyBridgePayload } from "@/lib/ollama-bridge-token";
+import type { OllamaOverride } from "@/lib/ollama-config";
 import { resolveNpcPostMedia, shouldAttachMediaToNpcPost } from "@/lib/engine/content/media";
 import { maybeAttachNpcPoll, shouldNpcAttachPoll } from "@/lib/engine/content/poll-create";
-import { ollamaChat, ollamaProfileForPostType } from "@/lib/engine/content/ollama";
+import {
+  createServerOllamaProvider,
+  ollamaProfileForPostType,
+  type OllamaChatProfile,
+} from "@/lib/engine/content/ollama";
 import {
   buildNpcPostPrompt,
   npcPostUserMessage,
@@ -34,15 +41,45 @@ export type GenerateNpcPostResult =
   | { ok: true; author: string; postId: number; postType: string }
   | { ok: false; error: string };
 
+export type NpcPostPrepareResult =
+  | {
+      ok: true;
+      prepareToken: string;
+      system: string;
+      user: string;
+      profile: OllamaChatProfile;
+      postType: PostType;
+    }
+  | { ok: false; error: string };
+
+type PreparedNpcPostPayload = {
+  v: 1;
+  npcId: string;
+  postType: PostType;
+  usePoll: boolean;
+  recentContents: string[];
+};
+
 export function clampNpcPostBatchCount(count: number): number {
   const n = Number.isFinite(count) ? Math.floor(count) : 1;
   return Math.min(5, Math.max(1, n));
 }
 
-async function generateSingleNpcPost(
+async function buildNpcPostDraft(
   excludeNpcIds: Set<string> = new Set()
-): Promise<GenerateNpcPostResult & { npcId?: string }> {
-  const supabase = createAdminClient();
+): Promise<
+  | {
+      ok: true;
+      npc: Awaited<ReturnType<typeof pickRotatingNpc>> & object;
+      postType: PostType;
+      system: string;
+      user: string;
+      ollamaProfile: OllamaChatProfile;
+      usePoll: boolean;
+      recentPosts: string[];
+    }
+  | { ok: false; error: string }
+> {
   const npc = await pickRotatingNpc(excludeNpcIds);
   if (!npc) {
     return { ok: false, error: "Aucun NPC trouvé." };
@@ -50,8 +87,7 @@ async function generateSingleNpcPost(
 
   const historyBlock = await buildNpcHistoryBlock(npc.id);
   const recentPosts = await fetchRecentNpcPostContents(npc.id);
-
-  const postType = pickRandomNpcPostType();
+  const postType = pickRandomNpcPostType() as PostType;
 
   let welcomeBlock = "";
   const focus = await getWelcomeFocusHuman();
@@ -68,25 +104,28 @@ async function generateSingleNpcPost(
   const system = buildNpcPostPrompt(npc, historyBlock + welcomeBlock + trendBlock);
   const user = npcPostUserMessage(useTrend);
   const ollamaProfile = ollamaProfileForPostType(postType);
+  const usePoll = shouldNpcAttachPoll(postType, false, "ambient");
 
-  let content: string | null = null;
+  return {
+    ok: true,
+    npc,
+    postType,
+    system,
+    user,
+    ollamaProfile,
+    usePoll,
+    recentPosts,
+  };
+}
 
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const raw = await ollamaChat(system, user, 500, ollamaProfile);
-    content = raw
-      ? validateNpcAmbientPostContent(raw, postType as PostType, recentPosts)
-      : null;
-    if (content) break;
-  }
-
-  if (!content) {
-    return {
-      ok: false,
-      error: "Échec après 3 tentatives (Ollama ou contenu filtré).",
-    };
-  }
-
-  const usePoll = shouldNpcAttachPoll(postType as PostType, false, "ambient");
+async function persistNpcPost(
+  npc: NonNullable<Awaited<ReturnType<typeof pickRotatingNpc>>>,
+  postType: PostType,
+  content: string,
+  usePoll: boolean,
+  provider: OllamaProvider
+): Promise<GenerateNpcPostResult & { npcId?: string }> {
+  const supabase = createAdminClient();
 
   const media =
     !usePoll && shouldAttachMediaToNpcPost(npc, postType)
@@ -124,17 +163,18 @@ async function generateSingleNpcPost(
       postId: post.id,
       npc,
       content,
-      postType: postType as PostType,
+      postType,
       hasMedia: false,
       context: "ambient",
       forceAttach: true,
+      provider,
     });
   }
 
   const reactionBounds = getNpcPostReactionBounds();
   await maybeNpcReactionsOnPost(post.id, {
     humanAuthorId: npc.id,
-    postType: postType as PostType,
+    postType,
     postContent: content,
     minCount: reactionBounds.min,
     maxCount: reactionBounds.max,
@@ -153,37 +193,169 @@ async function generateSingleNpcPost(
   };
 }
 
-export async function generateNpcPost(): Promise<GenerateNpcPostResult> {
+export async function generateSingleNpcPost(
+  excludeNpcIds: Set<string> = new Set(),
+  provider: OllamaProvider = createServerOllamaProvider()
+): Promise<GenerateNpcPostResult & { npcId?: string }> {
+  const draft = await buildNpcPostDraft(excludeNpcIds);
+  if (!draft.ok) return draft;
+
+  const { npc, postType, system, user, ollamaProfile, usePoll, recentPosts } =
+    draft;
+
+  let content: string | null = null;
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const raw = await provider.chat(system, user, 500, ollamaProfile);
+    content = raw
+      ? validateNpcAmbientPostContent(raw, postType, recentPosts)
+      : null;
+    if (content) break;
+  }
+
+  if (!content) {
+    return {
+      ok: false,
+      error: "Échec après 3 tentatives (Ollama ou contenu filtré).",
+    };
+  }
+
+  return persistNpcPost(npc, postType, content, usePoll, provider);
+}
+
+export async function prepareNpcPostGeneration(
+  excludeNpcIds: Set<string> = new Set()
+): Promise<NpcPostPrepareResult> {
   if (!isNpcGenerationEnabled()) {
     return { ok: false, error: NPC_GENERATION_DISABLED_ERROR };
   }
 
-  const ollama = await checkOllamaStatus();
-  if (!ollama.online) {
-    return {
-      ok: false,
-      error: "Ollama est hors ligne. Lancez ollama serve puis réessayez.",
-    };
+  const draft = await buildNpcPostDraft(excludeNpcIds);
+  if (!draft.ok) return draft;
+
+  const { npc, postType, system, user, ollamaProfile, usePoll, recentPosts } =
+    draft;
+
+  const prepareToken = signBridgePayload<PreparedNpcPostPayload>({
+    v: 1,
+    npcId: npc.id,
+    postType,
+    usePoll,
+    recentContents: recentPosts,
+  });
+
+  return {
+    ok: true,
+    prepareToken,
+    system,
+    user,
+    profile: ollamaProfile,
+    postType,
+  };
+}
+
+export async function commitNpcPostGeneration(
+  prepareToken: string,
+  rawContent: string
+): Promise<GenerateNpcPostResult> {
+  if (!isNpcGenerationEnabled()) {
+    return { ok: false, error: NPC_GENERATION_DISABLED_ERROR };
   }
 
-  return generateSingleNpcPost();
+  const payload = verifyBridgePayload<PreparedNpcPostPayload>(prepareToken);
+  if (!payload || payload.v !== 1) {
+    return { ok: false, error: "Session de génération expirée ou invalide." };
+  }
+
+  const supabase = createAdminClient();
+  const { data: npc } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", payload.npcId)
+    .maybeSingle();
+
+  if (!npc) {
+    return { ok: false, error: "NPC introuvable." };
+  }
+
+  const content = validateNpcAmbientPostContent(
+    rawContent,
+    payload.postType,
+    payload.recentContents
+  );
+
+  if (!content) {
+    return { ok: false, error: "Contenu filtré ou invalide." };
+  }
+
+  return persistNpcPost(
+    npc,
+    payload.postType,
+    content,
+    payload.usePoll,
+    createServerOllamaProvider()
+  );
+}
+
+async function ensurePostProvider(
+  ollama?: OllamaOverride
+): Promise<
+  | { ok: true; provider: OllamaProvider }
+  | { ok: false; error: string; clientBridge?: true }
+> {
+  const ctx = await resolveOllamaActionContext(ollama);
+  if (!ctx.ok) return ctx;
+  if (ctx.clientBridge) {
+    return { ok: false, error: "CLIENT_BRIDGE", clientBridge: true };
+  }
+  return { ok: true, provider: ctx.provider };
+}
+
+export async function generateNpcPost(
+  ollama?: OllamaOverride,
+  provider?: OllamaProvider
+): Promise<GenerateNpcPostResult> {
+  if (!isNpcGenerationEnabled()) {
+    return { ok: false, error: NPC_GENERATION_DISABLED_ERROR };
+  }
+
+  if (provider) {
+    return generateSingleNpcPost(new Set(), provider);
+  }
+
+  const resolved = await ensurePostProvider(ollama);
+  if (!resolved.ok) {
+    if (resolved.clientBridge) {
+      return {
+        ok: false,
+        error: "CLIENT_BRIDGE",
+      };
+    }
+    return { ok: false, error: resolved.error };
+  }
+
+  return generateSingleNpcPost(new Set(), resolved.provider);
 }
 
 export async function generateNpcPostsBatch(
-  count = 1
+  count = 1,
+  ollama?: OllamaOverride,
+  provider?: OllamaProvider
 ): Promise<GenerateNpcPostResult[]> {
   if (!isNpcGenerationEnabled()) {
     return [{ ok: false, error: NPC_GENERATION_DISABLED_ERROR }];
   }
 
-  const ollama = await checkOllamaStatus();
-  if (!ollama.online) {
-    return [
-      {
-        ok: false,
-        error: "Ollama est hors ligne. Lancez ollama serve puis réessayez.",
-      },
-    ];
+  let activeProvider = provider;
+  if (!activeProvider) {
+    const resolved = await ensurePostProvider(ollama);
+    if (!resolved.ok) {
+      if (resolved.clientBridge) {
+        return [{ ok: false, error: "CLIENT_BRIDGE" }];
+      }
+      return [{ ok: false, error: resolved.error }];
+    }
+    activeProvider = resolved.provider;
   }
 
   const batchSize = clampNpcPostBatchCount(count);
@@ -191,7 +363,7 @@ export async function generateNpcPostsBatch(
   const usedNpcIds = new Set<string>();
 
   for (let i = 0; i < batchSize; i++) {
-    const result = await generateSingleNpcPost(usedNpcIds);
+    const result = await generateSingleNpcPost(usedNpcIds, activeProvider);
     if (result.ok) {
       if (result.npcId) usedNpcIds.add(result.npcId);
       results.push({

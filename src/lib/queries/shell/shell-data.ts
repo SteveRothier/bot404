@@ -4,7 +4,6 @@
   NPC_POST_INTERVAL_MINUTES,
 } from "@/lib/engine/shared/schedule";
 import { getNpcGenerationStatus } from "@/lib/engine/shared/generation-gate";
-import { getNpcOpsSnapshot } from "@/lib/queries/shell/narrative-ops";
 import {
   getCachedNetworkStatsData,
   getCachedPopularHashtagsData,
@@ -13,6 +12,9 @@ import {
   getLastNpcCommentTime,
   getLastNpcPostTime,
 } from "@/lib/queries/shell/npc-schedule";
+import { getOllamaDisplayDefaults } from "@/lib/ollama-config";
+
+export type { OllamaDisplayDefaults } from "@/lib/ollama-config";
 
 export type ShellNpcSchedule = {
   lastPostAt: string | null;
@@ -22,12 +24,11 @@ export type ShellNpcSchedule = {
 };
 
 export async function getShellData() {
-  const [stats, hashtags, lastPostAt, lastCommentAt, npcOps] = await Promise.all([
+  const [stats, hashtags, lastPostAt, lastCommentAt] = await Promise.all([
     getCachedNetworkStatsData(),
     getCachedPopularHashtagsData(10),
     getLastNpcPostTime(),
     getLastNpcCommentTime(),
-    getNpcOpsSnapshot(),
   ]);
 
   const npcSchedule: ShellNpcSchedule = {
@@ -48,6 +49,6 @@ export async function getShellData() {
     hashtags: hashtags.slice(0, 5),
     npcSchedule,
     npcGeneration: getNpcGenerationStatus(),
-    npcOps,
+    ollamaDisplay: getOllamaDisplayDefaults(),
   };
 }

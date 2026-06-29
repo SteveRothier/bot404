@@ -1,8 +1,9 @@
 import {
   getOllamaConfig,
+  getOllamaDisplayDefaults,
   getPublicOllamaModel,
-  getPublicOllamaUrl,
   isLocalOllamaUrl,
+  type OllamaRuntime,
 } from "@/lib/ollama-config";
 
 export type OllamaStatus = {
@@ -13,9 +14,8 @@ export type OllamaStatus = {
 };
 
 export function getDefaultOllamaStatus(): OllamaStatus {
-  const { model } = getOllamaConfig();
-  const publicModel = getPublicOllamaModel();
-  return { online: false, model: publicModel ?? model };
+  const { model } = getOllamaDisplayDefaults();
+  return { online: false, model };
 }
 
 export async function pingOllamaUrl(
@@ -34,8 +34,11 @@ export async function pingOllamaUrl(
 }
 
 /** Vérification côté serveur (API route, scripts Node). */
-export async function checkOllamaStatus(): Promise<OllamaStatus> {
-  const { baseUrl, model } = getOllamaConfig();
+export async function checkOllamaStatus(
+  runtime?: OllamaRuntime | null
+): Promise<OllamaStatus> {
+  const resolved = runtime ?? getOllamaConfig();
+  const { baseUrl, model } = resolved;
   const localOnly = isLocalOllamaUrl(baseUrl);
 
   if (localOnly && process.env.VERCEL) {
@@ -46,20 +49,21 @@ export async function checkOllamaStatus(): Promise<OllamaStatus> {
   return { online, model, localOnly: localOnly && !online ? true : undefined };
 }
 
-/** Vérification côté navigateur (prod Vercel + Ollama sur le même PC). */
+/** Vérification côté navigateur (URL éditable ou défaut env). */
 export async function checkOllamaStatusClient(
-  fallbackModel: string
+  fallbackModel: string,
+  endpointUrl?: string
 ): Promise<OllamaStatus> {
-  const publicUrl = getPublicOllamaUrl();
   const publicModel = getPublicOllamaModel();
   const model = publicModel ?? fallbackModel;
 
-  if (publicUrl) {
-    const online = await pingOllamaUrl(publicUrl);
+  if (endpointUrl) {
+    const online = await pingOllamaUrl(endpointUrl);
+    const local = isLocalOllamaUrl(endpointUrl);
     return {
       online,
       model,
-      localOnly: isLocalOllamaUrl(publicUrl) || undefined,
+      localOnly: !online && local ? true : undefined,
     };
   }
 

@@ -1,5 +1,8 @@
 ﻿import { insertPostPoll } from "@/lib/queries/posts";
-import { ollamaChat } from "@/lib/engine/content/ollama";
+import {
+  createServerOllamaProvider,
+} from "@/lib/engine/content/ollama";
+import type { OllamaProvider } from "@/lib/ollama-bridge";
 import { npcBase } from "@/lib/engine/content/prompt";
 import { validatePollDraft, type PollDraftInput } from "@/lib/polls";
 import type { PostType, Profile } from "@/lib/supabase/types";
@@ -86,7 +89,8 @@ export async function generateNpcPollOptions(
   npc: Profile,
   content: string,
   postType: PostType,
-  durationMinutes: number
+  durationMinutes: number,
+  provider: OllamaProvider = createServerOllamaProvider()
 ): Promise<PollDraftInput | null> {
   const system = `${npcBase(npc)}
 Tu crées les choix d'un sondage pour un post (${postType}) sur Bot404.
@@ -95,7 +99,7 @@ Entre 2 et 4 choix, max 25 caractères chacun, en français.`;
 
   const user = `Texte du post (question ou sujet) :\n${content.slice(0, 400)}`;
 
-  const raw = await ollamaChat(system, user, 200, "comment");
+  const raw = await provider.chat(system, user, 200, "comment");
   let options = raw ? parseNpcPollOptionsJson(raw) : null;
 
   if (!options) {
@@ -121,6 +125,7 @@ export async function maybeAttachNpcPoll(params: {
   random?: () => number;
   /** Si true, saute le tirage (déjà fait en amont, ex. exclusivité média). */
   forceAttach?: boolean;
+  provider?: OllamaProvider;
 }): Promise<boolean> {
   const random = params.random ?? Math.random;
 
@@ -145,7 +150,8 @@ export async function maybeAttachNpcPoll(params: {
     params.npc,
     params.content,
     params.postType,
-    durationMinutes
+    durationMinutes,
+    params.provider
   );
 
   if (!draft) return false;

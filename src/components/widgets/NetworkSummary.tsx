@@ -8,12 +8,13 @@ import {
 } from "@/components/widgets/SidebarPanel";
 import type { ShellNpcSchedule } from "@/lib/queries/shell";
 import type { NpcGenerationStatus } from "@/lib/engine/shared/generation-gate";
+import type { OllamaDisplayDefaults } from "@/lib/ollama-config";
 import type { NetworkStats } from "@/lib/supabase/types";
 
-const OllamaStatusBadge = dynamic(
+const OllamaEndpointField = dynamic(
   () =>
-    import("@/components/widgets/OllamaStatusBadge").then(
-      (m) => m.OllamaStatusBadge
+    import("@/components/widgets/OllamaEndpointField").then(
+      (m) => m.OllamaEndpointField
     ),
   { ssr: false, loading: () => null }
 );
@@ -26,17 +27,11 @@ const NpcGeneratePanel = dynamic(
   { ssr: false, loading: () => null }
 );
 
-const NpcOpsPanel = dynamic(
-  () =>
-    import("@/components/widgets/NpcOpsPanel").then((m) => m.NpcOpsPanel),
-  { ssr: false, loading: () => null }
-);
-
 type Props = {
   stats: NetworkStats;
   npcSchedule: ShellNpcSchedule;
   npcGeneration: NpcGenerationStatus;
-  npcOps: import("@/lib/queries/shell/narrative-ops").NpcOpsSnapshot;
+  ollamaDisplay: OllamaDisplayDefaults;
 };
 
 function StatRow({
@@ -56,7 +51,12 @@ function StatRow({
   );
 }
 
-export function NetworkSummary({ stats, npcSchedule, npcGeneration, npcOps }: Props) {
+export function NetworkSummary({
+  stats,
+  npcSchedule,
+  npcGeneration,
+  ollamaDisplay,
+}: Props) {
   return (
     <SidebarPanel title="Réseau">
       {!npcGeneration.enabled && (
@@ -78,9 +78,12 @@ export function NetworkSummary({ stats, npcSchedule, npcGeneration, npcOps }: Pr
         <NpcScheduleDisplay npcSchedule={npcSchedule} />
       </div>
       <SidebarPanelSection className="mt-2">
-        <OllamaStatusBadge compact />
+        <OllamaEndpointField
+          compact
+          defaultEndpointUrl={ollamaDisplay.endpointUrl}
+          defaultModel={ollamaDisplay.model}
+        />
         <NpcGeneratePanel compact />
-        <NpcOpsPanel snapshot={npcOps} compact />
       </SidebarPanelSection>
     </SidebarPanel>
   );
