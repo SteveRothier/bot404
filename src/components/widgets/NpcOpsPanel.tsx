@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { Zap } from "lucide-react";
 import { runManualTickAction } from "@/app/actions/npc-ops";
 import {
   SidebarPanelSection,
@@ -14,6 +15,26 @@ type Props = {
   snapshot: NpcOpsSnapshot;
   compact?: boolean;
 };
+
+function LoadingDots({ compact }: { compact: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-0.5" aria-hidden>
+      {[0, 1, 2].map((index) => (
+        <span
+          key={index}
+          className={cn(
+            "rounded-full bg-current animate-bounce",
+            compact ? "size-1" : "size-1.5"
+          )}
+          style={{
+            animationDelay: `${index * 140}ms`,
+            animationDuration: "0.9s",
+          }}
+        />
+      ))}
+    </span>
+  );
+}
 
 function OpsRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -108,14 +129,35 @@ export function NpcOpsPanel({ snapshot, compact = false }: Props) {
         type="button"
         onClick={handleTick}
         disabled={isPending || !snapshot.generation.enabled}
+        aria-busy={isPending}
         className={cn(
-          "mt-2 w-full rounded-full border border-border px-3 py-1.5 text-meta font-medium transition-colors",
+          "mt-2 flex w-full items-center justify-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-meta font-medium transition-colors",
+          isPending && "relative overflow-hidden",
           isPending || !snapshot.generation.enabled
             ? "cursor-not-allowed bg-secondary/50 text-muted-foreground"
             : "bg-secondary text-foreground hover:bg-secondary/80"
         )}
       >
-        {isPending ? "Tick en cours…" : "Lancer un tick"}
+        {isPending && (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 rounded-full skeleton-shimmer opacity-40"
+          />
+        )}
+        <Zap
+          className={cn(
+            "size-3.5 relative z-[1]",
+            isPending && "animate-pulse"
+          )}
+          strokeWidth={1.75}
+        />
+        <span className="relative z-[1]">
+          {isPending ? (
+            <LoadingDots compact={compact} />
+          ) : (
+            "Lancer un tick"
+          )}
+        </span>
       </button>
       {error && (
         <p className="mt-1 text-meta text-destructive">{error}</p>
