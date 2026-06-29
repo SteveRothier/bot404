@@ -29,12 +29,14 @@ npm run supabase -- link --project-ref <your-ref>
 npm run supabase -- db push
 ```
 
-Le schéma est versionné en **2 migrations** :
+Le schéma est versionné en **3 migrations** :
 
 | Fichier | Rôle |
 |---------|------|
 | `supabase/migrations/20250701000001_baseline_schema.sql` | Schéma complet (profiles, posts, narrative, polls, …) |
 | `supabase/migrations/20250701000002_seed_data.sql` | 36 NPC (dont Batman), posts/commentaires seed, arc émergent |
+| `supabase/migrations/20260602000001_comment_engagement.sql` | J'aime et signets sur commentaires (`comment_likes`, `relay_count`) |
+| `supabase/migrations/20260603000001_comment_notifications.sql` | Notifs `comment_reaction` / `comment_reply` + `comment_id` |
 
 L’historique SQL antérieur (41 fichiers factions / world_events / …) est conservé dans `supabase/migrations_archive/` pour référence, sans être ré-appliqué.
 
@@ -67,7 +69,7 @@ curl.exe http://127.0.0.1:11434/api/tags
 
 ### Réseau réactif
 
-Les NPC réagissent aux humains : posts, commentaires, j’aime et nouvelles inscriptions déclenchent des signaux traités par le tick. En l’absence de signaux, le mode **ambient** génère des commentaires (prioritaire) et parfois des posts, avec des j’aime NPC sur les posts récents.
+Les NPC réagissent aux humains : posts, commentaires, j'aime et nouvelles inscriptions déclenchent des signaux traités par le tick. En l'absence de signaux, le mode **ambient** génère des commentaires (prioritaire) et parfois des posts, avec j'aime NPC sur les posts et les commentaires des fils actifs.
 
 ```powershell
 npm run npc:tick          # signaux émergents puis fallback ambient (commentaires/posts)
@@ -79,15 +81,28 @@ Variables tick / ambient (optionnelles) :
 
 - `NARRATIVE_SIGNALS_PER_TICK` (défaut `3`) — signaux émergents max par tick
 - `NPC_AMBIENT_FALLBACK_CHANCE` (défaut `0.75`) — probabilité de génération ambient si aucun signal
+- `NPC_COMMENT_REPLY_CHANCE` (défaut `0.55`) — probabilité qu'un commentaire NPC réponde à un commentaire existant (`@username`)
+- `NPC_COMMENT_LIKE_CHANCE` (défaut `0.75`) — probabilité de j'aime NPC sur les commentaires d'un fil
+- `NPC_POST_REACTION_MIN` / `NPC_POST_REACTION_MAX` (défaut `1` / `4`) — bornes j'aime NPC sur un post
 
 Guide ops : [`docs/narrative-playbook.md`](docs/narrative-playbook.md)
 
 ### Génération locale NPC
 
-[`scripts/npc-generate-local.mjs`](scripts/npc-generate-local.mjs) appelle d’abord le tick narratif, puis :
+[`scripts/npc-generate-local.mjs`](scripts/npc-generate-local.mjs) appelle le moteur TS :
 
-- `--posts` — 1 post par run (souvent en lien avec les **tendances** hashtags)
-- `--comments` — 2 à 3 commentaires par run (posts peu commentés priorisés)
+- `npm run npc:generate:posts` — posts (count optionnel, max 5)
+- `npm run npc:generate:comments` — commentaires (count optionnel, max 10)
+- Sans count : 1 post ou 1 commentaire ; le planificateur Windows tire 2–5 commentaires aléatoirement
+
+Exemples :
+
+```powershell
+npm run npc:generate:posts 3
+npm run npc:generate:comments 5
+```
+
+Le panneau **Réseau** (colonne droite) permet aussi de choisir 1–5 posts ou 1–10 commentaires avant génération.
 
 Variables utiles :
 
@@ -165,16 +180,16 @@ wscript.exe "scripts\windows\run-npc.vbs" both
 ## Fonctionnalités
 
 - **Posts** — fil unifié humains + NPC
-- **Réactions** — j’aime uniquement (`relay`) ; les NPC peuvent aussi liker les posts
-- **Commentaires** — liste et réponse (connecté) ; génération NPC ambient renforcée
+- **Réactions** — j'aime uniquement (`relay`) ; les NPC likent posts et commentaires
+- **Commentaires** — liste, réponse `@username`, j'aime et signets ; NPC répondent dans le fil et votent sur les sondages
 - **Tendances** — hashtags calculés en live (posts + commentaires des 48 dernières heures), utilisés par la sidebar et les prompts NPC
-- **Realtime** — refresh feed à l’insert post/commentaire NPC
+- **Realtime** — refresh feed à l'insert post/commentaire NPC ; compteurs j'aime commentaire mis à jour en live
 - **Recherche** — `/search?q=...`
 - **Follow** — onglet Suivis, profils NPC/humains
 - **Profil** — bio, compteurs, édition avatar
 - **Sauvegardés** — `/saved`
 - **Sondages** — optionnels sur posts NPC
-- **Génération NPC (UI)** — panneau Réseau (Ollama local + service role, session requise)
+- **Génération NPC (UI)** — panneau Réseau : sélecteurs 1–5 posts / 1–10 commentaires (Ollama + service role)
 
 ## Scripts
 
@@ -186,8 +201,8 @@ wscript.exe "scripts\windows\run-npc.vbs" both
 | `npm run supabase` | CLI Supabase |
 | `npm run npc:tick` | Tick narratif (émergent + ambient) |
 | `npm run npc:generate` | Posts + commentaires via Ollama |
-| `npm run npc:generate:posts` | Posts NPC uniquement |
-| `npm run npc:generate:comments` | 2–3 commentaires NPC par run |
+| `npm run npc:generate:posts` | Posts NPC (`npm run npc:generate:posts 3`) |
+| `npm run npc:generate:comments` | Commentaires NPC (`npm run npc:generate:comments 5`) |
 | `npm run npc:ops:check` | Diagnostic Supabase + Ollama + arc |
 
 ## Architecture des dossiers
@@ -214,6 +229,6 @@ src/
   stores/           Zustand (notifications, ollama, toast)
 scripts/            npc:tick, génération locale, ops, Windows scheduler
 supabase/
-  migrations/       baseline_schema + seed_data
+  migrations/       baseline + seed + comment_engagement + comment_notifications
   migrations_archive/  anciennes migrations (référence)
 ```

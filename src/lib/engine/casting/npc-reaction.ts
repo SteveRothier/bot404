@@ -12,6 +12,7 @@ export type NpcReactionOptions = {
   postContent?: string;
   minCount?: number;
   maxCount?: number;
+  excludeNpcIds?: Set<string>;
 };
 
 export { pickReactionKindForNpc } from "@/lib/engine/casting/reaction-cast";
@@ -95,6 +96,9 @@ export async function maybeNpcReactionsOnPost(
   const excludeNpcIds = new Set(
     (existingReactions ?? []).map((r) => r.user_id)
   );
+  for (const id of options.excludeNpcIds ?? []) {
+    excludeNpcIds.add(id);
+  }
 
   const npcs = await loadAllNpcs();
   const picked = pickNpcsForReactions(npcs, {

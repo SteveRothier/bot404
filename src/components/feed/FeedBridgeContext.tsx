@@ -13,11 +13,17 @@ import type { FeedTab } from "@/components/feed/FeedTabs";
 export type FeedBridgeApi = {
   prependPost: (post: PostWithAuthor, tab: FeedTab) => void;
   prependComment: (postId: number, comment: CommentWithAuthor) => void;
+  updateCommentRelayCount: (
+    postId: number,
+    commentId: number,
+    relayCount: number
+  ) => void;
 };
 
 const noop: FeedBridgeApi = {
   prependPost: () => {},
   prependComment: () => {},
+  updateCommentRelayCount: () => {},
 };
 
 export const FeedBridgeContext = createContext<FeedBridgeApi>(noop);
@@ -44,6 +50,8 @@ export function FeedBridgeProvider({ children }: { children: React.ReactNode }) 
       prependPost: (post, tab) => apiRef.current.prependPost(post, tab),
       prependComment: (postId, comment) =>
         apiRef.current.prependComment(postId, comment),
+      updateCommentRelayCount: (postId, commentId, relayCount) =>
+        apiRef.current.updateCommentRelayCount(postId, commentId, relayCount),
     }),
     []
   );

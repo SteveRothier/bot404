@@ -1,5 +1,6 @@
 import { pickNpcsForReactions } from "@/lib/engine/casting/reaction-cast";
 import { loadAllNpcs } from "@/lib/engine/casting/select-npc";
+import { createCommentLikeNotification } from "@/lib/notifications";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PostType } from "@/lib/supabase/types";
 
@@ -22,7 +23,7 @@ export type NpcCommentLikeOptions = {
   prioritizeCommentId?: number;
 };
 
-function pickWeightedComment<T extends { relay_count: number; id: number }>(
+export function pickWeightedComment<T extends { relay_count: number; id: number }>(
   comments: T[],
   prioritizeId?: number,
   random = Math.random
@@ -186,6 +187,7 @@ export async function maybeNpcLikesOnPostComments(
     if (!error) {
       inserted += 1;
       usedPairs.add(pairKey);
+      await createCommentLikeNotification(comment.id, npc.id);
     }
   }
 

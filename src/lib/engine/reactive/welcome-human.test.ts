@@ -57,10 +57,22 @@ describe("welcomeBeatFromPayload", () => {
 describe("usernameFromWelcomeSignal", () => {
   it("lit le payload username", () => {
     const signal = {
+      id: 0,
+      kind: "human_joined" as const,
+      author_id: "a",
+      post_id: null,
+      comment_id: null,
+      reaction_kind: null,
+      mentioned_username: null,
+      priority: 48,
+      status: "pending" as const,
       payload: { username: "TestUser" },
-    } as NarrativeSignal;
+      result: {},
+      created_at: new Date().toISOString(),
+      handled_at: null,
+    } satisfies NarrativeSignal;
     assert.equal(usernameFromWelcomeSignal(signal), "TestUser");
-    assert.equal(usernameFromWelcomeSignal({ payload: {} } as NarrativeSignal), "humain");
+    assert.equal(usernameFromWelcomeSignal({ ...signal, payload: {} }), "humain");
   });
 });
 

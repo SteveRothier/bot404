@@ -8,7 +8,7 @@ import {
 } from "@/lib/engine/reactive/signals";
 import { triggerNarrativeTickAfterAction } from "@/lib/engine/reactive/trigger-tick";
 import { isEmergentModeActive } from "@/lib/engine/shared/queries";
-import { createMentionNotifications } from "@/lib/notifications";
+import { createMentionNotifications, createCommentReplyNotifications } from "@/lib/notifications";
 import { isValidPostType } from "@/lib/post-types";
 import { extractEmbedMediaUrls } from "@/lib/embed-media";
 import { parsePollJson, validatePollDraft } from "@/lib/polls";
@@ -253,9 +253,8 @@ export async function createComment(postId: number, formData: FormData) {
     return { error: error.message };
   }
 
-  await createMentionNotifications(content, user.id, postId);
-
   if (comment?.id) {
+    await createCommentReplyNotifications(content, user.id, postId, comment.id);
     await enqueueHumanCommentSignal(user.id, postId, comment.id, content);
     triggerNarrativeTickAfterAction();
 

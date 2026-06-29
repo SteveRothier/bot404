@@ -138,6 +138,17 @@ async function checkSupabaseNarrative() {
       detail: pendingDetail,
     });
 
+    const { error: commentLikesError } = await supabase
+      .from("comment_likes")
+      .select("comment_id", { count: "exact", head: true });
+
+    checks.push({
+      name: "Engagement commentaires",
+      ok: !commentLikesError,
+      detail: commentLikesError
+        ? `comment_likes inaccessible (${commentLikesError.message}) — lancez db push`
+        : "comment_likes + relay_count OK",
+    });
   }
 }
 

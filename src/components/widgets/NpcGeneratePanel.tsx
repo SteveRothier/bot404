@@ -241,6 +241,7 @@ export function NpcGeneratePanel({ compact = false }: Props) {
 
   function run(
     action: (count: number) => Promise<{ error?: string; success?: boolean }>,
+    kind: "post" | "comment",
     count: number
   ) {
     setError(null);
@@ -330,7 +331,7 @@ export function NpcGeneratePanel({ compact = false }: Props) {
       <div className={rowClass}>
         <button
           type="button"
-          onClick={() => run(generateNpcPostAction, postCount)}
+          onClick={() => run(generateNpcPostAction, "post", postCount)}
           disabled={disabled}
           aria-busy={isPostLoading}
           className={btnPrimary}
@@ -369,7 +370,7 @@ export function NpcGeneratePanel({ compact = false }: Props) {
       <div className={rowClass}>
         <button
           type="button"
-          onClick={() => run(generateNpcCommentAction, commentCount)}
+          onClick={() => run(generateNpcCommentAction, "comment", commentCount)}
           disabled={disabled}
           aria-busy={isCommentLoading}
           className={btnSecondary}

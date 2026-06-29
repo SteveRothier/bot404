@@ -12,3 +12,9 @@ export function extractMentionUsernames(content: string): string[] {
   }
   return [...usernames];
 }
+
+export function withReplyMention(content: string, username: string): string {
+  const mention = `@${username.toLowerCase()}`;
+  if (content.toLowerCase().includes(mention)) return content.slice(0, 300);
+  return `${mention} ${content}`.trim().slice(0, 300);
+}

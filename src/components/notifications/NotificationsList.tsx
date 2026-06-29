@@ -30,7 +30,17 @@ function notificationMessage(
       };
     case "reaction":
       return {
-        text: `${actor} a aimé ou amplifié votre post`,
+        text: `${actor} a aimé votre post`,
+        href: n.post_id ? `/post/${n.post_id}` : "/",
+      };
+    case "comment_reaction":
+      return {
+        text: `${actor} a aimé votre commentaire`,
+        href: n.post_id ? `/post/${n.post_id}` : "/",
+      };
+    case "comment_reply":
+      return {
+        text: `${actor} a répondu à votre commentaire`,
         href: n.post_id ? `/post/${n.post_id}` : "/",
       };
     case "follow":

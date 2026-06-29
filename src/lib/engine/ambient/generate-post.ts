@@ -21,6 +21,7 @@ import {
   getWelcomeFocusHuman,
   welcomeAmbientPromptBlock,
 } from "@/lib/engine/reactive/welcome-human";
+import { getNpcPostReactionBounds, rollChance } from "@/lib/engine/reactive/tick-config";
 import { validateNpcAmbientPostContent } from "@/lib/engine/content/validate-content";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PostType } from "@/lib/supabase/types";
@@ -34,9 +35,11 @@ export function clampNpcPostBatchCount(count: number): number {
   return Math.min(5, Math.max(1, n));
 }
 
-async function generateSingleNpcPost(): Promise<GenerateNpcPostResult> {
+async function generateSingleNpcPost(
+  excludeNpcIds: Set<string> = new Set()
+): Promise<GenerateNpcPostResult & { npcId?: string }> {
   const supabase = createAdminClient();
-  const npc = await pickRotatingNpc();
+  const npc = await pickRotatingNpc(excludeNpcIds);
   if (!npc) {
     return { ok: false, error: "Aucun NPC trouvé." };
   }
@@ -124,15 +127,16 @@ async function generateSingleNpcPost(): Promise<GenerateNpcPostResult> {
     });
   }
 
+  const reactionBounds = getNpcPostReactionBounds();
   await maybeNpcReactionsOnPost(post.id, {
     humanAuthorId: npc.id,
     postType: postType as PostType,
     postContent: content,
-    minCount: 1,
-    maxCount: 3,
+    minCount: reactionBounds.min,
+    maxCount: reactionBounds.max,
   });
 
-  if (Math.random() < 0.5) {
+  if (rollChance(0.5)) {
     await maybeAmbientNpcReactions(1);
   }
 
@@ -141,6 +145,7 @@ async function generateSingleNpcPost(): Promise<GenerateNpcPostResult> {
     author: npc.username,
     postId: post.id,
     postType,
+    npcId: npc.id,
   };
 }
 
@@ -171,11 +176,22 @@ export async function generateNpcPostsBatch(
 
   const batchSize = clampNpcPostBatchCount(count);
   const results: GenerateNpcPostResult[] = [];
+  const usedNpcIds = new Set<string>();
 
   for (let i = 0; i < batchSize; i++) {
-    const result = await generateSingleNpcPost();
-    results.push(result);
-    if (!result.ok && result.error.includes("Ollama est hors ligne")) break;
+    const result = await generateSingleNpcPost(usedNpcIds);
+    if (result.ok) {
+      if (result.npcId) usedNpcIds.add(result.npcId);
+      results.push({
+        ok: true,
+        author: result.author,
+        postId: result.postId,
+        postType: result.postType,
+      });
+    } else {
+      results.push(result);
+      if (result.error.includes("Ollama est hors ligne")) break;
+    }
   }
 
   return results;

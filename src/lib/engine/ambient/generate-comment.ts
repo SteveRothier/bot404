@@ -21,6 +21,17 @@ import {
 import { ollamaChat } from "@/lib/engine/content/ollama";
 import { npcBase, npcExamplePostsBlock } from "@/lib/engine/content/prompt";
 import { validateNpcCommentContent } from "@/lib/engine/content/validate-content";
+import {
+  getCommentLikeChance,
+  getCommentReplyChance,
+  getNpcPostReactionBounds,
+  getPostReactionAfterCommentChance,
+  rollChance,
+} from "@/lib/engine/reactive/tick-config";
+import { withReplyMention } from "@/lib/mentions";
+import {
+  createCommentReplyNotifications,
+} from "@/lib/notifications";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PostType, Profile } from "@/lib/supabase/types";
 
@@ -93,12 +104,6 @@ async function pickCommentToReply(
     username: author.username,
     content: fallback.content,
   };
-}
-
-function withReplyMention(content: string, username: string): string {
-  const mention = `@${username.toLowerCase()}`;
-  if (content.toLowerCase().includes(mention)) return content.slice(0, 300);
-  return `${mention} ${content}`.trim().slice(0, 300);
 }
 
 async function fetchCommentCounts(
@@ -187,9 +192,10 @@ async function pickPostToComment(
 
 async function tryGenerateCommentForPost(
   post: CommentTarget,
-  excludePostIds: Set<number>
+  excludePostIds: Set<number>,
+  usedNpcIds: Set<string> = new Set()
 ): Promise<
-  | { ok: true; npc: Profile; content: string }
+  | { ok: true; npc: Profile; content: string; isReply: boolean }
   | { ok: false; error: string; retryPost?: boolean }
 > {
   const supabase = createAdminClient();
@@ -204,11 +210,11 @@ async function tryGenerateCommentForPost(
   }
 
   const replyTarget =
-    post.comment_count > 0 && Math.random() < 0.55
+    post.comment_count > 0 && rollChance(getCommentReplyChance())
       ? await pickCommentToReply(post.id)
       : null;
 
-  const excludeAuthorIds = new Set([post.author_id]);
+  const excludeAuthorIds = new Set([post.author_id, ...usedNpcIds]);
   if (replyTarget) excludeAuthorIds.add(replyTarget.author_id);
 
   const commenters = (npcs as Profile[]).filter(
@@ -286,7 +292,7 @@ Réponds en commentaire (max 200 caractères). Ton conversationnel — une phras
       ? withReplyMention(validated, replyTarget.username)
       : validated;
 
-    return { ok: true, npc, content };
+    return { ok: true, npc, content, isReply: !!replyTarget };
   }
 
   excludePostIds.add(post.id);
@@ -298,8 +304,9 @@ Réponds en commentaire (max 200 caractères). Ton conversationnel — une phras
 }
 
 async function generateSingleNpcComment(
-  excludePostIds: Set<number>
-): Promise<GenerateNpcCommentResult> {
+  excludePostIds: Set<number>,
+  usedNpcIds: Set<string> = new Set()
+): Promise<GenerateNpcCommentResult & { npcId?: string }> {
   const ollama = await checkOllamaStatus();
   if (!ollama.online) {
     return {
@@ -316,7 +323,7 @@ async function generateSingleNpcComment(
       return { ok: false, error: "Aucun post récent pour commenter." };
     }
 
-    const draft = await tryGenerateCommentForPost(post, excludePostIds);
+    const draft = await tryGenerateCommentForPost(post, excludePostIds, usedNpcIds);
     if (!draft.ok) {
       if (draft.retryPost) continue;
       return { ok: false, error: draft.error };
@@ -346,22 +353,33 @@ async function generateSingleNpcComment(
       .update({ popularity_score: (npc.popularity_score ?? 0) + 1 })
       .eq("id", npc.id);
 
-    if (Math.random() < 0.65) {
+    if (rollChance(getPostReactionAfterCommentChance())) {
+      const reactionBounds = getNpcPostReactionBounds();
       await maybeNpcReactionsOnPost(post.id, {
         humanAuthorId: post.author_id,
         postType: post.post_type,
         postContent: post.content,
-        minCount: 1,
-        maxCount: 3,
+        minCount: reactionBounds.min,
+        maxCount: reactionBounds.max,
+        excludeNpcIds: usedNpcIds,
       });
     }
 
-    if (Math.random() < 0.75) {
+    if (rollChance(getCommentLikeChance())) {
       await maybeNpcLikesOnPostComments(post.id, {
         minLikes: 1,
         maxLikes: 4,
-        excludeNpcIds: new Set([npc.id]),
+        excludeNpcIds: new Set([npc.id, ...usedNpcIds]),
       });
+    }
+
+    if (draft.isReply) {
+      await createCommentReplyNotifications(
+        content,
+        npc.id,
+        post.id,
+        comment.id
+      );
     }
 
     let pollVote: string | undefined;
@@ -374,6 +392,7 @@ async function generateSingleNpcComment(
       postId: post.id,
       commentId: comment.id,
       pollVote,
+      npcId: npc.id,
     };
   }
 
@@ -393,12 +412,24 @@ export async function generateNpcCommentsBatch(
   const batchSize = clampNpcCommentBatchCount(count);
   const results: GenerateNpcCommentResult[] = [];
   const usedPosts = new Set<number>();
+  const usedNpcIds = new Set<string>();
 
   for (let i = 0; i < batchSize; i++) {
-    const result = await generateSingleNpcComment(usedPosts);
-    results.push(result);
-    if (result.ok) usedPosts.add(result.postId);
-    if (!result.ok && result.error.includes("Ollama est hors ligne")) break;
+    const result = await generateSingleNpcComment(usedPosts, usedNpcIds);
+    if (result.ok) {
+      if (result.npcId) usedNpcIds.add(result.npcId);
+      usedPosts.add(result.postId);
+      results.push({
+        ok: true,
+        author: result.author,
+        postId: result.postId,
+        commentId: result.commentId,
+        pollVote: result.pollVote,
+      });
+    } else {
+      results.push(result);
+      if (result.error.includes("Ollama est hors ligne")) break;
+    }
   }
 
   return results;

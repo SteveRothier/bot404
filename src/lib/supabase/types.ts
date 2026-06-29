@@ -124,7 +124,9 @@ export type NetworkStats = {
 export type NotificationKind =
   | "mention"
   | "reaction"
-  | "follow";
+  | "follow"
+  | "comment_reaction"
+  | "comment_reply";
 
 export type Notification = {
   id: string;
@@ -132,6 +134,7 @@ export type Notification = {
   kind: NotificationKind;
   actor_id: string | null;
   post_id: number | null;
+  comment_id: number | null;
   read_at: string | null;
   created_at: string;
 };

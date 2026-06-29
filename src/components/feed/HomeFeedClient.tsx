@@ -183,11 +183,31 @@ export function HomeFeedClient({
     []
   );
 
+  const updateCommentRelayCount = useCallback(
+    (postId: number, commentId: number, relayCount: number) => {
+      setCommentsByPostId((prev) => {
+        const existing = prev[postId];
+        if (!existing?.some((c) => c.id === commentId)) return prev;
+        return {
+          ...prev,
+          [postId]: existing.map((c) =>
+            c.id === commentId ? { ...c, relay_count: relayCount } : c
+          ),
+        };
+      });
+    },
+    []
+  );
+
   useEffect(() => {
-    const api: FeedBridgeApi = { prependPost, prependComment };
+    const api: FeedBridgeApi = {
+      prependPost,
+      prependComment,
+      updateCommentRelayCount,
+    };
     registerBridge(api);
     return () => registerBridge(null);
-  }, [registerBridge, prependPost, prependComment]);
+  }, [registerBridge, prependPost, prependComment, updateCommentRelayCount]);
 
   useEffect(() => {
     if (tab === "for-you" || tabCache.has(tab)) return;

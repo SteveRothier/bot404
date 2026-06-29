@@ -68,8 +68,12 @@ const runComments =
   (!process.argv.includes("--posts") && !process.argv.includes("--comments"));
 
 const postCount = clampNpcPostBatchCount(parseBatchCount("posts", 1, 5));
+const defaultCommentCount =
+  process.argv.includes("--comments") && !process.argv.some((a) => /^\d+$/.test(a))
+    ? 2 + Math.floor(Math.random() * 4)
+    : 1;
 const commentCount = clampNpcCommentBatchCount(
-  parseBatchCount("comments", 1, 10)
+  parseBatchCount("comments", defaultCommentCount, 10)
 );
 
 async function main() {

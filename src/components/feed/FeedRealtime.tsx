@@ -19,6 +19,9 @@ export function FeedRealtime({ children }: Props) {
   const bridge = useFeedBridge();
   const pendingPostIds = useRef(new Set<number>());
   const pendingCommentIds = useRef(new Set<number>());
+  const pendingCommentUpdates = useRef<
+    Array<{ postId: number; commentId: number; relayCount: number }>
+  >([]);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -27,8 +30,10 @@ export function FeedRealtime({ children }: Props) {
     async function flush() {
       const postIds = [...pendingPostIds.current];
       const commentIds = [...pendingCommentIds.current];
+      const commentUpdates = [...pendingCommentUpdates.current];
       pendingPostIds.current.clear();
       pendingCommentIds.current.clear();
+      pendingCommentUpdates.current = [];
 
       await Promise.all([
         ...postIds.map(async (id) => {
@@ -38,6 +43,9 @@ export function FeedRealtime({ children }: Props) {
         ...commentIds.map(async (id) => {
           const comment = await fetchFeedCommentById(id);
           if (comment) bridge.prependComment(comment.post_id, comment);
+        }),
+        ...commentUpdates.map(async ({ postId, commentId, relayCount }) => {
+          bridge.updateCommentRelayCount(postId, commentId, relayCount);
         }),
       ]);
     }
@@ -69,6 +77,29 @@ export function FeedRealtime({ children }: Props) {
           const id = payload.new?.id;
           if (typeof id === "number") {
             pendingCommentIds.current.add(id);
+            scheduleFlush();
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "comments" },
+        (payload) => {
+          const row = payload.new as {
+            id?: number;
+            post_id?: number;
+            relay_count?: number;
+          };
+          if (
+            typeof row.id === "number" &&
+            typeof row.post_id === "number" &&
+            typeof row.relay_count === "number"
+          ) {
+            pendingCommentUpdates.current.push({
+              postId: row.post_id,
+              commentId: row.id,
+              relayCount: row.relay_count,
+            });
             scheduleFlush();
           }
         }

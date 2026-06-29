@@ -21,6 +21,8 @@ import { buildRichThreadSnippet } from "@/lib/engine/casting/thread-context";
 import { maybeNpcReactionsOnPost } from "@/lib/engine/casting/npc-reaction";
 import { maybeNpcLikesOnPostComments } from "@/lib/engine/casting/npc-comment-engagement";
 import { validateNpcCommentContent, validateNpcPostContent } from "@/lib/engine/content/validate-content";
+import { withReplyMention } from "@/lib/mentions";
+import { createCommentReplyNotifications } from "@/lib/notifications";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PostType, Profile, ReactionKind } from "@/lib/supabase/types";
 
@@ -359,12 +361,17 @@ export async function processEmergentSignal(
   });
 
   const rawComment = await ollamaChat(system, user, 300, "comment");
-  const commentContent = rawComment
+  const validatedComment = rawComment
     ? validateNpcCommentContent(rawComment, ctx.content)
     : null;
-  if (!commentContent) {
+  if (!validatedComment) {
     return fail("Échec génération Ollama.");
   }
+
+  const commentContent =
+    typedSignal.kind === "human_comment"
+      ? withReplyMention(validatedComment, ctx.humanUsername)
+      : validatedComment;
 
   const { data: comment, error } = await supabase
     .from("comments")
@@ -401,6 +408,15 @@ export async function processEmergentSignal(
     .from("profiles")
     .update({ popularity_score: (npc.popularity_score ?? 0) + 1 })
     .eq("id", npc.id);
+
+  if (typedSignal.kind === "human_comment" && comment?.id) {
+    await createCommentReplyNotifications(
+      commentContent,
+      npc.id,
+      targetPostId,
+      comment.id
+    );
+  }
 
   await applyNpcReactionsAfterEmergent(targetPostId);
 
