@@ -1,9 +1,12 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  getAmbientCommentsPerTick,
   getCommentLikeChance,
   getCommentReplyChance,
   getNpcPostReactionBounds,
+  getPollVotesPerTick,
+  getSignalsPerTick,
   rollChance,
 } from "@/lib/engine/reactive/tick-config";
 
@@ -17,6 +20,12 @@ describe("tick-config engagement", () => {
   it("chances par défaut dans ]0,1]", () => {
     assert.ok(getCommentReplyChance() > 0 && getCommentReplyChance() <= 1);
     assert.ok(getCommentLikeChance() > 0 && getCommentLikeChance() <= 1);
+  });
+
+  it("augmente commentaires et votes sondage par tick", () => {
+    assert.equal(getSignalsPerTick(), 4);
+    assert.equal(getAmbientCommentsPerTick(), 4);
+    assert.equal(getPollVotesPerTick(), 3);
   });
 
   it("rollChance respecte le tirage", () => {

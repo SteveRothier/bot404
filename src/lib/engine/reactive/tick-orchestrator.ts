@@ -1,12 +1,7 @@
-import { generateNpcCommentsBatch } from "@/lib/engine/ambient/generate-comment";
-import { generateNpcPost } from "@/lib/engine/ambient/generate-post";
-import { maybeAmbientNpcReactions } from "@/lib/engine/casting/npc-reaction";
-import { maybeAmbientNpcCommentLikes } from "@/lib/engine/casting/npc-comment-engagement";
 import { checkNarrativeEndgame } from "@/lib/engine/reactive/endgame-stub";
 import { expireOldSignals } from "@/lib/engine/reactive/signals";
-import {
-  getAmbientFallbackChance,
-} from "@/lib/engine/reactive/tick-config";
+import { getAmbientFallbackChance } from "@/lib/engine/reactive/tick-config";
+import { runAmbientTickPhase } from "@/lib/engine/reactive/tick-ambient";
 import { persistLastTickResult } from "@/lib/engine/reactive/tick-metrics";
 import {
   getOllamaCallCount,
@@ -42,7 +37,6 @@ type BridgeTickSession = {
   maxSignals: number;
   ollamaResponses: (string | null)[];
   ambientRoll?: number;
-  preferComment?: boolean;
   errors: string[];
   ollama?: OllamaOverride;
 };
@@ -82,8 +76,6 @@ async function runBridgeAmbientPhase(
 ): Promise<TickOrchestratorStep> {
   const ambientRoll =
     session.ambientRoll ?? (session.ambientRoll = Math.random());
-  const preferComment =
-    session.preferComment ?? (session.preferComment = Math.random() < 0.88);
 
   if (ambientRoll >= getAmbientFallbackChance()) {
     const endgame = await checkNarrativeEndgame();
@@ -101,19 +93,14 @@ async function runBridgeAmbientPhase(
     };
   }
 
-  const ambientReactions = await maybeAmbientNpcReactions(2);
-  const commentLikes = await maybeAmbientNpcCommentLikes(2);
+  const ambient = await runAmbientTickPhase(session.ollama, provider);
+  session.errors.push(...ambient.errors);
 
-  const ambient = preferComment
-    ? (await generateNpcCommentsBatch(2, session.ollama, provider))[0] ?? {
-        ok: false as const,
-        error: "Aucun commentaire généré.",
-      }
-    : await generateNpcPost(session.ollama, provider);
-
-  if (ambient.ok) {
-    const isComment = "commentId" in ambient;
+  if (ambient.handled) {
     const endgame = await checkNarrativeEndgame();
+    const firstComment = ambient.comments[0];
+    const isComment = ambient.kind === "comment_batch";
+
     return {
       status: "complete",
       result: finishBridgeTick(
@@ -124,9 +111,21 @@ async function runBridgeAmbientPhase(
           detail: {
             bridge: true,
             kind: isComment ? "comment" : "post",
-            author: ambient.author,
-            post_id: ambient.postId,
-            comment_id: isComment ? ambient.commentId : undefined,
+            author: isComment
+              ? firstComment?.author
+              : ambient.post?.author,
+            post_id: isComment
+              ? firstComment?.postId
+              : ambient.post?.postId,
+            comment_id: isComment ? firstComment?.commentId : undefined,
+            comment_count: ambient.comments.length,
+            poll_votes: ambient.pollVotes,
+            batch: ambient.comments.map((c) => ({
+              author: c.author,
+              post_id: c.postId,
+              comment_id: c.commentId,
+              poll_vote: c.pollVote,
+            })),
             endgame: endgame.triggered ? endgame : undefined,
           },
         },
@@ -135,8 +134,6 @@ async function runBridgeAmbientPhase(
     };
   }
 
-  if (ambient.error) session.errors.push(ambient.error);
-
   return {
     status: "complete",
     result: finishBridgeTick(
@@ -144,7 +141,7 @@ async function runBridgeAmbientPhase(
       {
         handled: false,
         mode: "none",
-        detail: { bridge: true, ambient_error: ambient.error },
+        detail: { bridge: true, ambient_errors: ambient.errors },
       },
       session.errors
     ),

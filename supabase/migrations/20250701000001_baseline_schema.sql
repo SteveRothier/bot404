@@ -1,10 +1,11 @@
--- Bot404 baseline schema (squash des migrations obsolètes)
+-- Bot404 — schéma complet (squash)
 
 -- Enums
 create type post_type as enum ('message', 'theory', 'signal', 'rumor');
 create type reaction_kind as enum ('relay', 'amplify', 'flag');
 create type notification_kind as enum (
-  'mention', 'reaction', 'follow', 'world_event', 'archive_unlock', 'investigation_entry'
+  'mention', 'reaction', 'follow', 'world_event', 'archive_unlock', 'investigation_entry',
+  'comment_reaction', 'comment_reply'
 );
 create type narrative_arc_mode as enum ('scripted', 'emergent');
 create type narrative_arc_status as enum ('draft', 'active', 'completed', 'paused');
@@ -57,6 +58,7 @@ create table comments (
   post_id bigint not null references posts(id) on delete cascade,
   author_id uuid not null references profiles(id) on delete cascade,
   content text not null check (char_length(content) <= 300),
+  relay_count int not null default 0,
   narrative_beat_id bigint,
   narrative_signal_id bigint,
   created_at timestamptz not null default now()
@@ -112,18 +114,38 @@ create table post_bookmarks (
 create index post_bookmarks_user_id_idx on post_bookmarks (user_id);
 create index post_bookmarks_post_id_idx on post_bookmarks (post_id);
 
+create table comment_likes (
+  user_id uuid not null references profiles(id) on delete cascade,
+  comment_id bigint not null references comments(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (user_id, comment_id)
+);
+
+create index comment_likes_comment_id_idx on comment_likes (comment_id);
+
+create table comment_bookmarks (
+  user_id uuid not null references profiles(id) on delete cascade,
+  comment_id bigint not null references comments(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (user_id, comment_id)
+);
+
+create index comment_bookmarks_user_id_idx on comment_bookmarks (user_id);
+
 create table notifications (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references profiles(id) on delete cascade,
   kind notification_kind not null,
   actor_id uuid references profiles(id) on delete set null,
   post_id bigint references posts(id) on delete cascade,
+  comment_id bigint references comments(id) on delete cascade,
   read_at timestamptz,
   created_at timestamptz not null default now()
 );
 
 create index notifications_user_created_idx on notifications (user_id, created_at desc);
 create index notifications_user_unread_idx on notifications (user_id) where read_at is null;
+create index notifications_comment_id_idx on notifications (comment_id);
 
 create table post_polls (
   post_id bigint primary key references posts(id) on delete cascade,
@@ -225,6 +247,8 @@ alter table post_likes enable row level security;
 alter table post_reactions enable row level security;
 alter table follows enable row level security;
 alter table post_bookmarks enable row level security;
+alter table comment_likes enable row level security;
+alter table comment_bookmarks enable row level security;
 alter table notifications enable row level security;
 alter table post_polls enable row level security;
 alter table post_poll_options enable row level security;
@@ -337,6 +361,29 @@ create policy "post_bookmarks_delete_own"
   on post_bookmarks for delete to authenticated
   using (user_id = auth.uid());
 
+create policy "comment_likes_select_public"
+  on comment_likes for select to anon, authenticated using (true);
+
+create policy "comment_likes_insert_own"
+  on comment_likes for insert to authenticated
+  with check (auth.uid() = user_id);
+
+create policy "comment_likes_delete_own"
+  on comment_likes for delete to authenticated
+  using (auth.uid() = user_id);
+
+create policy "comment_bookmarks_select_own"
+  on comment_bookmarks for select to authenticated
+  using (auth.uid() = user_id);
+
+create policy "comment_bookmarks_insert_own"
+  on comment_bookmarks for insert to authenticated
+  with check (auth.uid() = user_id);
+
+create policy "comment_bookmarks_delete_own"
+  on comment_bookmarks for delete to authenticated
+  using (auth.uid() = user_id);
+
 create policy "notifications_select_own"
   on notifications for select to authenticated
   using (user_id = auth.uid());
@@ -438,6 +485,20 @@ begin
       update posts set flag_count = flag_count + 1 where id = new.post_id;
     end if;
     return new;
+  end if;
+  return null;
+end;
+$$;
+
+create or replace function public.sync_comment_like_counts()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if tg_op = 'INSERT' then
+    update comments set relay_count = relay_count + 1 where id = new.comment_id;
+    return new;
+  elsif tg_op = 'DELETE' then
+    update comments set relay_count = greatest(relay_count - 1, 0) where id = old.comment_id;
+    return old;
   end if;
   return null;
 end;
@@ -582,6 +643,9 @@ create trigger post_likes_count_delete
 create trigger post_reactions_count_sync
   after insert or update or delete on post_reactions
   for each row execute function public.sync_post_reaction_counts();
+create trigger comment_likes_count_sync
+  after insert or delete on comment_likes
+  for each row execute function public.sync_comment_like_counts();
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created

@@ -4,6 +4,7 @@ import { resolveOllamaActionContext } from "@/lib/ollama-server";
 import { generateEmergentNpcResponseBatch } from "@/lib/engine/reactive/generate-emergent";
 import {
   getAmbientFallbackChance,
+  getPollVotesPerTick,
   getSignalsPerTick,
 } from "@/lib/engine/reactive/tick-config";
 import { expireOldSignals } from "@/lib/engine/reactive/signals";
@@ -13,10 +14,8 @@ import type {
   NarrativeTickMetrics,
   NarrativeTickResult,
 } from "@/lib/engine/shared/types";
-import { generateNpcCommentsBatch } from "@/lib/engine/ambient/generate-comment";
-import { generateNpcPost } from "@/lib/engine/ambient/generate-post";
-import { maybeAmbientNpcReactions } from "@/lib/engine/casting/npc-reaction";
-import { maybeAmbientNpcCommentLikes } from "@/lib/engine/casting/npc-comment-engagement";
+import { maybeAmbientNpcPollVotes } from "@/lib/engine/content/poll-vote";
+import { runAmbientTickPhase } from "@/lib/engine/reactive/tick-ambient";
 import {
   getOllamaCallCount,
   resetOllamaCallCount,
@@ -119,6 +118,10 @@ export async function runNarrativeTick(
 
   if (batch.handled > 0) {
     const first = batch.results[0];
+    const pollVotes = await maybeAmbientNpcPollVotes(
+      getPollVotesPerTick(),
+      provider
+    );
     const endgame = await checkNarrativeEndgame();
     return finishTick(
       startedAt,
@@ -127,6 +130,7 @@ export async function runNarrativeTick(
         mode: "emergent",
         detail: {
           batch_count: batch.handled,
+          poll_votes: pollVotes,
           batch: batch.results.map((r) => ({
             author: r.author,
             post_id: r.postId,
@@ -150,21 +154,14 @@ export async function runNarrativeTick(
   }
 
   if (Math.random() < getAmbientFallbackChance()) {
-    const ambientReactions = await maybeAmbientNpcReactions(2);
-    const commentLikes = await maybeAmbientNpcCommentLikes(2);
+    const ambient = await runAmbientTickPhase(options.ollama, provider);
+    errors.push(...ambient.errors);
 
-    const ambient =
-      Math.random() < 0.88
-        ? (await generateNpcCommentsBatch(
-            2 + Math.floor(Math.random() * 2),
-            options.ollama,
-            provider
-          ))[0] ?? { ok: false as const, error: "Aucun commentaire généré." }
-        : await generateNpcPost(options.ollama, provider);
-
-    if (ambient.ok) {
-      const isComment = "commentId" in ambient;
+    if (ambient.handled) {
       const endgame = await checkNarrativeEndgame();
+      const firstComment = ambient.comments[0];
+      const isComment = ambient.kind === "comment_batch";
+
       return finishTick(
         startedAt,
         {
@@ -172,23 +169,33 @@ export async function runNarrativeTick(
           mode: "ambient",
           detail: {
             kind: isComment ? "comment" : "post",
-            author: ambient.author,
-            post_id: ambient.postId,
-            comment_id: isComment ? ambient.commentId : undefined,
+            author: isComment
+              ? firstComment?.author
+              : ambient.post?.author,
+            post_id: isComment
+              ? firstComment?.postId
+              : ambient.post?.postId,
+            comment_id: isComment ? firstComment?.commentId : undefined,
+            comment_count: ambient.comments.length,
+            poll_votes: ambient.pollVotes,
+            batch: ambient.comments.map((c) => ({
+              author: c.author,
+              post_id: c.postId,
+              comment_id: c.commentId,
+              poll_vote: c.pollVote,
+            })),
             endgame: endgame.triggered ? endgame : undefined,
           },
         },
         {
           signals_attempted: maxSignals,
           signals_handled: 0,
-          ambient_reactions: ambientReactions,
-          comment_likes: commentLikes,
+          ambient_reactions: ambient.ambientReactions,
+          comment_likes: ambient.commentLikes,
           errors,
         }
       );
     }
-
-    if (ambient.error) errors.push(ambient.error);
 
     return finishTick(
       startedAt,
@@ -197,14 +204,14 @@ export async function runNarrativeTick(
         mode: "none",
         detail: {
           emergent_error: batch.lastError,
-          ambient_error: ambient.error,
+          ambient_errors: ambient.errors,
         },
       },
       {
         signals_attempted: maxSignals,
         signals_handled: 0,
-        ambient_reactions: ambientReactions,
-        comment_likes: commentLikes,
+        ambient_reactions: ambient.ambientReactions,
+        comment_likes: ambient.commentLikes,
         errors,
       }
     );

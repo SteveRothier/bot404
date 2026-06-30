@@ -1,8 +1,4 @@
 import { create } from "zustand";
-import {
-  normalizeOllamaEndpointUrl,
-  OLLAMA_ENDPOINT_STORAGE_KEY,
-} from "@/lib/ollama-config";
 import { checkOllamaStatusClient, type OllamaStatus } from "@/lib/ollama";
 
 type OllamaState = {
@@ -10,12 +6,9 @@ type OllamaState = {
   model: string;
   localOnly: boolean;
   endpointUrl: string;
-  defaultEndpointUrl: string;
   initialized: boolean;
   hydrate: (status: OllamaStatus) => void;
   initEndpoint: (defaultUrl: string, defaultModel: string) => void;
-  setEndpointUrl: (url: string) => boolean;
-  resetEndpointUrl: () => void;
   refresh: () => Promise<boolean>;
   startPolling: () => void;
   stopPolling: () => void;
@@ -23,19 +16,11 @@ type OllamaState = {
 
 let pollingId: number | null = null;
 
-function readStoredEndpoint(fallback: string): string {
-  if (typeof window === "undefined") return fallback;
-  const stored = localStorage.getItem(OLLAMA_ENDPOINT_STORAGE_KEY);
-  if (!stored) return fallback;
-  return normalizeOllamaEndpointUrl(stored) ?? fallback;
-}
-
 export const useOllamaStore = create<OllamaState>((set, get) => ({
   online: false,
   model: "",
   localOnly: false,
   endpointUrl: "",
-  defaultEndpointUrl: "",
   initialized: false,
   hydrate: (status) =>
     set({
@@ -44,39 +29,21 @@ export const useOllamaStore = create<OllamaState>((set, get) => ({
       localOnly: status.localOnly ?? false,
     }),
   initEndpoint: (defaultUrl, defaultModel) => {
-    const endpointUrl = get().initialized
-      ? get().endpointUrl
-      : readStoredEndpoint(defaultUrl);
+    const endpointUrl = defaultUrl.trim();
+    const changed =
+      !get().initialized ||
+      get().endpointUrl !== endpointUrl ||
+      get().model !== (defaultModel || get().model);
 
     set({
-      defaultEndpointUrl: defaultUrl,
       endpointUrl,
       model: defaultModel || get().model,
       initialized: true,
     });
 
-    void get().refresh();
-  },
-  setEndpointUrl: (url) => {
-    const normalized = normalizeOllamaEndpointUrl(url);
-    if (!normalized) return false;
-
-    if (typeof window !== "undefined") {
-      localStorage.setItem(OLLAMA_ENDPOINT_STORAGE_KEY, normalized);
+    if (changed) {
+      void get().refresh();
     }
-
-    set({ endpointUrl: normalized });
-    void get().refresh();
-    return true;
-  },
-  resetEndpointUrl: () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem(OLLAMA_ENDPOINT_STORAGE_KEY);
-    }
-
-    const defaultUrl = get().defaultEndpointUrl;
-    set({ endpointUrl: defaultUrl });
-    void get().refresh();
   },
   refresh: async () => {
     const { endpointUrl, model } = get();

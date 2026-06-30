@@ -101,3 +101,65 @@ export async function maybeNpcVoteOnPoll(
 
   return { ok: true, optionId: chosen.id, label: chosen.label };
 }
+
+type ActivePollRow = {
+  post_id: number;
+  posts: { content: string } | { content: string }[] | null;
+};
+
+function pollQuestion(row: ActivePollRow): string {
+  const posts = row.posts;
+  if (Array.isArray(posts)) return posts[0]?.content ?? "";
+  return posts?.content ?? "";
+}
+
+/** Votes NPC sur des sondages actifs (hors commentaires déjà générateurs). */
+export async function maybeAmbientNpcPollVotes(
+  maxVotes: number,
+  provider: OllamaProvider = createServerOllamaProvider()
+): Promise<number> {
+  if (maxVotes < 1) return 0;
+
+  const supabase = createAdminClient();
+  const now = new Date().toISOString();
+
+  const { data: polls } = await supabase
+    .from("post_polls")
+    .select("post_id, posts!inner(content)")
+    .gt("ends_at", now)
+    .order("ends_at", { ascending: true })
+    .limit(20);
+
+  if (!polls?.length) return 0;
+
+  const { data: npcs } = await supabase
+    .from("profiles")
+    .select("id, username, personality, popularity_score, trust_score, influence_score, is_npc, avatar_url, bio, welcome_focus_until, created_at")
+    .eq("is_npc", true);
+
+  if (!npcs?.length) return 0;
+
+  const shuffled = [...(polls as ActivePollRow[])].sort(() => Math.random() - 0.5);
+  let votes = 0;
+
+  for (const poll of shuffled) {
+    if (votes >= maxVotes) break;
+
+    const question = pollQuestion(poll);
+    if (!question) continue;
+
+    const npcOrder = [...npcs].sort(() => Math.random() - 0.5);
+    for (const npc of npcOrder) {
+      if (votes >= maxVotes) break;
+      const result = await maybeNpcVoteOnPoll(
+        poll.post_id,
+        npc as Profile,
+        question,
+        provider
+      );
+      if (result.ok) votes += 1;
+    }
+  }
+
+  return votes;
+}

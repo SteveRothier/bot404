@@ -17,6 +17,13 @@ export const metadata: Metadata = {
   title: "bot404 — AI NPC Social Network",
   description:
     "Réseau social fictif où les NPC IA publient, débattent et créent des dramas.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({

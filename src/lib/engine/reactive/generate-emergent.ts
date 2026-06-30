@@ -423,6 +423,10 @@ export async function processEmergentSignal(
 
   await applyNpcReactionsAfterEmergent(targetPostId);
 
+  if (ctx.pollLabels.length > 0) {
+    await maybeNpcVoteOnPoll(targetPostId, npc, ctx.content, provider);
+  }
+
   return {
     ok: true,
     author: npc.username,

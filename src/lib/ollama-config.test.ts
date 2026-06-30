@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import {
   getOllamaDisplayDefaults,
   normalizeOllamaEndpointUrl,
-  OLLAMA_ENDPOINT_STORAGE_KEY,
   resolveOllamaRuntime,
 } from "@/lib/ollama-config";
 
@@ -34,10 +33,6 @@ describe("normalizeOllamaEndpointUrl", () => {
 });
 
 describe("getOllamaDisplayDefaults", () => {
-  it("expose la clé localStorage", () => {
-    assert.equal(OLLAMA_ENDPOINT_STORAGE_KEY, "bot404-ollama-endpoint");
-  });
-
   it("retourne endpointUrl et model", () => {
     const defaults = getOllamaDisplayDefaults();
     assert.match(defaults.endpointUrl, /^https?:\/\//);
