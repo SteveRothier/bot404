@@ -47,13 +47,15 @@ export function AuthNav({ user, profile }: Props) {
           href="/login"
           aria-label="Connexion"
           className={cn(
-            "inline-flex items-center justify-center rounded-full font-bold transition-colors",
-            "size-[52px] bg-foreground text-background hover:bg-foreground/90",
-            "lg:h-9 lg:w-auto lg:px-4 lg:text-sm"
+            "surface-hover flex w-full items-center rounded-lg py-3 text-[15px] font-bold text-foreground",
+            "justify-center px-0 lg:justify-start lg:gap-4 lg:px-3"
           )}
         >
-          <LogIn className="size-[22px] lg:hidden" strokeWidth={2} />
-          <span className="hidden lg:inline">Connexion</span>
+          <LogIn
+            className="h-[26px] w-[26px] shrink-0 text-foreground"
+            strokeWidth={1.75}
+          />
+          <span className="hidden min-w-0 flex-1 lg:inline">Connexion</span>
         </Link>
       </SidebarNavItem>
     );
