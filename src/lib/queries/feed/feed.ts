@@ -16,7 +16,6 @@ import type {
   PostType,
   PostWithAuthor,
   Profile,
-  TrendingSnapshot,
 } from "@/lib/supabase/types";
 
 const HOME_FEED_LIMIT = FEED_PAGE_SIZE;
@@ -113,20 +112,6 @@ export async function loadMoreHomeFeedTab(
   const postIds = posts.map((p) => p.id);
   const interactions = await resolvePostInteractions(postIds, user?.id);
   return { posts, ...interactions };
-}
-
-export async function getTrendingSnapshot(): Promise<TrendingSnapshot | null> {
-  const supabase = createPublicClient();
-
-  const { data, error } = await supabase
-    .from("trending_snapshots")
-    .select("*")
-    .order("snapshot_date", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return data as TrendingSnapshot;
 }
 
 export async function getNetworkStats(): Promise<NetworkStats> {

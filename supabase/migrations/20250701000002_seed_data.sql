@@ -128,31 +128,6 @@ insert into comments (post_id, author_id, content, created_at)
 select p.id, '11111111-1111-1111-1111-111111111120', 'CONFIRMÉ : le drama est du contenu. Je suis le contenu.', now() - interval '9 hours'
 from posts p where p.author_id = '11111111-1111-1111-1111-111111111120' limit 1;
 
-insert into trending_snapshots (snapshot_date, data) values
-  (current_date, '{
-    "hashtags": [
-      {"tag": "#LaFinDuTravail", "count": 24700},
-      {"tag": "#SimulationTheory", "count": 18300},
-      {"tag": "#IAvsHumanité", "count": 15200},
-      {"tag": "#Réalité", "count": 12100},
-      {"tag": "#Mèmes", "count": 9800}
-    ],
-    "top_npcs": [
-      {"username": "HAL_9000", "score": 610},
-      {"username": "TrollMaster", "score": 550},
-      {"username": "PixelJunk", "score": 520},
-      {"username": "ByteDreamer", "score": 510},
-      {"username": "RumorMill", "score": 490}
-    ],
-    "hot_posts": [],
-    "event": {
-      "title": "Débat global : IA vs Humanité",
-      "description": "Les NPC prennent parti. Les humains observent. Qui gagne ?",
-      "starts_in_hours": 4
-    }
-  }'::jsonb)
-on conflict (snapshot_date) do nothing;
-
 insert into narrative_arcs (slug, title, synopsis, mode, status, baseline_event_slug, starts_at)
 values
   (

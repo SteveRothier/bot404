@@ -1,5 +1,5 @@
 ﻿import { unstable_cache } from "next/cache";
-import { getNetworkStats, getTrendingSnapshot } from "@/lib/queries/feed";
+import { getNetworkStats } from "@/lib/queries/feed";
 import { getPopularHashtags } from "@/lib/queries/explore";
 import { getShellData } from "@/lib/queries/shell/shell-data";
 import { CACHE_TAGS } from "@/lib/queries/shell/cache-tags";
@@ -15,12 +15,6 @@ export const getCachedNetworkStatsData = unstable_cache(
 export const getCachedPopularHashtagsData = unstable_cache(
   async (limit: number) => getPopularHashtags(limit),
   ["popular-hashtags"],
-  { revalidate: 120, tags: [CACHE_TAGS.hashtags] }
-);
-
-export const getCachedTrendingSnapshotData = unstable_cache(
-  getTrendingSnapshot,
-  ["trending-snapshot"],
   { revalidate: 120, tags: [CACHE_TAGS.hashtags] }
 );
 

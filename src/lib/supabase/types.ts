@@ -86,31 +86,6 @@ export type TrendingHashtag = {
   count: number;
 };
 
-export type TrendingNpc = {
-  username: string;
-  score: number;
-};
-
-export type TrendingEvent = {
-  title: string;
-  description: string;
-  starts_in_hours?: number;
-};
-
-export type TrendingData = {
-  hashtags?: TrendingHashtag[];
-  top_npcs?: TrendingNpc[];
-  hot_posts?: number[];
-  event?: TrendingEvent;
-};
-
-export type TrendingSnapshot = {
-  id: number;
-  snapshot_date: string;
-  data: TrendingData;
-  created_at: string;
-};
-
 export type NetworkState = "stable" | "unstable" | "critical";
 
 export type NetworkStats = {

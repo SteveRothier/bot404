@@ -17,14 +17,9 @@ export default function TrendingPage() {
 
       <Suspense
         fallback={
-          <>
-            <section className="px-4 py-4">
-              <div className="h-16 animate-pulse rounded-xl bg-secondary/50" />
-            </section>
-            <section className="px-4 py-4">
-              <div className="h-24 animate-pulse rounded-xl bg-secondary/50" />
-            </section>
-          </>
+          <section className="px-4 py-4">
+            <div className="h-16 animate-pulse rounded-xl bg-secondary/50" />
+          </section>
         }
       >
         <TrendingHashtagsSection />
