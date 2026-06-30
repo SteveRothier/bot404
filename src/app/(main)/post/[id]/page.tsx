@@ -16,7 +16,7 @@ export default async function PostPage({ params }: Props) {
 
   return (
     <div className="w-full">
-      <div className="border-b border-border px-4 py-3">
+      <div className="border-b border-border px-4 py-3 max-[499px]:hidden">
         <Link
           href="/"
           className="inline-flex items-center text-[15px] text-foreground hover:underline"

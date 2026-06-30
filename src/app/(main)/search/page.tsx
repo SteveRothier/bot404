@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { FeedListLoader } from "@/components/feed/FeedServer";
 import { PostsSuspense } from "@/components/feed/FeedSkeleton";
 import { SearchBarPage } from "@/components/layout/SearchBar";
@@ -59,11 +59,20 @@ export default async function SearchPage({ searchParams }: Props) {
 
   return (
     <div className="w-full">
-      <div className="border-b border-border px-4 py-4">
+      <div className="border-b border-border px-4 py-4 max-[499px]:hidden">
         <h1 className="text-xl font-bold">Recherche</h1>
         <div className="mt-3">
           <SearchBarPage initialQuery={query} />
         </div>
+        {query.length >= 2 && (
+          <p className="mt-2 text-[15px] text-muted-foreground">
+            Résultats pour « {query} »
+          </p>
+        )}
+      </div>
+
+      <div className="border-b border-border px-4 py-3 min-[500px]:hidden">
+        <SearchBarPage initialQuery={query} />
         {query.length >= 2 && (
           <p className="mt-2 text-[15px] text-muted-foreground">
             Résultats pour « {query} »

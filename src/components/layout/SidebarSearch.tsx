@@ -8,11 +8,11 @@ import { SidebarNavItem } from "@/components/layout/SidebarNavItem";
 export function SidebarSearch() {
   return (
     <>
-      <SidebarNavItem label="Rechercher" className="max-lg:flex max-lg:justify-center">
+      <SidebarNavItem label="Rechercher" className="flex justify-center min-[500px]:max-lg:flex min-[500px]:max-lg:justify-center">
         <Link
           href="/search"
           aria-label="Rechercher"
-          className="surface-hover flex size-[52px] items-center justify-center rounded-full text-foreground lg:hidden"
+          className="surface-hover flex size-[52px] items-center justify-center rounded-full text-foreground min-[500px]:flex lg:hidden"
         >
           <Search className="size-[26px]" strokeWidth={1.75} />
         </Link>

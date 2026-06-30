@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { FeedListLoader } from "@/components/feed/FeedServer";
 import { PostsSuspense } from "@/components/feed/FeedSkeleton";
 import { normalizeHashtag } from "@/lib/hashtags";
@@ -16,7 +16,7 @@ export default async function TagPage({ params }: Props) {
 
   return (
     <div className="w-full">
-      <div className="border-b border-border px-4 py-4">
+      <div className="border-b border-border px-4 py-4 max-[499px]:hidden">
         <Link
           href="/trending"
           className="text-[15px] text-muted-foreground hover:underline"

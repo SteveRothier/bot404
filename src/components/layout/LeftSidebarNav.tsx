@@ -2,66 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Bell,
-  Bookmark,
-  Compass,
-  Home,
-  User,
-} from "lucide-react";
 import { SidebarNavItem } from "@/components/layout/SidebarNavItem";
+import { buildMainNavItems, isMainNavActive } from "@/lib/layout/nav-items";
 import { cn } from "@/lib/utils";
 import { useNotificationsStore } from "@/stores/notifications-store";
-
-type NavItem = {
-  href: string;
-  label: string;
-  icon: typeof Home;
-};
 
 type Props = {
   profileUsername?: string | null;
 };
 
-function buildNavItems(profileUsername?: string | null): NavItem[] {
-  return [
-    { href: "/", label: "Accueil", icon: Home },
-    { href: "/notifications", label: "Notifications", icon: Bell },
-    { href: "/trending", label: "Explorer", icon: Compass },
-    profileUsername
-      ? { href: `/profile/${profileUsername}`, label: "Profil", icon: User }
-      : { href: "/login", label: "Profil", icon: User },
-    profileUsername
-      ? { href: "/saved", label: "Sauvegardés", icon: Bookmark }
-      : { href: "/login", label: "Sauvegardés", icon: Bookmark },
-  ];
-}
-
-function isNavActive(pathname: string, href: string): boolean {
-  if (href === pathname) return true;
-  if (href === "/" && pathname === "/") return true;
-  if (href === "/notifications" && pathname.startsWith("/notifications"))
-    return true;
-  if (
-    href.startsWith("/profile/") &&
-    pathname.startsWith("/profile/") &&
-    !pathname.startsWith("/profile/edit")
-  ) {
-    return true;
-  }
-  return false;
-}
-
 export function LeftSidebarNav({ profileUsername = null }: Props) {
   const pathname = usePathname();
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
-  const navItems = buildNavItems(profileUsername);
+  const navItems = buildMainNavItems(profileUsername);
 
   return (
     <nav className="flex flex-col gap-0.5 px-1 lg:px-0" aria-label="Navigation principale">
       {navItems.map((item) => {
         const Icon = item.icon;
-        const active = isNavActive(pathname, item.href);
+        const active = isMainNavActive(pathname, item.href);
         const showNotifBadge =
           item.href === "/notifications" && unreadCount > 0;
 
@@ -79,8 +38,9 @@ export function LeftSidebarNav({ profileUsername = null }: Props) {
             >
               <span className="relative shrink-0">
                 <Icon
-                  className="h-[26px] w-[26px]"
+                  className="h-[26px] w-[26px] text-foreground"
                   strokeWidth={active ? 2.25 : 1.75}
+                  fill="none"
                 />
                 {showNotifBadge && (
                   <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground lg:hidden">

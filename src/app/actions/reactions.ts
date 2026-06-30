@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { revalidateDataCaches } from "@/lib/queries/shell";
 import { enqueueReactionSignal } from "@/lib/engine/reactive/signals";
 import { triggerNarrativeTickAfterAction } from "@/lib/engine/reactive/trigger-tick";
-import { createReactionNotification } from "@/lib/notifications";
 import { maybeNpcReactionsOnPost } from "@/lib/engine/casting/npc-reaction";
 import { maybeNpcLikesOnPostComments } from "@/lib/engine/casting/npc-comment-engagement";
 import { isReactionKind } from "@/lib/reactions";
@@ -42,7 +41,6 @@ async function mirrorNpcReactionsOnRelay(postId: number) {
 }
 
 async function applyNarrativeReactionEffects(postId: number, userId: string) {
-  await createReactionNotification(postId, userId);
   await enqueueReactionSignal(userId, postId, "relay");
   await mirrorNpcReactionsOnRelay(postId);
   triggerNarrativeTickAfterAction();

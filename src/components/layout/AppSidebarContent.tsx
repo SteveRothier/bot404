@@ -21,7 +21,7 @@ export async function AppSidebarContent({
   return (
     <div
       className={cn(
-        "flex min-h-full flex-col gap-2 overflow-visible py-2 lg:gap-4",
+        "flex h-full min-h-0 flex-col gap-2 overflow-hidden py-2 lg:gap-4",
         className
       )}
     >

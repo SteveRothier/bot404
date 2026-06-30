@@ -1,4 +1,4 @@
-﻿import { RightSidebar } from "@/components/layout/RightSidebar";
+import { RightSidebar } from "@/components/layout/RightSidebar";
 import { getCachedShellData } from "@/lib/queries/shell";
 
 export async function RightSidebarLoader() {

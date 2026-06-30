@@ -1,6 +1,5 @@
 import { pickNpcsForReactions } from "@/lib/engine/casting/reaction-cast";
 import { loadAllNpcs } from "@/lib/engine/casting/select-npc";
-import { createCommentLikeNotification } from "@/lib/notifications";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PostType } from "@/lib/supabase/types";
 
@@ -187,7 +186,6 @@ export async function maybeNpcLikesOnPostComments(
     if (!error) {
       inserted += 1;
       usedPairs.add(pairKey);
-      await createCommentLikeNotification(comment.id, npc.id);
     }
   }
 

@@ -2,6 +2,24 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { extractMentionUsernames } from "@/lib/mentions";
 import type { NotificationKind } from "@/lib/supabase/types";
 
+/** Kinds affichés aux joueurs — pas de j'aime (post ou commentaire). */
+export const VISIBLE_NOTIFICATION_KINDS: NotificationKind[] = [
+  "mention",
+  "comment_reply",
+  "follow",
+];
+
+const SILENT_NOTIFICATION_KINDS = new Set<NotificationKind>([
+  "reaction",
+  "comment_reaction",
+]);
+
+export function isVisibleNotificationKind(
+  kind: NotificationKind | string
+): boolean {
+  return !SILENT_NOTIFICATION_KINDS.has(kind as NotificationKind);
+}
+
 type CreateNotificationParams = {
   userId: string;
   kind: NotificationKind;
@@ -96,49 +114,6 @@ export async function createCommentReplyNotifications(
 
   if (rows.length === 0) return;
   await admin.from("notifications").insert(rows);
-}
-
-export async function createReactionNotification(
-  postId: number,
-  actorId: string
-) {
-  const admin = createAdminClient();
-  const { data: post } = await admin
-    .from("posts")
-    .select("author_id")
-    .eq("id", postId)
-    .maybeSingle();
-
-  if (!post?.author_id || post.author_id === actorId) return;
-
-  await createNotification({
-    userId: post.author_id,
-    kind: "reaction",
-    actorId,
-    postId,
-  });
-}
-
-export async function createCommentLikeNotification(
-  commentId: number,
-  actorId: string
-) {
-  const admin = createAdminClient();
-  const { data: comment } = await admin
-    .from("comments")
-    .select("author_id, post_id")
-    .eq("id", commentId)
-    .maybeSingle();
-
-  if (!comment?.author_id || comment.author_id === actorId) return;
-
-  await createNotification({
-    userId: comment.author_id,
-    kind: "comment_reaction",
-    actorId,
-    postId: comment.post_id,
-    commentId,
-  });
 }
 
 export async function createFollowNotification(

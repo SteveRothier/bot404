@@ -1,4 +1,4 @@
-﻿import { TrendingList } from "@/components/widgets/TrendingList";
+import { TrendingList } from "@/components/widgets/TrendingList";
 import { NetworkSummary } from "@/components/widgets/NetworkSummary";
 import type { OllamaDisplayDefaults, ShellNpcSchedule } from "@/lib/queries/shell";
 import type { NpcGenerationStatus } from "@/lib/engine/shared/generation-gate";
@@ -20,7 +20,7 @@ export function RightSidebar({
   ollamaDisplay,
 }: Props) {
   return (
-    <aside className="sidebar-sticky hidden w-80 shrink-0 flex-col gap-4 xl:flex">
+    <aside className="layout-sidebar-column hidden w-80 flex-col gap-4 pt-3 xl:flex">
       <TrendingList hashtags={hashtags} compact />
       <NetworkSummary
         stats={stats}

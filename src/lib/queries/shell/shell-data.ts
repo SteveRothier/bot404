@@ -1,4 +1,4 @@
-﻿import {
+import {
   minutesUntilNextNpcRun,
   NPC_COMMENT_INTERVAL_MINUTES,
   NPC_POST_INTERVAL_MINUTES,

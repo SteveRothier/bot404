@@ -1,5 +1,9 @@
 import { create } from "zustand";
 import { createClient } from "@/lib/supabase/client";
+import {
+  isVisibleNotificationKind,
+  VISIBLE_NOTIFICATION_KINDS,
+} from "@/lib/notifications";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 type NotificationsState = {
@@ -28,6 +32,7 @@ async function refreshUnreadCount(userId: string) {
     .from("notifications")
     .select("*", { count: "exact", head: true })
     .eq("user_id", userId)
+    .in("kind", VISIBLE_NOTIFICATION_KINDS)
     .is("read_at", null);
 
   useNotificationsStore.getState().setUnreadCount(count ?? 0);
@@ -49,7 +54,9 @@ export function startNotificationsRealtime(userId: string) {
         table: "notifications",
         filter: `user_id=eq.${userId}`,
       },
-      () => {
+      (payload) => {
+        const kind = (payload.new as { kind?: string } | undefined)?.kind;
+        if (kind && !isVisibleNotificationKind(kind)) return;
         useNotificationsStore.getState().incrementUnread();
       }
     )

@@ -8,7 +8,7 @@ export const revalidate = 60;
 export default function TrendingPage() {
   return (
     <div className="w-full divide-y divide-border">
-      <div className="px-4 py-4">
+      <div className="px-4 py-4 max-[499px]:hidden">
         <h1 className="text-xl font-bold">Explorer</h1>
         <p className="mt-1 text-[15px] text-muted-foreground">
           Tendances et hashtags du réseau

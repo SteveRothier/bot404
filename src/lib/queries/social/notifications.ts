@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { VISIBLE_NOTIFICATION_KINDS } from "@/lib/notifications";
 import type { NotificationWithActor } from "@/lib/supabase/types";
 
 export async function getNotifications(
@@ -22,6 +23,7 @@ export async function getNotifications(
     `
     )
     .eq("user_id", user.id)
+    .in("kind", VISIBLE_NOTIFICATION_KINDS)
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -41,6 +43,7 @@ export async function getUnreadNotificationCount(): Promise<number> {
     .from("notifications")
     .select("*", { count: "exact", head: true })
     .eq("user_id", user.id)
+    .in("kind", VISIBLE_NOTIFICATION_KINDS)
     .is("read_at", null);
 
   if (error) return 0;

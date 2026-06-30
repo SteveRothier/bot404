@@ -1,4 +1,4 @@
-﻿import { contentHasHuntKeywords } from "@/lib/engine/shared/hunt-keywords";
+import { contentHasHuntKeywords } from "@/lib/engine/shared/hunt-keywords";
 import {
   getTrendingHashtagsForNpc,
   trendingPromptBlock,

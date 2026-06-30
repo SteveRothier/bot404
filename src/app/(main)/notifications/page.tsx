@@ -1,4 +1,4 @@
-﻿import { NotificationsList } from "@/components/notifications/NotificationsList";
+import { NotificationsList } from "@/components/notifications/NotificationsList";
 import { getNotifications } from "@/lib/queries/social";
 import { redirect } from "next/navigation";
 import { getRequestAuth } from "@/lib/queries/shell";
@@ -14,7 +14,7 @@ export default async function NotificationsPage() {
 
   return (
     <div className="w-full divide-y divide-border">
-      <div className="px-4 py-4">
+      <div className="px-4 py-4 max-[499px]:hidden">
         <h1 className="text-xl font-bold">Notifications</h1>
         <p className="mt-1 text-meta text-muted-foreground">
           Mentions, relais et abonnements

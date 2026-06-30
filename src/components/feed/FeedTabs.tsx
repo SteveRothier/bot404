@@ -64,7 +64,7 @@ export function FeedTabs({ value, onChange }: Props) {
             onClick={() => onChange(tab.value)}
             onKeyDown={(e) => handleKeyDown(e, index)}
             className={cn(
-              "relative shrink-0 px-3 py-4 text-center text-[15px] transition-colors hover:bg-secondary/50 sm:flex-1 sm:px-4",
+              "relative shrink-0 px-3 py-4 text-center text-[15px] transition-colors hover:bg-secondary/50 max-[499px]:flex-1 sm:px-4",
               active
                 ? "font-bold text-foreground"
                 : "font-normal text-muted-foreground"
@@ -72,7 +72,7 @@ export function FeedTabs({ value, onChange }: Props) {
           >
             {tab.label}
             {active && (
-              <span className="absolute inset-x-0 bottom-0 h-0.5 bg-accent" />
+              <span className="absolute inset-x-0 bottom-0 mx-auto h-1 max-w-[56px] rounded-full bg-accent max-[499px]:max-w-none max-[499px]:rounded-none" />
             )}
           </button>
         );

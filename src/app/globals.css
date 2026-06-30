@@ -143,10 +143,28 @@
 }
 
 @layer utilities {
-  .sidebar-sticky {
+  .layout-main {
+    padding-bottom: calc(3.25rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 500px) {
+    .layout-main {
+      padding-bottom: 0;
+    }
+  }
+
+  .mobile-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .layout-sidebar-column {
     position: sticky;
-    top: 0.5rem;
-    align-self: start;
+    top: 0;
+    align-self: flex-start;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    flex-shrink: 0;
   }
 
   .divider {

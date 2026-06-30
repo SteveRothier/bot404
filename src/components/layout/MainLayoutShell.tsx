@@ -1,5 +1,7 @@
-﻿import { Suspense } from "react";
+import { Suspense } from "react";
 import { LeftSidebar } from "@/components/layout/LeftSidebar";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { MobileTopBar } from "@/components/layout/MobileTopBar";
 import { RightSidebarLoader } from "@/components/layout/RightSidebarLoader";
 import { ClientStoresHydrator } from "@/components/providers/ClientStoresHydrator";
 import { getCachedSidebarAuth } from "@/lib/queries/shell";
@@ -13,7 +15,7 @@ type Props = {
 function RightSidebarSkeleton() {
   return (
     <aside
-      className="sidebar-sticky hidden w-80 shrink-0 flex-col gap-4 xl:flex"
+      className="layout-sidebar-column hidden w-80 flex-col gap-4 pt-3 xl:flex"
       aria-hidden
     >
       {Array.from({ length: 3 }).map((_, i) => (
@@ -40,11 +42,16 @@ export async function MainLayoutShell({ children }: Props) {
       initialUnreadCount={initialUnreadCount}
     >
       <div className="min-h-screen bg-background">
-        <div className="mx-auto flex max-w-[1280px] items-start gap-2 px-2 sm:gap-4 sm:px-3 lg:gap-6 lg:px-4">
+        <div className="mx-auto flex max-w-[1280px] items-start gap-0 px-0 min-[500px]:gap-2 min-[500px]:px-2 sm:min-[500px]:gap-4 sm:min-[500px]:px-3 lg:gap-6 lg:px-4">
           <LeftSidebar sidebarAuth={sidebarAuth} />
 
           <div className="flex min-w-0 flex-1 flex-col">
-            <main className="min-w-0 flex-1 border-l border-border py-0">
+            <MobileTopBar
+              user={sidebarAuth.user}
+              profile={sidebarAuth.profile}
+              profileUsername={sidebarAuth.profileUsername}
+            />
+            <main className="layout-main min-w-0 flex-1 min-[500px]:border-l min-[500px]:border-border">
               {children}
             </main>
           </div>
@@ -53,6 +60,8 @@ export async function MainLayoutShell({ children }: Props) {
             <RightSidebarLoader />
           </Suspense>
         </div>
+
+        <MobileBottomNav profileUsername={sidebarAuth.profileUsername} />
       </div>
     </ClientStoresHydrator>
   );

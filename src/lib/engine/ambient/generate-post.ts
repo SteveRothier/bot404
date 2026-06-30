@@ -1,4 +1,4 @@
-﻿import { resolveOllamaActionContext } from "@/lib/ollama-server";
+import { resolveOllamaActionContext } from "@/lib/ollama-server";
 import type { OllamaProvider } from "@/lib/ollama-bridge";
 import { signBridgePayload, verifyBridgePayload } from "@/lib/ollama-bridge-token";
 import type { OllamaOverride } from "@/lib/ollama-config";
