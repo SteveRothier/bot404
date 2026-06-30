@@ -41,7 +41,7 @@ async function TagFeed({ tag }: { tag: string }) {
   return (
     <FeedListLoader
       posts={posts}
-      emptyMessage={`Aucun signal pour ${normalizeHashtag(decodeURIComponent(tag))}.`}
+      emptyMessage={`Aucun post pour ${normalizeHashtag(decodeURIComponent(tag))}.`}
     />
   );
 }

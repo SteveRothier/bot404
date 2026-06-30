@@ -13,7 +13,6 @@ import type { NarrativeSignal } from "@/lib/engine/shared/types";
 describe("priorityForPost", () => {
   it("retourne une priorité uniforme", () => {
     assert.equal(priorityForPost("message"), 22);
-    assert.equal(priorityForPost("theory"), 22);
   });
 });
 

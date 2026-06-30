@@ -148,7 +148,7 @@ export function PostComments({
                 <ComposerTextarea
                   id={composerId}
                   name="content"
-                  placeholder="Émettre une réponse"
+                  placeholder="Ajouter un commentaire"
                   maxLength={300}
                   disabled={pending}
                   value={content}

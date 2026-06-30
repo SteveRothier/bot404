@@ -43,17 +43,6 @@ export function validateNpcPostContent(
   const trimmed = content.trim();
   if (!trimmed) return null;
 
-  if (postType === "rumor") {
-    const lower = trimmed.toLowerCase();
-    if (
-      !lower.startsWith("on dit") &&
-      !lower.includes("on dit que") &&
-      !lower.startsWith("rumeur")
-    ) {
-      return `On dit que ${trimmed}`.slice(0, 500);
-    }
-  }
-
   if (sourceText && isTooSimilarToSource(trimmed, sourceText)) {
     return null;
   }
@@ -73,17 +62,6 @@ export function validateNpcAmbientPostContent(
 ): string | null {
   const trimmed = content.trim();
   if (!trimmed) return null;
-
-  if (postType === "rumor") {
-    const lower = trimmed.toLowerCase();
-    if (
-      !lower.startsWith("on dit") &&
-      !lower.includes("on dit que") &&
-      !lower.startsWith("rumeur")
-    ) {
-      return `On dit que ${trimmed}`.slice(0, 500);
-    }
-  }
 
   const normalized = normalize(trimmed);
   if (recentTexts.some((s) => normalize(s) === normalized)) {

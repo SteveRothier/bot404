@@ -23,6 +23,7 @@ describe("pickRandomNpcPostType", () => {
     for (let i = 0; i < 20; i++) {
       types.add(pickRandomNpcPostType());
     }
-    assert.ok(types.has("message") || types.has("theory"));
+    assert.equal(types.size, 1);
+    assert.ok(types.has("message"));
   });
 });

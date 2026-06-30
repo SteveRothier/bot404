@@ -1,9 +1,6 @@
 import type { PostType, ReactionKind } from "@/lib/supabase/types";
 
-function postTypeLabel(postType: PostType | null | undefined): string {
-  if (postType === "rumor") return "rumeur";
-  if (postType === "theory") return "théorie";
-  if (postType === "signal") return "signal";
+function postTypeLabel(_postType: PostType | null | undefined): string {
   return "post";
 }
 
