@@ -1,11 +1,11 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogIn } from "lucide-react";
+import { LogIn, MoreHorizontal } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { Button } from "@/components/ui/button";
 import { SidebarNavItem } from "@/components/layout/SidebarNavItem";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/lib/supabase/types";
@@ -17,8 +17,24 @@ type Props = {
 
 export function AuthNav({ user, profile }: Props) {
   const router = useRouter();
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
 
   async function signOut() {
+    setMenuOpen(false);
     const supabase = createClient();
     await supabase.auth.signOut();
     router.refresh();
@@ -43,35 +59,75 @@ export function AuthNav({ user, profile }: Props) {
     );
   }
 
+  const username = profile?.username ?? "Profil";
+  const handle = `@${username.toLowerCase()}`;
+
   return (
-    <div
-      className={cn(
-        "flex items-center",
-        "justify-center gap-0 lg:justify-start lg:gap-2"
-      )}
-    >
-      <SidebarNavItem label="Mon profil">
+    <div ref={menuRef} className="relative w-full">
+      <div
+        className={cn(
+          "flex w-full items-center",
+          "justify-center lg:justify-between lg:gap-1 lg:rounded-full lg:px-3 lg:py-2 lg:transition-colors lg:hover:bg-secondary/80"
+        )}
+      >
+        <SidebarNavItem label="Mon profil" className="lg:hidden">
+          <Link
+            href={profile ? `/profile/${profile.username}` : "/"}
+            aria-label="Mon profil"
+            className="flex shrink-0 items-center justify-center rounded-full"
+          >
+            <UserAvatar
+              avatarUrl={profile?.avatar_url}
+              fallbackSeed={user.id}
+              username={username}
+              className="h-9 w-9"
+            />
+          </Link>
+        </SidebarNavItem>
+
         <Link
           href={profile ? `/profile/${profile.username}` : "/"}
           aria-label="Mon profil"
-          className="flex shrink-0 items-center justify-center rounded-full lg:justify-start"
+          className="hidden min-w-0 flex-1 items-center gap-3 lg:flex"
         >
           <UserAvatar
             avatarUrl={profile?.avatar_url}
             fallbackSeed={user.id}
-            username={profile?.username ?? "U"}
-            className="h-9 w-9"
+            username={username}
+            className="h-10 w-10 shrink-0"
           />
+          <div className="min-w-0 leading-tight">
+            <p className="truncate text-[15px] font-bold text-foreground">
+              {username}
+            </p>
+            <p className="truncate text-[15px] text-muted-foreground">
+              {handle}
+            </p>
+          </div>
         </Link>
-      </SidebarNavItem>
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={signOut}
-        className="hidden text-sm text-muted-foreground lg:inline-flex"
-      >
-        Déco
-      </Button>
+
+        <button
+          type="button"
+          aria-label="Menu du compte"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((open) => !open)}
+          className="hidden shrink-0 rounded-full p-2 text-foreground transition-colors hover:bg-secondary/80 lg:inline-flex"
+        >
+          <MoreHorizontal className="size-5" strokeWidth={1.75} />
+        </button>
+      </div>
+
+      {menuOpen && (
+        <div className="absolute bottom-full right-0 z-50 mb-2 hidden min-w-[220px] overflow-hidden rounded-xl border border-border bg-background shadow-[0_8px_28px_rgba(0,0,0,0.55)] lg:block">
+          <button
+            type="button"
+            onClick={signOut}
+            className="block w-full px-4 py-3 text-left text-[15px] font-bold text-foreground transition-colors hover:bg-secondary/80"
+          >
+            Se déconnecter {handle}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
