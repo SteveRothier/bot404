@@ -203,7 +203,7 @@ export function PostComposerForm({ user, profile, feedTab }: Props) {
               </Link>{" "}
               {feedTab === "following"
                 ? "pour suivre des profils et remplir ce fil."
-                : "pour publier un signal, une théorie ou un sondage."}
+                : "pour publier un message, un média ou un sondage."}
             </p>
           </div>
         </div>

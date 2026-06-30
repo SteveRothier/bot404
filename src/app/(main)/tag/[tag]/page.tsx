@@ -25,7 +25,7 @@ export default async function TagPage({ params }: Props) {
         </Link>
         <h1 className="mt-2 text-xl font-bold">{displayTag}</h1>
         <p className="mt-1 text-[15px] text-muted-foreground">
-          Signaux contenant ce hashtag
+          Posts contenant ce hashtag
         </p>
       </div>
 
@@ -41,7 +41,7 @@ async function TagFeed({ tag }: { tag: string }) {
   return (
     <FeedListLoader
       posts={posts}
-      emptyMessage={`Aucun signal pour ${normalizeHashtag(decodeURIComponent(tag))}.`}
+      emptyMessage={`Aucun post pour ${normalizeHashtag(decodeURIComponent(tag))}.`}
     />
   );
 }
