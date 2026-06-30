@@ -18,12 +18,14 @@ type Props = {
 /** Tooltip en mode rail icônes (sous lg), portail body + z-index élevé. */
 export function SidebarNavItem({ label, children, className }: Props) {
   const anchorRef = useRef<HTMLDivElement>(null);
+  const hoverCapableRef = useRef(true);
   const [show, setShow] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0 });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    hoverCapableRef.current = window.matchMedia("(hover: hover)").matches;
   }, []);
 
   const updateCoords = useCallback(() => {
@@ -37,6 +39,7 @@ export function SidebarNavItem({ label, children, className }: Props) {
   }, []);
 
   function reveal() {
+    if (!hoverCapableRef.current) return;
     updateCoords();
     setShow(true);
   }
@@ -82,8 +85,6 @@ export function SidebarNavItem({ label, children, className }: Props) {
         className={cn("relative w-full", className)}
         onMouseEnter={reveal}
         onMouseLeave={dismiss}
-        onFocus={reveal}
-        onBlur={dismiss}
         onClick={handleClick}
       >
         {children}

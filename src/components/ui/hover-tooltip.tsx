@@ -21,7 +21,7 @@ type Props = {
   className?: string;
 };
 
-/** Bulle sombre style X/Twitter au survol / focus (portail body). */
+/** Bulle sombre style X/Twitter au survol uniquement (portail body). */
 export function HoverTooltip({
   label,
   children,
@@ -31,6 +31,7 @@ export function HoverTooltip({
 }: Props) {
   const anchorRef = useRef<HTMLSpanElement>(null);
   const delayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverCapableRef = useRef(true);
   const tooltipId = useId();
   const [show, setShow] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0 });
@@ -38,6 +39,7 @@ export function HoverTooltip({
 
   useEffect(() => {
     setMounted(true);
+    hoverCapableRef.current = window.matchMedia("(hover: hover)").matches;
     return () => {
       if (delayRef.current) clearTimeout(delayRef.current);
     };
@@ -61,7 +63,7 @@ export function HoverTooltip({
   }, [side]);
 
   function reveal() {
-    if (disabled || !label) return;
+    if (disabled || !label || !hoverCapableRef.current) return;
     updateCoords();
     if (delayRef.current) clearTimeout(delayRef.current);
     delayRef.current = setTimeout(() => setShow(true), SHOW_DELAY_MS);
@@ -113,8 +115,6 @@ export function HoverTooltip({
         className={cn("inline-flex items-center", className)}
         onMouseEnter={reveal}
         onMouseLeave={dismiss}
-        onFocusCapture={reveal}
-        onBlurCapture={dismiss}
         aria-describedby={show ? tooltipId : undefined}
       >
         {children}

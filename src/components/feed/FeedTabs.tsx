@@ -64,7 +64,7 @@ export function FeedTabs({ value, onChange }: Props) {
             onClick={() => onChange(tab.value)}
             onKeyDown={(e) => handleKeyDown(e, index)}
             className={cn(
-              "relative shrink-0 px-3 py-4 text-center text-[15px] transition-colors hover:bg-secondary/50 max-[499px]:flex-1 sm:px-4",
+              "relative flex-1 shrink-0 px-3 py-4 text-center text-[15px] transition-colors hover:bg-secondary/50 sm:px-4",
               active
                 ? "font-bold text-foreground"
                 : "font-normal text-muted-foreground"
